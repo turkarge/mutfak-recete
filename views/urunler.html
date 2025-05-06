@@ -1,0 +1,45 @@
+<!-- views/urunler.html -->
+
+<h2>Yeni Ürün/Hammadme Ekle</h2>
+<form id="urunEkleForm">
+  <div class="mb-3">
+    <label class="form-label" for="urunAdi">Ad:</label>
+    <input type="text" class="form-control" id="urunAdi" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="urunTuru">Tür:</label>
+    <select class="form-select" id="urunTuru" required>
+      <option value="">Seçiniz</option>
+      <option value="Hammadde">Hammadde</option>
+      <option value="Son Ürün">Son Ürün</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Ürünü Ekle</button>
+</form>
+
+<hr>
+
+<h2>Ürün Listesi</h2>
+
+<div class="card"> <!-- Tablo için bir kart görünümü -->
+    <div class="card-header">
+        <h2 class="card-title">Ürün Listesi</h2>
+    </div>
+    <div class="table-responsive"> <!-- Tablo için duyarlı kapsayıcı -->
+        <table id="urunlerTable" class="table table-striped table-hover"> <!-- Tabler tablo sınıfları -->
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Ad</th>
+              <th>Tür</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Ürünler buraya JavaScript ile eklenecek -->
+            <tr>
+                <td colspan="3" class="text-center">Ürünler yükleniyor...</td> <!-- Yükleniyor mesajı -->
+            </tr>
+          </tbody>
+        </table>
+    </div>
+</div> <!-- Kart sonu -->
