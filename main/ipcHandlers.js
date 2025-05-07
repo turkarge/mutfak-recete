@@ -3,6 +3,7 @@ const { ipcMain } = require('electron');
 const database = require('./db'); // db modülümüzü içeri aktarıyoruz
 const path = require('node:path'); // <-- BU SATIRI EKLEYİN
 const fs = require('node:fs').promises; // <-- BU SATIRI EKLEYİN
+const sqlite3 = require('sqlite3');
 
 function registerIpcHandlers() {
   // Örnek: Ürünleri getirme isteğini dinle
