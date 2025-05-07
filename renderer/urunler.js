@@ -128,6 +128,50 @@ export async function loadUrunlerPage() {
         console.error("Ürün ekleme formu (urunEkleForm) bulunamadı. urunler.html yüklü mü?");
     }
 
+    // Düzenleme işlemini yönetecek fonksiyon (şimdilik boş)
+    function handleEditUrun(event) {
+        const urunId = event.target.dataset.id;
+        console.log(`Düzenle butonuna tıklandı, Ürün ID: ${urunId}`);
+        toastr.info(`Düzenleme işlevi henüz aktif değil. Ürün ID: ${urunId}`);
+    }
+
+    // Silme işlemini yönetecek fonksiyon
+    async function handleDeleteUrun(event) {
+        const urunId = event.target.dataset.id;
+        console.log(`Sil butonuna tıklandı, Ürün ID: ${urunId}`);
+
+        const confirmation = confirm(`Bu ürünü silmek istediğinizden emin misiniz? (ID: ${urunId})`);
+
+        if (confirmation) {
+            try {
+                const success = await window.electronAPI.deleteUrun(urunId);
+
+                if (success) {
+                    console.log(`Ürün başarıyla silindi, ID: ${urunId}`);
+                    toastr.success('Ürün başarıyla silindi!');
+
+                    const guncelUrunler = await window.electronAPI.getUrunler();
+                    displayUrunler(guncelUrunler);
+                } else {
+                    console.warn(`Ürün silme başarısız veya ürün bulunamadı, ID: ${urunId}`);
+                    toastr.warning('Ürün silme başarısız veya ürün bulunamadı.');
+                }
+
+            } catch (error) {
+                console.error('Genel Hata Yakalandı (Ürün Sil):', error);
+                 if (error.message && error.message.includes('FOREIGN KEY constraint failed')) {
+                      console.warn('Yabancı anahtar kısıtlaması hatası yakalandı (Ürün Sil).');
+                      toastr.error('Bu ürün başka tablolarda kullanıldığı için silinemez.');
+                 }
+                 else {
+                    toastr.error('Ürün silinirken bir hata oluştu: ' + error.message);
+                 }
+            }
+        } else {
+            console.log('Ürün silme işlemi kullanıcı tarafından iptal edildi.');
+            toastr.info('Ürün silme işlemi iptal edildi.');
+        }
+    }
 
     // Sayfa yüklendiğinde ürünleri çek ve göster (loadUrunlerPage çağrıldığında)
     try {
