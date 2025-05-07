@@ -121,6 +121,31 @@ ipcMain.handle('getPorsiyonlar', async (event) => {
     }
 });
 
+// Ürün silme isteğini dinle
+ipcMain.handle('deleteUrun', async (event, urunId) => {
+  try {
+      // Veritabanından ürünü sil
+      // db.run komutu silinen satır sayısını this.changes ile verir.
+      // function(err) callback'i kullanmalıyız.
+      return new Promise((resolve, reject) => {
+          database.db.run("DELETE FROM urunler WHERE id = ?", [urunId], function(err) { // <-- database.db'yi kullanıyoruz
+              if (err) {
+                  console.error(`Ürün silme hatası (ID: ${urunId}):`, err.message);
+                  reject(err); // Hatayı Renderer'a ilet
+              } else {
+                   console.log(`Ürün başarıyla silindi (ID: ${urunId}). Silinen satır sayısı: ${this.changes}`);
+                   // Silme başarılıysa ve en az 1 satır etkilendiyse true döndür
+                   resolve(this.changes > 0);
+              }
+          });
+      });
+
+  } catch (error) {
+      console.error(`Genel Hata Yakalandı (Ürün Silme Handler, ID: ${urunId}):`, error);
+      throw error; // Hatayı Renderer'a ilet
+  }
+});
+
   // TODO: Diğer handler'ları buraya ekleyeceğiz:
   // - Birimleri getirme (get-birimler)
   // - Birim ekleme (add-birim)
