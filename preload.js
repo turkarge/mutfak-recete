@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Ana Süreç'ten veri almak veya bir işlem yapmasını istemek için kullanılır
   getUrunler: () => ipcRenderer.invoke('get-urunler'), // Ürünleri getirmek için
   addUrun: (urun) => ipcRenderer.invoke('add-urun', urun), // Ürün eklemek için
+  getBirimler: () => ipcRenderer.invoke('get-birimler'),
+  addBirim: (birim) => ipcRenderer.invoke('add-birim', birim),
   getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName)
   // Diğer veri tabanı işlemleri (güncelleme, silme) için de buraya fonksiyonlar ekleyeceğiz
 });
