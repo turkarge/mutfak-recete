@@ -8,6 +8,7 @@ console.log('Ana Renderer süreci çalışıyor!');
 
 // Farklı sayfalara ait JavaScript modüllerini içeri aktaralım (şimdilik sadece urunler.js)
 import { loadUrunlerPage } from './renderer/urunler.js';
+import { loadBirimlerPage } from './renderer/birimler.js';
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
 // import { loadBirimlerPage } from './renderer/birimler.js';
 // import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
@@ -20,25 +21,19 @@ const mainContentArea = document.getElementById('main-content-area');
 // Belirli bir sayfanın HTML içeriğini yükleyen fonksiyon
 async function loadPage(pageName) {
     try {
-        // views klasöründeki ilgili HTML dosyasını oku (Ana Süreç aracılığıyla)
-        // HTML içeriğini okumak için yeni bir IPC handler'ına ihtiyacımız olacak.
-        const pageHtml = await window.electronAPI.getPageHtml(pageName); // TODO: Bu handler'ı Ana Süreç'te ekleyeceğiz
+        const pageHtml = await window.electronAPI.getPageHtml(pageName);
 
-        // Ana içerik alanını temizle ve yeni HTML'i ekle
         if (mainContentArea) {
              mainContentArea.innerHTML = pageHtml;
              console.log(`${pageName}.html içeriği yüklendi.`);
 
              // Sayfa yüklendikten sonra ilgili JavaScript fonksiyonunu çalıştır.
-             // Örneğin urunler.html yüklendiğinde loadUrunlerPage'i çalıştıracağız.
-             // Hangi sayfanın JS'inin çalışacağını belirlemek için bir mantık kuralım.
              switch (pageName) {
                  case 'urunler':
-                     // İlgili JS fonksiyonunu çağırıyoruz
                      loadUrunlerPage();
                      break;
-                 case 'birimler':
-                      // TODO: loadBirimlerPage(); çağrılacak
+                 case 'birimler': // <-- Bu case bloğunu ekleyin
+                      loadBirimlerPage();
                       break;
                  // TODO: Diğer sayfalar için case'ler eklenecek
                  default:
@@ -60,6 +55,10 @@ window.addEventListener('DOMContentLoaded', () => {
    // Menü linklerine olay dinleyicileri ekle (ileride)
    // İlk yüklenecek sayfayı belirle (örneğin ürünler sayfası)
    loadPage('urunler'); // <-- Uygulama başladığında urunler.html'i yükle
+   const urunlerLink = document.querySelector('.navbar-nav .nav-link[data-page="urunler"]');
+   if (urunlerLink) {
+       urunlerLink.classList.add('active');
+   }
 });
 
 // TODO: Menü linkleri tıklandığında loadPage fonksiyonunu ilgili sayfa adıyla çağıran

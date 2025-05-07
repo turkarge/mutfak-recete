@@ -49,6 +49,31 @@ function registerIpcHandlers() {
     }
 });
 
+ipcMain.handle('get-birimler', async (event) => {
+  try {
+      const birimler = await database.all("SELECT * FROM birimler");
+      console.log('Birimler başarıyla getirildi.');
+      return birimler;
+  } catch (error) {
+      console.error('Birimleri getirme hatası:', error.message);
+      throw error; // Hatayı Renderer'a ilet
+  }
+});
+
+// Birim ekleme isteğini dinle
+ipcMain.handle('add-birim', async (event, birim) => {
+  try {
+      // Veritabanına yeni birim ekle
+      const lastID = await database.run("INSERT INTO birimler (birimAdi, kisaAd, anaBirimKisaAd) VALUES (?, ?, ?)",
+                                         [birim.birimAdi, birim.kisaAd, birim.anaBirimKisaAd]);
+      console.log(`Birim başarıyla eklendi: ${birim.birimAdi}, ID: ${lastID}`);
+      return lastID; // Eklenen birimin ID'sini döndür
+  } catch (error) {
+      console.error('Birim ekleme hatası:', error.message);
+      throw error; // Hatayı Renderer'a ilet
+  }
+});
+
   // TODO: Diğer handler'ları buraya ekleyeceğiz:
   // - Birimleri getirme (get-birimler)
   // - Birim ekleme (add-birim)
