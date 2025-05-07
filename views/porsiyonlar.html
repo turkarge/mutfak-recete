@@ -1,0 +1,66 @@
+<!-- views/porsiyonlar.html -->
+
+<h2>Porsiyon Yönetimi</h2>
+
+<div class="card mb-4"> <!-- Form için bir kart görünümü -->
+    <div class="card-header">
+        <h2 class="card-title">Yeni Porsiyon Ekle</h2>
+    </div>
+    <div class="card-body">
+        <form id="porsiyonEkleForm">
+            <div class="mb-3">
+                <label class="form-label" for="sonUrun">Son Ürün:</label>
+                <select class="form-select" id="sonUrunId" required>
+                    <option value="">-- Son Ürün Seçiniz --</option>
+                    <!-- Son ürünler buraya JavaScript ile doldurulacak -->
+                </select>
+                 <small class="form-text text-muted">Hangi son ürüne ait porsiyon ekliyorsunuz?</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="porsiyonAdi">Porsiyon Adı:</label>
+                <input type="text" class="form-control" id="porsiyonAdi" required>
+                 <small class="form-text text-muted">Örn: 1 Porsiyon, 1.5 Porsiyon, Duble</small>
+            </div>
+             <div class="mb-3">
+                <label class="form-label" for="satisBirimi">Satış Birimi (Kısa Ad):</label>
+                <select class="form-select" id="satisBirimiKisaAd" required>
+                     <option value="">-- Satış Birimi Seçiniz --</option>
+                    <!-- Birimler buraya JavaScript ile doldurulacak -->
+                </select>
+                 <small class="form-text text-muted">Bu porsiyon hangi birimde satılacak? (Porsiyon, Adet vb.)</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="varsayilanSatisFiyati">Varsayılan Satış Fiyatı:</label>
+                <input type="number" class="form-control" id="varsayilanSatisFiyati" step="0.01">
+                 <small class="form-text text-muted">Bu porsiyon için varsayılan satış fiyatı (İsteğe bağlı).</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Porsiyon Ekle</button>
+        </form>
+    </div>
+</div> <!-- Kart sonu -->
+
+<div class="card"> <!-- Tablo için bir kart görünümü -->
+    <div class="card-header">
+        <h2 class="card-title">Porsiyon Listesi</h2>
+    </div>
+    <div class="table-responsive"> <!-- Tablo için duyarlı kapsayıcı -->
+        <table id="porsiyonlarTable" class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Son Ürün</th> <!-- Son Ürünün Adı görünecek -->
+              <th>Porsiyon Adı</th>
+              <th>Satış Birimi</th> <!-- Satış Biriminin Kısa Adı görünecek -->
+              <th>Varsayılan Satış Fiyatı</th>
+              <!-- Düzenle/Sil gibi eylem sütunları eklenebilir -->
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Porsiyonlar buraya JavaScript ile eklenecek -->
+            <tr>
+                <td colspan="5" class="text-center">Porsiyonlar yükleniyor...</td> <!-- Yükleniyor mesajı (5 sütun için) -->
+            </tr>
+          </tbody>
+        </table>
+    </div>
+</div> <!-- Kart sonu -->
