@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addUrun: (urun) => ipcRenderer.invoke('add-urun', urun), // Ürün eklemek için
   getBirimler: () => ipcRenderer.invoke('get-birimler'),
   addBirim: (birim) => ipcRenderer.invoke('add-birim', birim),
+  getUrunlerByTur: (tur) => ipcRenderer.invoke('get-urunler-by-tur', tur),
+  getPorsiyonlar: () => ipcRenderer.invoke('getPorsiyonlar'),
+  addPorsiyon: (porsiyon) => ipcRenderer.invoke('addPorsiyon', porsiyon),
   getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName)
   // Diğer veri tabanı işlemleri (güncelleme, silme) için de buraya fonksiyonlar ekleyeceğiz
 });

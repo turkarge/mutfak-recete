@@ -74,6 +74,53 @@ ipcMain.handle('add-birim', async (event, birim) => {
   }
 });
 
+ipcMain.handle('get-urunler-by-tur', async (event, tur) => {
+  try {
+      const urunler = await database.all("SELECT * FROM urunler WHERE tur = ?", [tur]);
+      console.log(`'${tur}' türündeki ürünler başarıyla getirildi. (${urunler.length} adet)`);
+      return urunler;
+  } catch (error) {
+      console.error(`'${tur}' türündeki ürünleri getirme hatası:`, error.message);
+      throw error;
+  }
+});
+
+// Porsiyonları getirme isteğini dinle
+ipcMain.handle('getPorsiyonlar', async (event) => {
+  try {
+      // Porsiyonlarla birlikte ilgili Son Ürünün adını da çekelim (JOIN kullanarak)
+      const porsiyonlar = await database.all(`
+        SELECT
+          p.id,
+          p.sonUrunId,
+          u.ad AS sonUrunAdi, -- urunler tablosundaki adı 'sonUrunAdi' olarak alıyoruz
+          p.porsiyonAdi,
+          p.satisBirimiKisaAd,
+          p.varsayilanSatisFiyati
+        FROM porsiyonlar p
+        JOIN urunler u ON p.sonUrunId = u.id
+      `);
+      console.log('Porsiyonlar başarıyla getirildi.');
+      return porsiyonlar;
+  } catch (error) {
+      console.error('Porsiyonları getirme hatası:', error.message);
+      throw error;
+  }
+});
+
+  // Porsiyon ekleme isteğini dinle
+  ipcMain.handle('addPorsiyon', async (event, porsiyon) => {
+    try {
+        const lastID = await database.run("INSERT INTO porsiyonlar (sonUrunId, porsiyonAdi, satisBirimiKisaAd, varsayilanSatisFiyati) VALUES (?, ?, ?, ?)",
+                                           [porsiyon.sonUrunId, porsiyon.porsiyonAdi, porsiyon.satisBirimiKisaAd, porsiyon.varsayilanSatisFiyati]);
+        console.log(`Porsiyon başarıyla eklendi: ${porsiyon.porsiyonAdi}, ID: ${lastID}`);
+        return lastID;
+    } catch (error) {
+        console.error('Porsiyon ekleme hatası:', error.message);
+        throw error;
+    }
+});
+
   // TODO: Diğer handler'ları buraya ekleyeceğiz:
   // - Birimleri getirme (get-birimler)
   // - Birim ekleme (add-birim)
