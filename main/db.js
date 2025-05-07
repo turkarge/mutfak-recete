@@ -1,19 +1,24 @@
 // main/db.js
+// Veritabanı bağlantısını ve temel CRUD işlemlerini yönetir.
+
 const { app } = require('electron');
 const path = require('node:path');
 const sqlite3 = require('sqlite3').verbose(); // verbose hata ayıklama için faydalı
 
 const dbPath = path.join(app.getPath('userData'), 'restoran.db');
-let db = null; // Veritabanı bağlantı nesnesi
+let db = null; // Veritabanı bağlantı nesnesi. Başlangıçta null, initializeDatabase çalışınca atanacak.
 
 // Veritabanını açma ve tabloları oluşturma fonksiyonu
+// Bu fonksiyon bir Promise döndürür ve tüm tablolar oluşana kadar beklemesini sağlar.
 function initializeDatabase() {
   return new Promise((resolve, reject) => {
     // Veritabanı dosyasını aç veya oluştur
     db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
       if (err) {
         console.error('Veritabanı bağlantı hatası:', err.message);
-        reject(err); // Bağlantı hatasında Promise'i reject et
+        // Bağlantı hatasında Promise'i reject et ve uygulamayı kapat
+        // main.js'deki app.whenReady'deki catch bloğu bunu yakalayacak.
+        reject(err);
       } else {
         console.log('Veritabanına başarıyla bağlandı:', dbPath);
 
@@ -21,30 +26,13 @@ function initializeDatabase() {
         db.run('PRAGMA foreign_keys = ON;', (pragmaErr) => {
             if (pragmaErr) {
                 console.error('Yabancı anahtarları etkinleştirme hatası:', pragmaErr.message);
-                reject(pragmaErr); // PRAGMA hatasında Promise'i reject et
+                // PRAGMA hatasında Promise'i reject et
+                reject(pragmaErr);
             } else {
                 console.log('Yabancı anahtarlar etkin.');
 
-                // Bağlantı ve PRAGMA tamamlandı.
-                // db bağlantı nesnesi (db değişkeni) artık atanmış durumda ve null değil.
-                // Şimdi Promise'i çözebiliriz. IPC handler'ları artık kaydedilebilir.
-                resolve();
-
-                // Tablo oluşturma ve varsayılan birim ekleme işlemleri burada devam edecek.
-                // Bunların Promise'ın çözülmesini beklemesi gerekmiyor çünkü CREATE TABLE IF NOT EXISTS idempotent.
-                // Ancak, bu işlemlerin bitmeden handler'ların veri tabanını kullanmaya başlaması sorun yaratabilir.
-                // En iyi uygulama: initialize Promise'ının tüm tablolar oluşana kadar beklemesi.
-                // Önceki yaklaşım (tüm serialize bitince resolve) daha doğruydu.
-                // Hata 'Cannot read properties of null' başka bir yerden kaynaklanıyor olabilir.
-                // Önceki yaklaşımı tekrar deneyelim ve db nesnesini aktardığımızdan emin olalım.
-
-                 // <-- ÖNCEKİ YAKLAŞIMA GERİ DÖNÜYORUZ -->
-                 // Promise'ı tüm serialize işlemleri bitince çözeceğiz.
-                 // 'Cannot read properties of null' hatası, db nesnesinin null olmasından değil,
-                 // belki de database.db'ye erişim sırasında nesnenin henüz tam initialize olmamasından kaynaklanıyor olabilir.
-                 // database.db'yi export ettiğimizden eminiz, şimdi serialize içinde resolve edelim.
-
-                 db.serialize(() => {
+                // Tablo oluşturma ve varsayılan birim ekleme işlemleri seri olarak yapılacak
+                db.serialize(() => {
                       console.log('Tablolar oluşturuluyor ve birimler ekleniyor...');
                       // urunler Tablosu
                       db.run(`CREATE TABLE IF NOT EXISTS urunler (
@@ -157,9 +145,16 @@ function initializeDatabase() {
                       // Tüm serialize işlemleri bittiğinde Promise'ı çöz
                       // Bu, main.js'deki await database.initialize()'ın burada tamamlanmasını sağlar
                       // ve handler'lar kaydedildiğinde tabloların oluşmuş olmasını garanti eder.
-                      resolve(); // <-- Promise'ı serialize bloğu sonunda çözüyoruz
+                      // Not: serialize bloğu tamamlandığında callback fonksiyonu yoktur.
+                      // Bu nedenle resolve() çağrısını serialize bloğunun dışına,
+                      // PRAGMA callback'inin içine (ama serialize'dan sonra) taşıdık.
+                      // resolve(); // <-- Bu satır buradan kaldırıldı, PRAGMA callback'inde yukarıya taşındı.
+
 
                     }); // serialize sonu
+
+                    // resolve() çağrısı artık PRAGMA callback'i içinde, serialize bloğu başlamadan hemen önce.
+
                 } // else (bağlantı başarılıysa) sonu
             }); // PRAGMA sonu
           } // else (bağlantı başarılıysa) sonu
@@ -180,17 +175,21 @@ function initializeDatabase() {
       ];
 
       // db.serialize() dışından çağrıldığı için burada tekrar serialize kullanmak güvenli
-      db.serialize(() => {
-          const stmt = db.prepare("INSERT OR IGNORE INTO birimler (birimAdi, kisaAd, anaBirimKisaAd) VALUES (?, ?, ?)");
-          birimler.forEach(birim => {
-              stmt.run(birim.birimAdi, birim.kisaAd, birim.anaBirimKisaAd);
-          });
-          stmt.finalize((err) => {
-              if (!err) {
-                  console.log("Varsayılan birimler eklendi (eğer daha önce yoksa).");
-              }
-          });
-      });
+      // insertDefaultBirimler fonksiyonu initializeDatabase içindeki serialize bloğundan çağrıldığı için buradaki serialize gereksiz ve hata yaratabilir.
+      // Düzeltme: insertDefaultBirimler fonksiyonu sadece db.run komutlarını içermeli, serialize initializeDatabase içinde yapılmalı.
+
+      // Düzeltilmiş insertDefaultBirimler fonksiyonu:
+       const stmt = db.prepare("INSERT OR IGNORE INTO birimler (birimAdi, kisaAd, anaBirimKisaAd) VALUES (?, ?, ?)");
+       birimler.forEach(birim => {
+           stmt.run(birim.birimAdi, birim.kisaAd, birim.anaBirimKisaAd);
+       });
+       stmt.finalize((err) => {
+           if (!err) {
+               console.log("Varsayılan birimler eklendi (eğer daha önce yoksa).");
+           } else {
+               console.error("Varsayılan birim ekleme hatası:", err.message);
+           }
+       });
     }
 
 
@@ -199,13 +198,21 @@ function initializeDatabase() {
     // Promise dönen fonksiyonlar
     const database = {
       initialize: initializeDatabase,
-      // db bağlantısı initialize edildiyse kullan
+      // db bağlantı nesnesini döndüren getter fonksiyonu
+      getDb: () => {
+          if (!db) {
+             // Teorik olarak buraya düşmemeli, initialize bekleniyor.
+             // Ancak düşerse hata fırlatmak daha iyi.
+             // Bu hata, initialize tamamlanmadan bir handler çalışırsa ortaya çıkar.
+             throw new Error("Veritabanı bağlantısı henüz hazır değil (getDb çağrıldı).");
+          }
+          return db;
+      },
+
        all: (sql, params = []) => {
         return new Promise((resolve, reject) => {
-          if (!db) { // Bağlantı kontrolü
-              return reject(new Error("Veritabanı bağlantısı henüz kurulmadı."));
-          }
-          db.all(sql, params, (err, rows) => {
+          // getDb() aracılığıyla güncel db nesnesine eriş
+          database.getDb().all(sql, params, (err, rows) => {
             if (err) reject(err);
             else resolve(rows);
           });
@@ -213,10 +220,8 @@ function initializeDatabase() {
       },
        run: (sql, params = []) => {
         return new Promise((resolve, reject) => {
-           if (!db) { // Bağlantı kontrolü
-              return reject(new Error("Veritabanı bağlantısı henüz kurulmadı."));
-           }
-          db.run(sql, params, function(err) { // function() callback'i this.lastID, this.changes için gerekli
+           // getDb() aracılığıyla güncel db nesnesine eriş
+          database.getDb().run(sql, params, function(err) { // function() callback'i this.lastID, this.changes için gerekli
             if (err) reject(err);
             else resolve(this.lastID); // Varsayılan olarak eklenen kaydın ID'sini döndür
           });
@@ -224,18 +229,33 @@ function initializeDatabase() {
       },
       get: (sql, params = []) => {
         return new Promise((resolve, reject) => {
-           if (!db) { // Bağlantı kontrolü
-            return reject(new Error("Veritabanı bağlantısı henüz kurulmadı."));
-           }
-          db.get(sql, params, (err, row) => {
+           // getDb() aracılığıyla güncel db nesnesine eriş
+          database.getDb().get(sql, params, (err, row) => {
             if (err) reject(err);
             else resolve(row);
           });
         });
-      },
-      // Doğrudan db bağlantı nesnesini de dışarıya aktarıyoruz (silme gibi özel işlemler için this.changes'a ihtiyaç duyulduğunda)
-      db: db // <-- db bağlantı nesnesini dışarıya aktardık. Başlangıçta null olabilir ama initialize sonrası atanacak.
-             // Bu satırın database objesinin içinde olduğundan emin olun!
+      }
+      // db.close fonksiyonu ekleyebiliriz, main.js kapanırken çağırırız
+       /*
+       close: () => {
+           return new Promise((resolve, reject) => {
+               if (db) {
+                   db.close((err) => {
+                       if (err) reject(err);
+                       else {
+                           console.log('Veritabanı bağlantısı kapatıldı.');
+                           db = null; // Nesneyi null yap
+                           resolve();
+                       }
+                   });
+               } else {
+                   resolve(); // Zaten kapalıysa sorun yok
+               }
+           });
+       }
+       */
     };
 
-    module.exports = database; // initializeDatabase ve diğer CRUD fonksiyonlarını dışarıya aktarıyoruz
+    // Yabancı modüllerden erişim için dışa aktar
+    module.exports = database;
