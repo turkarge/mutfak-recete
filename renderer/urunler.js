@@ -29,6 +29,28 @@ export async function loadUrunlerPage() {
                 idCell.textContent = urun.id;
                 adCell.textContent = urun.ad;
                 turCell.textContent = urun.tur;
+
+                // Eylemler hücresi oluştur
+                const actionsCell = row.insertCell(3);
+
+                // Düzenle butonu oluştur
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Düzenle';
+                editButton.classList.add('btn', 'btn-sm', 'btn-primary', 'me-2'); // Tabler buton sınıfları
+                editButton.dataset.id = urun.id; // Butona ürün ID'sini ekle (hangi ürünü düzenleyeceğimizi bilmek için)
+                editButton.addEventListener('click', handleEditUrun); // Tıklama olayını dinle (handleEditUrun fonksiyonu henüz yok)
+
+                // Sil butonu oluştur
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Sil';
+                deleteButton.classList.add('btn', 'btn-sm', 'btn-danger'); // Tabler buton sınıfları
+                deleteButton.dataset.id = urun.id; // Butona ürün ID'sini ekle (hangi ürünü sileceğimizi bilmek için)
+                deleteButton.addEventListener('click', handleDeleteUrun); // Tıklama olayını dinle (handleDeleteUrun fonksiyonu henüz yok)
+
+
+                // Butonları hücreye ekle
+                actionsCell.appendChild(editButton);
+                actionsCell.appendChild(deleteButton);
             });
 
         } else {
@@ -36,7 +58,7 @@ export async function loadUrunlerPage() {
             const row = tableBody.insertRow();
             const cell = row.insertCell(0);
             // Index.html'deki tablo başlık sayısı kadar colSpan (ID, Ad, Tür = 3 sütun)
-            cell.colSpan = 3;
+            cell.colSpan = 4;
             cell.textContent = 'Henüz kayıtlı ürün bulunamadı.';
             cell.style.textAlign = 'center';
         }
@@ -61,8 +83,8 @@ export async function loadUrunlerPage() {
 
             // Alanların boş olup olmadığını kontrol et
             if (!urun.ad || !urun.tur) {
-                 toastr.warning('Ürün Adı ve Türü boş bırakılamaz.');
-                 return;
+                toastr.warning('Ürün Adı ve Türü boş bırakılamaz.');
+                return;
             }
 
             try {
@@ -87,12 +109,12 @@ export async function loadUrunlerPage() {
                 let toastrType = 'error';
 
                 if (error.message && error.message.includes('UNIQUE constraint failed')) {
-                     console.warn('Benzersizlik kısıtlaması hatası yakalandı.');
-                     displayMessage = `"${urun.ad}" adında bir ürün zaten mevcut.`;
-                     toastrType = 'warning';
+                    console.warn('Benzersizlik kısıtlaması hatası yakalandı.');
+                    displayMessage = `"${urun.ad}" adında bir ürün zaten mevcut.`;
+                    toastrType = 'warning';
                 } else {
-                     displayMessage = 'Ürün eklenirken bir hata oluştu: ' + error.message;
-                     toastrType = 'error';
+                    displayMessage = 'Ürün eklenirken bir hata oluştu: ' + error.message;
+                    toastrType = 'error';
                 }
 
                 if (toastrType === 'warning') {
@@ -108,12 +130,12 @@ export async function loadUrunlerPage() {
 
 
     // Sayfa yüklendiğinde ürünleri çek ve göster (loadUrunlerPage çağrıldığında)
-     try {
+    try {
         const urunler = await window.electronAPI.getUrunler();
         console.log('Ana Süreçten gelen ürünler:', urunler);
         displayUrunler(urunler);
-      } catch (error) {
+    } catch (error) {
         console.error('Ürünleri alırken hata oluştu:', error);
         toastr.error('Ürün listesi yüklenirken hata oluştu.');
-      }
+    }
 } // loadUrunlerPage fonksiyonunun sonu
