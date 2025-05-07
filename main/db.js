@@ -202,5 +202,7 @@ const database = {
   }
   // db.each (tek tek satır işlemek için) ve diğer fonksiyonları da ihtiyaca göre sarmalayabiliriz
 };
+// Doğrudan db bağlantı nesnesini de dışarıya aktarıyoruz (silme gibi özel işlemler için)
+db: db // <-- db bağlantı nesnesini dışarıya aktardık. Başlangıçta null olabilir.
 
 module.exports = database; // initializeDatabase ve diğer CRUD fonksiyonlarını dışarıya aktarıyoruz
