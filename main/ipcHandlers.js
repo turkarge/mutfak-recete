@@ -234,6 +234,19 @@ function registerIpcHandlers() {
       }
   });
 
+  // Reçete silme isteğini dinle
+  ipcMain.handle('deleteRecete', async (event, receteId) => {
+      try {
+           // database.run fonksiyonu silme durumunda this.changes dönecek şekilde ayarlı.
+           const changes = await database.run("DELETE FROM receler WHERE id = ?", [receteId]);
+           console.log(`Reçete başarıyla silindi (ID: ${receteId}). Etkilenen satır sayısı: ${changes}`);
+           return changes > 0; // 1 veya daha fazla satır silindiyse true döndür
+      } catch (error) {
+           console.error(`Reçete silme hatası (ID: ${receteId}):`, error.message);
+           throw error;
+      }
+  });
+
   // TODO: Diğer handler'lar buraya gelecek:
   // - Birim silme (delete-birim)
   // - Porsiyon silme (delete-porsiyon)
