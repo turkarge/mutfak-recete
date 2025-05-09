@@ -1,0 +1,120 @@
+<!-- views/receler.html -->
+
+<h2>Reçete Yönetimi</h2>
+
+<div class="card mb-4"> <!-- Reçete Listesi ve Yeni Reçete Ekleme Kısmı -->
+    <div class="card-header">
+        <h2 class="card-title">Reçete Listesi</h2>
+    </div>
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Reçete Listesi Tablosu -->
+                 <div class="table-responsive">
+                    <table id="recelerTable" class="table table-striped table-hover">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Porsiyon</th> <!-- Porsiyon Adı görünecek -->
+                          <th>Reçete Adı</th>
+                          <th>Eylemler</th> <!-- Detayları Görüntüle butonu -->
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <!-- Reçeteler buraya JavaScript ile eklenecek -->
+                         <tr>
+                            <td colspan="4" class="text-center">Reçeteler yükleniyor...</td> <!-- Yükleniyor mesajı (4 sütun için) -->
+                        </tr>
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Yeni Reçete Ekleme Formu -->
+                <h4>Yeni Reçete Ekle</h4>
+                <form id="receteEkleForm">
+                    <div class="mb-3">
+                        <label class="form-label" for="porsiyonId">Porsiyon:</label>
+                        <select class="form-select" id="recetePorsiyonId" required>
+                            <option value="">-- Porsiyon Seçiniz --</option>
+                            <!-- Porsiyonlar buraya JavaScript ile doldurulacak -->
+                        </select>
+                        <small class="form-text text-muted">Hangi porsiyon için reçete ekliyorsunuz?</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="receteAdi">Reçete Adı:</label>
+                        <input type="text" class="form-control" id="receteAdi">
+                        <small class="form-text text-muted">Örn: Normal, Ekstra Acılı (İsteğe bağlı).</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Reçete Ekle</button>
+                </form>
+            </div>
+        </div>
+
+
+    </div>
+</div> <!-- Reçete Listesi ve Yeni Reçete Ekleme Kartı Sonu -->
+
+
+<div class="card" id="receteDetaylariCard" style="display: none;"> <!-- Reçete Detayları Kısmı (Başlangıçta gizli) -->
+    <div class="card-header">
+        <h2 class="card-title" id="receteDetaylariTitle">Seçilen Reçete Detayları</h2> <!-- Seçilen reçete adı buraya gelecek -->
+    </div>
+    <div class="card-body">
+
+        <!-- Hammadde Ekleme Formu (Seçilen Reçete İçin) -->
+        <h4>Hammadde Ekle</h4>
+        <form id="receteDetayEkleForm">
+            <input type="hidden" id="selectedReceteId"> <!-- Seçilen reçetenin ID'si burada saklanacak -->
+            <div class="mb-3">
+                <label class="form-label" for="hammaddeId">Hammadde:</label>
+                <select class="form-select" id="hammaddeId" required>
+                    <option value="">-- Hammadde Seçiniz --</option>
+                    <!-- Hammaddeler buraya JavaScript ile doldurulacak -->
+                </select>
+                 <small class="form-text text-muted">Reçetede hangi hammadde kullanılacak?</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="miktar">Miktar:</label>
+                <input type="number" class="form-control" id="miktar" step="0.001" required> <!-- Miktar ondalıklı olabilir -->
+                 <small class="form-text text-muted">Kullanılacak hammadde miktarı.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="birimKisaAd">Birim:</label>
+                <select class="form-select" id="detayBirimKisaAd" required>
+                     <option value="">-- Birim Seçiniz --</option>
+                    <!-- Birimler buraya JavaScript ile doldurulacak (kullanım birimleri) -->
+                </select>
+                <small class="form-text text-muted">Miktar hangi birimde? (Gr, Ml, Adet vb.)</small>
+            </div>
+             <button type="submit" class="btn btn-primary">Hammadde Ekle</button>
+        </form>
+
+        <hr>
+
+        <!-- Reçete Detayları Tablosu -->
+        <h4>Kullanılan Hammaddeler</h4>
+         <div class="table-responsive">
+            <table id="receteDetaylariTable" class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Hammadde</th> <!-- Hammadde Adı görünecek -->
+                  <th>Miktar</th>
+                  <th>Birim</th> <!-- Birimin Kısa Adı görünecek -->
+                  <th>Eylemler</th> <!-- Düzenle/Sil butonu -->
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Reçete Detayları buraya JavaScript ile eklenecek -->
+                 <tr>
+                    <td colspan="5" class="text-center">Hammadde bulunamadı.</td> <!-- Yükleniyor/Boş mesajı (5 sütun için) -->
+                </tr>
+              </tbody>
+            </table>
+        </div>
+
+    </div>
+</div> <!-- Reçete Detayları Kartı Sonu -->
