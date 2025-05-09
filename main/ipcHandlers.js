@@ -146,6 +146,93 @@ function registerIpcHandlers() {
       }
   });
 
+  // Reçeteleri getirme isteğini dinle (Porsiyon Adı ve Son Ürün Adı ile birlikte)
+  ipcMain.handle('getReceteler', async (event) => {
+      try {
+          const receler = await database.all(`
+            SELECT
+              r.id,
+              r.porsiyonId,
+              p.porsiyonAdi,        -- porsiyonlar tablosundan
+              p.sonUrunId,          -- porsiyonlar tablosundan
+              u.ad AS sonUrunAdi,   -- urunler tablosundan (JOIN porsiyonlar -> urunler)
+              r.receteAdi
+            FROM receler r
+            JOIN porsiyonlar p ON r.porsiyonId = p.id
+            JOIN urunler u ON p.sonUrunId = u.id
+          `);
+          console.log('Reçeteler başarıyla getirildi.');
+          return receler;
+      } catch (error) {
+          console.error('Reçeteleri getirme hatası:', error.message);
+          throw error;
+      }
+  });
+
+  // Reçete ekleme isteğini dinle
+  ipcMain.handle('addRecete', async (event, recete) => {
+      try {
+          const lastID = await database.run("INSERT INTO receler (porsiyonId, receteAdi) VALUES (?, ?)",
+                                             [recete.porsiyonId, recete.receteAdi]);
+          console.log(`Reçete başarıyla eklendi (Porsiyon ID: ${recete.porsiyonId}, Ad: ${recete.receteAdi}), ID: ${lastID}`);
+          return lastID;
+      } catch (error) {
+          console.error('Reçete ekleme hatası:', error.message);
+          throw error;
+      }
+  });
+
+  // Belirli bir reçetenin detaylarını getirme isteğini dinle
+  ipcMain.handle('getReceteDetaylari', async (event, receteId) => {
+      try {
+          // Reçete detayları ile birlikte Hammadde Adı ve Birim bilgisi çekelim
+          const detaylar = await database.all(`
+            SELECT
+              rd.id,
+              rd.receteId,
+              rd.hammaddeId,
+              u.ad AS hammaddeAdi,      -- urunler tablosundan (JOIN receteDetaylari -> urunler)
+              rd.miktar,
+              rd.birimKisaAd,
+              b.birimAdi AS birimAd     -- birimler tablosundan (JOIN receteDetaylari -> birimler)
+            FROM receteDetaylari rd
+            JOIN urunler u ON rd.hammaddeId = u.id
+            JOIN birimler b ON rd.birimKisaAd = b.kisaAd
+            WHERE rd.receteId = ?
+          `, [receteId]);
+          console.log(`Reçete detayları başarıyla getirildi (Reçete ID: ${receteId}).`);
+          return detaylar;
+      } catch (error) {
+          console.error(`Reçete detayları getirme hatası (Reçete ID: ${receteId}):`, error.message);
+          throw error;
+      }
+  });
+
+  // Reçete detayı ekleme isteğini dinle (Hammadde, Miktar, Birim)
+  ipcMain.handle('addReceteDetay', async (event, detay) => {
+      try {
+          const lastID = await database.run("INSERT INTO receteDetaylari (receteId, hammaddeId, miktar, birimKisaAd) VALUES (?, ?, ?, ?)",
+                                             [detay.receteId, detay.hammaddeId, detay.miktar, detay.birimKisaAd]);
+          console.log(`Reçete detayı başarıyla eklendi (Reçete ID: ${detay.receteId}, Hammadde ID: ${detay.hammaddeId}), ID: ${lastID}`);
+          return lastID;
+      } catch (error) {
+          console.error('Reçete detayı ekleme hatası:', error.message);
+          throw error;
+      }
+  });
+
+  // Reçete detayı silme isteğini dinle
+   ipcMain.handle('deleteReceteDetay', async (event, detayId) => {
+      try {
+           // database.run fonksiyonu silme durumunda this.changes dönecek şekilde ayarlı.
+           const changes = await database.run("DELETE FROM receteDetaylari WHERE id = ?", [detayId]);
+           console.log(`Reçete detayı başarıyla silindi (ID: ${detayId}). Etkilenen satır sayısı: ${changes}`);
+           return changes > 0; // 1 veya daha fazla satır silindiyse true döndür
+      } catch (error) {
+           console.error(`Reçete detayı silme hatası (ID: ${detayId}):`, error.message);
+           throw error;
+      }
+  });
 
   // TODO: Diğer handler'lar buraya gelecek:
   // - Birim silme (delete-birim)
