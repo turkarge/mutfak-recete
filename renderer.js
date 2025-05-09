@@ -10,7 +10,7 @@ console.log('Ana Renderer süreci çalışıyor!');
 import { loadUrunlerPage } from './renderer/urunler.js';
 import { loadBirimlerPage } from './renderer/birimler.js';
 import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
-import { loadRecetelerPage } from './renderer/receler.js';
+import { loadRecetelerPage } from './renderer/receteler.js';
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
 // import { loadRecetePage } from './renderer/receler.js';
 // import { loadAlimlarPage } from './renderer/alimlar.js';
