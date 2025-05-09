@@ -12,6 +12,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getUrunlerByTur: (tur) => ipcRenderer.invoke('get-urunler-by-tur', tur),
   getPorsiyonlar: () => ipcRenderer.invoke('getPorsiyonlar'),
   addPorsiyon: (porsiyon) => ipcRenderer.invoke('addPorsiyon', porsiyon),
+  getReceteler: () => ipcRenderer.invoke('getReceteler'),
+  addRecete: (recete) => ipcRenderer.invoke('addRecete', recete),
+  getReceteDetaylari: (receteId) => ipcRenderer.invoke('getReceteDetaylari', receteId),
+  addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
+  deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
   getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName)
   // Diğer veri tabanı işlemleri (güncelleme, silme) için de buraya fonksiyonlar ekleyeceğiz
 });
