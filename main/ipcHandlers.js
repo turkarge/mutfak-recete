@@ -130,20 +130,22 @@ function registerIpcHandlers() {
 
   // <-- Ürün silme isteğini dinle (Bu handler'da this.changes'a ihtiyacımız var) -->
   ipcMain.handle('deleteUrun', async (event, urunId) => {
-      try {
-          // database.getDb().run kullanıyoruz ve function() callback'indeki this.changes'a erişiyoruz
-          return new Promise((resolve, reject) => {
-              database.getDb().run("DELETE FROM urunler WHERE id = ?", [urunId], function(err) {
-                  if (err) {
-                      console.error(`Ürün silme hatası (ID: ${urunId}):`, err.message);
-                      reject(err); // Hatayı Renderer'a ilet
-                  } else {
-                       console.log(`Ürün başarıyla silindi (ID: ${urunId}). Silinen satır sayısı: ${this.changes}`);
-                       // Silme başarılıysa ve en az 1 satır etkilendiyse true döndür
-                       resolve(this.changes > 0);
-                  }
-              });
-          });
+    try {
+        // database.run fonksiyonu zaten Promise döndürüyor ve silinen satır sayısını (this.changes) döndürecek şekilde ayarlandı.
+        // database.run'ın dönen değeri this.lastID || this.changes idi. DELETE için this.lastID null, this.changes geçerli olur.
+        const changes = await database.run("DELETE FROM urunler WHERE id = ?", [urunId]); // <-- database.run kullanıldı
+
+        console.log(`Ürün silme işlemi tamamlandı (ID: ${urunId}). Etkilenen satır sayısı: ${changes}`);
+
+        // Eğer 1 veya daha fazla satır silindiyse başarılı say
+        return changes > 0;
+
+    } catch (error) {
+        console.error(`Genel Hata Yakalandı (Ürün Silme Handler, ID: ${urunId}):`, error);
+         // Hata durumunda Renderer'a iletmek için throw ediyoruz
+        throw error;
+    }
+});
 
       } catch (error) {
           console.error(`Genel Hata Yakalandı (Ürün Silme Handler, ID: ${urunId}):`, error);
