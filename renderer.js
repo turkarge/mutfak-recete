@@ -44,6 +44,17 @@ async function loadPage(pageName) {
             mainContentArea.innerHTML = pageHtml;
             console.log(`${pageName}.html içeriği yüklendi.`);
 
+            // Menüdeki aktif linki güncelle
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link'); // Menü linklerini tekrar seç
+            navLinks.forEach(link => {
+                // data-page attribute'u yüklenen sayfa adıyla eşleşen linki bul
+                if (link.dataset.page === pageName) {
+                    link.classList.add('active'); // Aktif yap
+                } else {
+                    link.classList.remove('active'); // Diğerlerini pasif yap
+                }
+            });
+
             // Sayfa yüklendikten sonra ilgili JavaScript fonksiyonunu çalıştır.
             // Hangi sayfanın JS'inin çalışacağını belirlemek için switch kullanalım.
             switch (pageName) {
