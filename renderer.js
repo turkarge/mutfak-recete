@@ -42,26 +42,28 @@ async function loadPage(pageName) {
              mainContentArea.innerHTML = pageHtml;
              console.log(`${pageName}.html içeriği yüklendi.`);
 
-             // --- Menüdeki aktif linki güncelle (Nihai Düzeltme) ---
              // Menüdeki tüm linkleri seçiyoruz
-             const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-             console.log("Menü linkleri bulundu:", navLinks);
+             const navItems = document.querySelectorAll('.navbar-nav .nav-item'); // li elementlerini seçiyoruz
+             console.log("Menü li elementleri bulundu:", navItems);
              console.log("Yüklenmek istenen sayfa:", pageName);
 
              // Önce mevcut tüm aktif sınıfları kaldır
-             navLinks.forEach(link => {
-                 link.classList.remove('active');
-             });
-
-             // Sonra, sadece yüklenen sayfaya ait linki bul ve aktif yap
-             // template literal (``) içinde seçici kullanıyoruz
-             const activeLink = document.querySelector(`.navbar-nav .nav-link[data-page="${pageName}"]`);
-             if (activeLink) {
-                 activeLink.classList.add('active');
-                 console.log(`"${pageName}" linki aktif yapıldı.`);
-             } else {
-                 console.warn(`"${pageName}" sayfasına ait menü linki bulunamadı.`);
-             }
+             navItems.forEach(item => {
+                // li elementinin içindeki a elementini bul
+                const link = item.querySelector('.nav-link');
+                if (link && link.dataset.page === pageName) {
+                    // Eğer bu li'nin içindeki a elementi yüklenen sayfaya aitse
+                    item.classList.add('active'); // li elementini aktif yap
+                    link.classList.add('active'); // a elementini de aktif yap (bazı temalar ikisini de isteyebilir)
+                    console.log(`"${pageName}" linki ve li elementleri aktif yapıldı.`);
+                } else {
+                    // Diğer li ve a elementlerini pasif yap
+                    item.classList.remove('active');
+                    if (link) {
+                         link.classList.remove('active');
+                    }
+                }
+            });
              // ---------------------------------------------------------
 
 
