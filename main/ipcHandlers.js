@@ -5,7 +5,6 @@ const { ipcMain } = require('electron');
 const database = require('./db'); // db modülümüzü içeri aktarıyoruz
 const path = require('node:path'); // Dosya yolları için path modülü
 const fs = require('node:fs').promises; // Dosya okuma için fs modülü (Promise versiyonu)
-// const sqlite3 = require('sqlite3'); // this.changes için sqlite3 modülünü import etmeye gerek yok, database.getDb().run yeterli
 
 function registerIpcHandlers() {
   console.log("IPC handler'lar kaydediliyor...");
@@ -130,26 +129,20 @@ function registerIpcHandlers() {
 
   // <-- Ürün silme isteğini dinle (Bu handler'da this.changes'a ihtiyacımız var) -->
   ipcMain.handle('deleteUrun', async (event, urunId) => {
-    try {
-        // database.run fonksiyonu zaten Promise döndürüyor ve silinen satır sayısını (this.changes) döndürecek şekilde ayarlandı.
-        // database.run'ın dönen değeri this.lastID || this.changes idi. DELETE için this.lastID null, this.changes geçerli olur.
-        const changes = await database.run("DELETE FROM urunler WHERE id = ?", [urunId]); // <-- database.run kullanıldı
+      try {
+          // database.run fonksiyonu zaten Promise döndürüyor ve silinen satır sayısını (this.changes) döndürecek şekilde ayarlandı.
+          // database.run'ın dönen değeri this.lastID || this.changes idi. DELETE için this.lastID null, this.changes geçerli olur.
+          const changes = await database.run("DELETE FROM urunler WHERE id = ?", [urunId]); // <-- database.run kullanılıyor
 
-        console.log(`Ürün silme işlemi tamamlandı (ID: ${urunId}). Etkilenen satır sayısı: ${changes}`);
+          console.log(`Ürün silme işlemi tamamlandı (ID: ${urunId}). Etkilenen satır sayısı: ${changes}`);
 
-        // Eğer 1 veya daha fazla satır silindiyse başarılı say
-        return changes > 0;
-
-    } catch (error) {
-        console.error(`Genel Hata Yakalandı (Ürün Silme Handler, ID: ${urunId}):`, error);
-         // Hata durumunda Renderer'a iletmek için throw ediyoruz
-        throw error;
-    }
-});
+          // Eğer 1 veya daha fazla satır silindiyse başarılı say
+          return changes > 0;
 
       } catch (error) {
           console.error(`Genel Hata Yakalandı (Ürün Silme Handler, ID: ${urunId}):`, error);
-          throw error; // Hatayı Renderer'a ilet
+           // Hata durumunda Renderer'a iletmek için throw ediyoruz
+          throw error;
       }
   });
 
