@@ -130,7 +130,25 @@
    </div>
  </div>
 
-
+ <!-- Genel Onay Modalı -->
+<div class="modal modal-blur fade" id="confirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-warning">Onay Gerekiyor</h5> <!-- Başlık rengi uyarı (sarı) -->
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="confirmationModalBody">
+        <!-- Onay mesajı buraya JavaScript ile eklenecek -->
+        Bu işlemi yapmak istediğinizden emin misiniz?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button> <!-- İptal butonu -->
+        <button type="button" class="btn btn-danger" id="confirmActionButton">Sil</button> <!-- Onay/Eylem butonu (varsayılan Silme) -->
+      </div>
+    </div>
+  </div>
+</div>
 <!-- jQuery (Toastr için gerekli) -->
 <script src="./assets/js/jquery.min.js"></script>
 
