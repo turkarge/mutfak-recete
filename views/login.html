@@ -1,0 +1,35 @@
+<!-- views/login.html -->
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;"> <!-- Sayfayı dikeyde ve yatayda ortalamak için -->
+    <div class="card card-md"> <!-- Tabler'ın küçük kart sınıfı -->
+        <div class="card-body">
+            <h2 class="h2 text-center mb-4">Restoran App Giriş</h2>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label" for="username">Kullanıcı Adı</label>
+                    <input type="text" class="form-control" id="username" placeholder="Kullanıcı adınızı girin" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label" for="password">
+                        Şifre
+                        <!-- Şifre gösterme/gizleme butonu eklenebilir -->
+                    </label>
+                    <input type="password" class="form-control" id="password" placeholder="Şifrenizi girin" required>
+                </div>
+                <!-- Beni hatırla gibi seçenekler eklenebilir -->
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-primary w-100">Giriş Yap</button>
+                </div>
+            </form>
+        </div>
+        <!-- Opsiyonel: Kayıt Ol, Şifremi Unuttum linkleri eklenebilir -->
+         <div class="card-footer text-secondary text-center py-3">
+             <!-- Basit bir copyright veya versiyon bilgisi -->
+             © 2024 Restoran App
+         </div>
+    </div>
+</div>
+
+<!-- Not: Bu HTML dosyası, index.html'deki ana içerik alanına yüklenecektir. -->
+<!-- Bu nedenle head, body, script linkleri burada yer almamalıdır. -->
