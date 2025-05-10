@@ -9,6 +9,23 @@ const fs = require('node:fs').promises; // Dosya okuma için fs modülü (Promis
 function registerIpcHandlers() {
   console.log("IPC handler'lar kaydediliyor...");
 
+  // Giriş isteğini dinle
+  ipcMain.handle('login', async (event, username, password) => {
+      console.log(`Giriş denemesi: Kullanıcı Adı: ${username}`);
+      // TODO: Gerçek kullanıcı doğrulama mantığı buraya gelecek
+      // Şu an için sabit bir kullanıcı adı ve şifre ile kontrol edelim.
+      const validUsername = 'admin';
+      const validPassword = 'password'; // Şifreler asla düz metin olarak saklanmamalı veya karşılaştırılmamalıdır!
+
+      if (username === validUsername && password === validPassword) {
+          console.log('Giriş başarılı!');
+          return true; // Başarılı giriş durumunda true döndür
+      } else {
+          console.warn('Giriş başarısız. Kullanıcı adı veya şifre hatalı.');
+          return false; // Başarısız giriş durumunda false döndür
+      }
+  });
+
   // Ürünleri getirme isteğini dinle
   ipcMain.handle('get-urunler', async (event) => {
     try {

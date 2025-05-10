@@ -11,6 +11,7 @@ import { loadUrunlerPage } from './renderer/urunler.js';
 import { loadBirimlerPage } from './renderer/birimler.js';
 import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
 import { loadRecetelerPage } from './renderer/receteler.js';
+import { loadLoginPage } from './renderer/login.js';
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
 // import { loadRecetePage } from './renderer/receler.js';
 // import { loadAlimlarPage } from './renderer/alimlar.js';
@@ -83,6 +84,8 @@ async function loadPage(pageName) {
                 case 'receler': // <-- Bu case bloğunu ekleyin
                     loadRecetelerPage();
                     break;
+                    case 'login': // <-- Bu case bloğunu ekleyin
+                  loadLoginPage();
                 // TODO: Diğer sayfalar için case'ler eklenecek:
                 // case 'receler':
                 //      loadRecetePage();

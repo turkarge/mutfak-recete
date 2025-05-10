@@ -4,6 +4,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // 'ipcRenderer.invoke' ile Ana Süreç'e asenkron mesaj gönderiyoruz
   // Ana Süreç'ten veri almak veya bir işlem yapmasını istemek için kullanılır
+  // Giriş fonksiyonu
+  login: (username, password) => ipcRenderer.invoke('login', username, password),
   getUrunler: () => ipcRenderer.invoke('get-urunler'), // Ürünleri getirmek için
   addUrun: (urun) => ipcRenderer.invoke('add-urun', urun), // Ürün eklemek için
   deleteUrun: (urunId) => ipcRenderer.invoke('deleteUrun', urunId),
@@ -18,7 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
   deleteRecete: (receteId) => ipcRenderer.invoke('deleteRecete', receteId),
-  getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName)
+  getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName),
   // Diğer veri tabanı işlemleri (güncelleme, silme) için de buraya fonksiyonlar ekleyeceğiz
 });
 
