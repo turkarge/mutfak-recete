@@ -120,50 +120,33 @@ async function loadPage(pageName) {
 
 // Uygulama yüklendiğinde (index.html DOM hazır olduğunda)
 window.addEventListener('DOMContentLoaded', () => {
-    // Menü linklerine olay dinleyicileri ekle
-    const navLinks = document.querySelectorAll('.navbar-nav .nav-link'); // Menü linklerini seç
+   // Menü linklerine olay dinleyicileri ekle
+   const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
 
-    if (navLinks.length > 0) {
+   if (navLinks.length > 0) {
         navLinks.forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault(); // Linkin varsayılan davranışını (sayfa yenileme) engelle
-                // event.currentTarget kullanıyoruz, çünkü click olayı linkin içindeki span/icon'a da tetiklenebilir
-                const pageName = event.currentTarget.dataset.page; // data-page attribute'undan sayfa adını al
+             link.addEventListener('click', (event) => {
+                 event.preventDefault();
+                 const pageName = event.currentTarget.dataset.page;
 
-                if (pageName) {
-                    console.log(`Menüden "${pageName}" sayfasına gidiliyor.`);
-                    loadPage(pageName); // loadPage fonksiyonunu çağır
-
-                    // Menüdeki aktiflik güncelleme mantığı loadPage fonksiyonuna taşındı.
-                    // Buradan silinmeli veya yorum satırı yapılmalı.
-                    // navLinks.forEach(l => l.classList.remove('active'));
-                    // event.currentTarget.classList.add('active');
-
-                } else {
-                    console.warn("Tıklanan menü linkinde 'data-page' attribute'u bulunamadı.", event.currentTarget);
-                }
-            });
+                 if (pageName) {
+                     console.log(`Menüden "${pageName}" sayfasına gidiliyor.`);
+                     // Menü tıklamasında loadPage fonksiyonunu çağırıyoruz
+                     loadPage(pageName);
+                 } else {
+                     console.warn("Tıklanan menü linkinde 'data-page' attribute'u bulunamadı.", event.currentTarget);
+                 }
+             });
         });
 
-        // Uygulama başladığında varsayılan olarak Ürünler sayfasını yükle
-        // loadPage fonksiyonunu çağırıyoruz, o da menü aktifliğini ayarlayacak.
-        loadPage('urunler'); // <-- Uygulama başladığında varsayılan olarak urunler.html'i yükle
+        // Uygulama başladığında (index.html yüklendiğinde) ilk gösterilecek sayfa giriş sayfası olmalı.
+        // Menü linkleri yüklendikten sonra Giriş Sayfasını yükle.
+        loadPage('login'); // <-- Varsayılan olarak Giriş Sayfasını yükle
 
-        // Varsayılan linki (Ürünler) manuel aktif yapmaya gerek yok,
-        // loadPage fonksiyonu bunu halledecek.
-        // Aşağıdaki kodlar buradan silinmeli veya yorum satırı yapılmalı:
-        // const defaultLink = document.querySelector('.navbar-nav .nav-link[data-page="urunler"]');
-        // if (defaultLink) {
-        //     defaultLink.classList.add('active');
-        // } else {
-        //      console.warn("Varsayılan sayfa linki ('urunler') bulunamadı.");
-        // }
-
-
-    } else {
-        console.warn("Menü linkleri bulunamadı ('.navbar-nav .nav-link').");
-        toastr.error("Uygulama layout hatası: Menü linkleri bulunamadı.");
-    }
-
-
+   } else {
+       console.warn("Menü linkleri bulunamadı ('.navbar-nav .nav-link').");
+       toastr.error("Uygulama layout hatası: Menü linkleri bulunamadı.");
+       // Menü linkleri bulunamazsa giriş sayfasını yüklemeye çalışmak mantıklı değil,
+       // belki sadece bir hata mesajı gösterilir. Şimdilik loadPage('login') kalsın, hata verecektir.
+   }
 });
