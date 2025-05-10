@@ -1,12 +1,12 @@
 // renderer/login.js
 // Bu dosya, Giriş Sayfası (views/login.html) ile ilgili JavaScript kodlarını içerir.
-// Giriş formunu işler ve başarılı giriş sonrası ana uygulama içeriğini yükler.
+// Giriş formunu işler ve başarılı giriş sonrası Ana Süreç'e sinyal gönderir.
 
-// renderer.js dosyasından loadPage fonksiyonunu import edelim
-import { loadPage } from '../renderer.js'; // <-- loadPage fonksiyonunu import ediyoruz
+// loadPage fonksiyonunu buradan import etmeyeceğiz.
+// Başarılı giriş sonrası Ana Süreç'e haber vereceğiz.
 
-// Bu fonksiyon, login.html içeriği ana sayfaya yüklendiğinde çağrılacak
-export async function loadLoginPage() {
+
+export async function loadLoginPage() { // Bu fonksiyon hala Ana Süreç tarafından çağrılacak
     console.log('Giriş Sayfası JavaScript\'i yükleniyor...');
 
     // !!! DİKKAT: Buradaki kodlar, login.html yüklendikten sonra çalışacaktır.
@@ -41,25 +41,10 @@ export async function loadLoginPage() {
                     console.log(`Kullanıcı başarıyla giriş yaptı: ${username}`);
                     toastr.success('Giriş başarılı! Yönlendiriliyorsunuz...');
 
-                    // --- Başarılı girişten sonra ana uygulama içeriğini yükle ---
-                    // 1. Ana uygulama içeriği kapsayıcısını görünür yap
-                     const appContentContainer = document.getElementById('app-content-container'); // <-- Elementi burada tekrar seç
-                     if (appContentContainer) {
-                          appContentContainer.style.display = 'block'; // <-- Görünür yap
-                          console.log("Ana uygulama içeriği görünür yapıldı.");
-                     } else {
-                          console.error("Ana uygulama içeriği kapsayıcısı (app-content-container) bulunamadı.");
-                     }
-
-                    // 2. Ana uygulama içeriğinin varsayılan sayfasını yükle
-                    // loadPage fonksiyonunu import ettik, şimdi çağırabiliriz.
-                     if (typeof loadPage === 'function') {
-                        // loadPage fonksiyonu çağrıldığında, menü aktifliğini de ayarlayacaktır.
-                        loadPage('urunler'); // Varsayılan sayfa: Ürünler (veya 'dashboard' gibi başka bir sayfa)
-                     } else {
-                        console.error("loadPage fonksiyonu bulunamadı (import edilemedi).");
-                     }
-                    // ------------------------------------------------------------
+                    // --- Başarılı girişten sonra Ana Süreç'e sinyal gönder ---
+                    // Ana Süreç, Giriş Penceresini kapatacak ve Ana Pencereyi gösterecek.
+                    window.electronAPI.loginSuccess(); // TODO: loginSuccess handler'ı Ana Süreç'te eklenecek
+                    // ----------------------------------------------------------
 
 
                 } else {

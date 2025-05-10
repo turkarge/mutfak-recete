@@ -1,27 +1,26 @@
 // main.js (Ana Giriş Noktası)
 // Electron uygulamasının başlatılmasını, pencereleri ve temel olayları yönetir.
 
-const { app, BrowserWindow, dialog } = require('electron'); // dialog modülünü ekledik
+const { app, BrowserWindow, dialog, ipcMain } = require('electron'); // ipcMain ve dialog modülünü ekledik
 const path = require('node:path');
 const database = require('./main/db'); // Veritabanı modülümüz
 const { registerIpcHandlers } = require('./main/ipcHandlers'); // IPC handler modülümüz
 
-let mainWindow = null; // Ana uygulama penceresi (Başlangıçta null)
-let splashWindow = null; // Splash screen penceresi (Başlangıçta null)
+let mainWindow = null; // Ana uygulama penceresi
+let splashWindow = null; // Splash screen penceresi
+let loginWindow = null; // <-- Giriş Penceresi
 
 
 // Splash screen penceresini oluşturma fonksiyonu
-// main.js (createSplashWindow fonksiyonu - hata yakalama eklendi)
 const createSplashWindow = () => {
-    try { // <-- try ekleyin
+    try {
         splashWindow = new BrowserWindow({
-            width: 640,
-            height: 480,
-            transparent: false,
+            width: 400,
+            height: 300,
+            transparent: true,
             frame: false,
             alwaysOnTop: true,
             resizable: false,
-            show: false, // <-- Açıkça show: false yapalım
              webPreferences: {
                  nodeIntegration: false,
                  contextIsolation: true
@@ -30,23 +29,58 @@ const createSplashWindow = () => {
 
         splashWindow.loadFile(path.join(__dirname, 'splash.html'));
 
-        // Pencere yüklendiğinde göster (HTML içeriği hazır olunca)
-         splashWindow.once('ready-to-show', () => { // <-- ready-to-show eventini kullan
-              splashWindow.show(); // <-- Pencereyi burada göster!
-         });
-
          splashWindow.on('closed', () => {
              splashWindow = null;
          });
 
-    } catch (error) { // <-- catch ekleyin
+         // Splash penceresi yüklendiğinde göster (HTML içeriği hazır olunca)
+         splashWindow.once('ready-to-show', () => {
+              splashWindow.show();
+         });
+
+
+    } catch (error) {
         console.error("Splash screen oluşturulurken hata:", error);
-        // Hata durumunda ana pencereyi hemen gösterebiliriz
-        // veya kullanıcıya hata mesajı verebiliriz.
-         const { dialog } = require('electron');
          dialog.showErrorBox('Splash Screen Hatası', 'Splash screen oluşturulurken bir hata oluştu: ' + error.message);
-        createMainWindow(); // Ana pencereyi yine de göster
+         // Hata durumunda splash açılamazsa veya kapandıysa, doğrudan login penceresini açmaya çalışalım
+         createLoginWindow(); // --> createLoginWindow çağırıldı
     }
+};
+
+// *** Giriş Penceresini oluşturma fonksiyonu ***
+const createLoginWindow = () => {
+     try {
+        loginWindow = new BrowserWindow({
+            width: 400, // Giriş penceresi boyutu
+            height: 500, // Giriş formuna göre yüksekliği ayarla
+            resizable: false,
+             frame: false, // Çerçevesiz pencere istenirse
+            // transparent: true, // Şeffaf arka plan istenirse
+             webPreferences: {
+                 preload: path.join(__dirname, 'preload.js'), // Aynı preload script'i kullanılabilir
+                 nodeIntegration: false,
+                 contextIsolation: true
+             }
+        });
+
+        // Giriş sayfası HTML dosyasını yükle
+        loginWindow.loadFile(path.join(__dirname, 'views/login.html')); // <-- views klasöründeki login.html
+
+         loginWindow.on('closed', () => {
+             loginWindow = null;
+         });
+
+         // Giriş penceresi yüklendiğinde göster
+         loginWindow.once('ready-to-show', () => {
+              loginWindow.show();
+         });
+
+
+     } catch (error) {
+          console.error("Giriş penceresi oluşturulurken hata:", error);
+           dialog.showErrorBox('Giriş Penceresi Hatası', 'Giriş penceresi oluşturulurken bir hata oluştu: ' + error.message);
+           app.quit(); // Kritik hata, uygulamayı kapat
+     }
 };
 
 
@@ -55,14 +89,11 @@ const createMainWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1024,
     height: 768,
-    show: false, // <-- Pencereyi hemen gösterme! Başlangıç işlemleri bitince göstereceğiz.
+    show: false, // Ana pencereyi hemen gösterme
     webPreferences: {
-      // Ana pencere Renderer'ı için preload script'i gerekli
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-       // file:// protokolüne izin ver (yerel HTML dosyalarını yüklemek için)
-       // Geliştirme modunda security'i kapatabiliriz, production'da açık olmalı
        webSecurity: process.env.NODE_ENV !== 'development',
        allowRunningInsecureContent: process.env.NODE_ENV === 'development',
     }
@@ -73,15 +104,14 @@ const createMainWindow = () => {
 
   // Ana pencere içeriği tamamen yüklendiğinde ve görünmeye hazır olduğunda
   mainWindow.once('ready-to-show', () => {
-      if (splashWindow) {
-         splashWindow.destroy(); // Splash screen'i kapat ve yok et
-      }
-      mainWindow.show(); // Ana pencereyi göster
+      // Bu mantık artık giriş başarılı olduğunda Ana Süreç'te tetiklenecek.
+      // Yani createMainWindow fonksiyonu zaten bu logic çalışınca çağrılacak.
+      // Burada sadece göstermemiz yeterli.
+      mainWindow.show();
       // Geliştirme Araçlarını aç (ana pencere hazır olunca açmak daha iyi)
-      // mainWindow.webContents.openDevTools(); // Geliştirme araçlarını manuel açmak daha iyi olabilir (View menüsünden)
+      // mainWindow.webContents.openDevTools();
   });
 
-  // Ana pencere kapandığında null yapalım activate eventi için
    mainWindow.on('closed', () => {
        mainWindow = null;
    });
@@ -95,75 +125,80 @@ app.whenReady().then(async () => {
   createSplashWindow(); // <-- Önce splash screen'i göster
 
   try {
-      // <-- Başlangıç işlemlerini yaparken splash screen görünüyor olacak -->
-      // Veritabanını başlat ve tabloları oluştur (db.js içindeki Promise'ın tamamlanmasını bekle)
+      // <-- Başlangıç işlemleri (Veritabanı init, handler kaydı) -->
       await database.initialize();
       console.log("Veritabanı başlatma tamamlandı.");
 
-      // IPC handler'larını kaydet (main/ipcHandlers.js içindeki fonksiyonları çalıştır)
-      registerIpcHandlers();
+      registerIpcHandlers(); // IPC handler'larını kaydet
       console.log("IPC handler'lar kaydedildi.");
       // <-- Başlangıç işlemleri tamamlandı -->
 
-      // Test için yapay bir gecikme (Örneğin 3 saniye)
-      console.log("Yapay gecikme başlatılıyor (3 saniye)...");
-      await new Promise(resolve => setTimeout(resolve, 5000)); // 5000 milisaniye = 3 saniye
-      console.log("Yapay gecikme tamamlandı.");
+      // Başlangıç işlemleri bitince splash screen'i kapat
+      if (splashWindow) {
+          splashWindow.destroy();
+      }
 
-      // Şimdi ana pencereyi oluştur
-      createMainWindow();
+      // Başlangıç işlemleri bittikten sonra Giriş Penceresini aç
+      createLoginWindow(); // <-- Giriş Penceresi çağırıldı
 
 
   } catch (error) {
       console.error("Uygulama başlatılırken hata:", error);
-      // Hata durumunda splash screen açıksa kapat
        if (splashWindow) {
            splashWindow.destroy();
        }
-      // Kullanıcıya hata mesajı gösterip uygulamayı kapatabiliriz (Electron dialog modülü)
        dialog.showErrorBox('Uygulama Başlatma Hatası', 'Uygulama başlatılırken kritik bir hata oluştu: ' + error.message);
-      app.quit(); // Uygulamayı kapat
+      app.quit();
 
   }
 
 
   // macOS için ek ayar: Dock simgesine tıklanması durumunda pencere oluştur (eğer ana pencere yoksa)
   app.on('activate', () => {
-    // Eğer uygulama aktif hale getirildiğinde ve ana pencere null ise (kapatılmışsa)
-    if (mainWindow === null) {
-        // Tekrar initialize ve handler kaydı yapmaya gerek yok, sadece ana pencereyi oluştur
-        createMainWindow();
+    if (mainWindow === null && loginWindow === null) { // Hem ana pencere hem giriş penceresi yoksa
+         // Uygulama kapatılmış ve tekrar aktif edilmiş.
+         // Giriş akışını yeniden başlatmak gerekir.
+         createLoginWindow(); // Giriş akışını yeniden başlat
     }
+     // Eğer sadece ana pencere kapalıysa ama giriş penceresi açıksa bir şey yapma.
+     // Eğer hem ana hem giriş açıksa bir şey yapma.
   });
 });
 
 // Tüm pencereler kapandığında uygulamayı kapat (macOS hariç)
 app.on('window-all-closed', () => {
-  // Eğer current process macOS değilse (Windows veya Linux) uygulamayı kapat
   if (process.platform !== 'darwin') {
-    // Veritabanı bağlantısını kapatmak iyi bir uygulama olabilir.
-    // db.js'e bir close fonksiyonu ekleyip burada çağırabiliriz.
-     /*
-     if (database && database.close) {
-         database.close().then(() => {
-             app.quit(); // Veritabanı kapatıldıktan sonra uygulamayı kapat
-         }).catch((err) => {
-             console.error("Veritabanı kapatılırken hata:", err);
-             app.quit(); // Hata olsa bile uygulamayı kapat
-         });
-     } else {
-         app.quit(); // Veritabanı objesi veya close fonksiyonu yoksa doğrudan kapat
+     // Eğer tüm pencereler kapandıysa (hem ana hem giriş), uygulamayı kapat
+     // isActive() yöntemi Electron'da genellikle uygulama sürecini kontrol eder.
+     // Eğer mainWindow ve loginWindow null ise tüm BrowserWindows kapanmıştır.
+     if (mainWindow === null && loginWindow === null) {
+         app.quit();
      }
-     */
-     app.quit(); // Şimdilik doğrudan kapatıyoruz
+     // Not: Eğer sadece biri kapandıysa (örn: Giriş penceresi ama ana pencere açık),
+     // window-all-closed tetiklenmez. Bu olay sadece TÜM pencereler kapandığında tetiklenir.
+     // Bu mantık biraz daha karmaşık, window 'close' eventlerini tek tek dinlemek gerekebilir.
+     // Şimdilik basit kalsın.
+     console.log("Tüm pencereler kapandı, uygulama kapatılıyor...");
+     app.quit();
+
   }
 });
 
-// Uygulama çıkarken (quit olmadan önce)
 app.on('before-quit', () => {
-    // Veritabanı bağlantısını kapatmak için daha güvenli bir yer olabilir.
-    // Ancak, window-all-closed çoğu durumda yeterlidir.
     console.log("Uygulama kapanıyor...");
+});
+
+
+// --- IPC Handler Kaydı ---
+// Bu handler, renderer/login.js'den başarılı giriş sinyali aldığında çalışacak.
+ipcMain.on('login-success', (event) => {
+     console.log("Başarılı giriş sinyali alındı.");
+     // Başarılı giriş sinyali geldiğinde Giriş Penceresini kapat
+     if (loginWindow) {
+         loginWindow.destroy();
+     }
+     // Ana uygulama penceresini oluştur ve göster
+     createMainWindow(); // --> createMainWindow çağırıldı
 });
 
 

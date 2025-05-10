@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
   deleteRecete: (receteId) => ipcRenderer.invoke('deleteRecete', receteId),
   getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName),
+  loginSuccess: () => ipcRenderer.send('login-success') // <-- send kullanıyoruz, yanıt beklemiyoruz
   // Diğer veri tabanı işlemleri (güncelleme, silme) için de buraya fonksiyonlar ekleyeceğiz
 });
 
