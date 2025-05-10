@@ -21,19 +21,18 @@
       margin: 0;
       padding: 0;
     }
-     /* Navbar yüksekliği kadar boşluk, body'ye değil içeriğe verilebilir */
-     /* body { padding-top: 56px; } */
-
      /* Ana içerik alanı için stil (isteğe bağlı) */
     #main-content-area {
         padding: 20px; /* İçerik etrafına padding ekle */
-        /* Navbar'dan sonraki boşluk için margin-top da eklenebilir */
-        /* margin-top: 56px; */
     }
   </style>
 
 </head>
 <body>
+
+    <!-- Ana Uygulama İçeriği -->
+    <!-- index.html artık doğrudan Ana Uygulama Penceresinin içeriğidir. -->
+    <!-- login-container ve app-content-container gibi divlere gerek yok. -->
 
     <!-- Üst Menü (Navbar) -->
     <header class="navbar navbar-expand-md d-print-none">
@@ -68,15 +67,13 @@
       </div>
     </header>
 
-    <!-- Ana İçerik Alanı -->
-    <!-- page-wrapper ve page-body sınıfları Tabler temasının layout için sağladığı sınıflardır -->
+    <!-- Ana Sayfa İçerik Alanı -->
     <div class="page-wrapper">
       <div class="page-body">
-          <!-- container-xl sınıfı içeriği ortalar ve genişliğini sınırlar -->
           <div class="container-xl">
             <div id="main-content-area">
-              <!-- Sayfa içeriği (views klasöründeki HTML dosyaları) buraya JavaScript ile yüklenecek -->
-              <p>İçerik yükleniyor...</p>
+              <!-- Yönetim sayfalarının (views klasöründeki HTML dosyaları) içeriği buraya JavaScript ile yüklenecek -->
+              <p>Ana sayfa içeriği yükleniyor...</p>
             </div>
           </div>
       </div>

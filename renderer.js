@@ -6,7 +6,7 @@ console.log('Ana Renderer süreci çalışıyor!');
 
 // Preload script'i ile sağlanan API'ye buradan erişebiliriz: window.electronAPI
 
-// Farklı sayfalara ait JavaScript modüllerini içeri aktaralım
+// Farklı sayfalara ait JavaScript modülleri içeri aktaralım
 import { loadUrunlerPage } from './renderer/urunler.js';
 import { loadBirimlerPage } from './renderer/birimler.js';
 import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
@@ -20,10 +20,10 @@ import { loadRecetelerPage } from './renderer/receler.js';
 // import { loadAnalizPage } from './renderer/analiz.js';
 
 
-// Ana içerik alanını seçelim (index.html'de bu id'ye sahip bir div olmalı)
+// Ana içerik alanı seçelim (index.html'de bu id'ye sahip bir div olmalı)
 const mainContentArea = document.getElementById('main-content-area');
 
-// app-content-container ve login-container artık index.html'de bu şekilde yönetilmiyor.
+// login-container ve app-content-container artık index.html'de bu şekilde yönetilmiyor.
 
 
 // Belirli bir sayfanın HTML içeriğini yükleyen fonksiyon
@@ -131,6 +131,3 @@ window.addEventListener('DOMContentLoaded', () => {
    }
 
 });
-
-// loadLoginPage artık burada import edilmeyecek ve çağrılmayacak.
-// loadPage fonksiyonu artık dışarıya export edilmeyecek.

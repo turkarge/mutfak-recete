@@ -8,7 +8,7 @@ const { registerIpcHandlers } = require('./main/ipcHandlers'); // IPC handler mo
 
 let mainWindow = null; // Ana uygulama penceresi
 let splashWindow = null; // Splash screen penceresi
-let loginWindow = null; // <-- Giriş Penceresi
+let loginWindow = null; // Giriş Penceresi
 
 
 // Splash screen penceresini oluşturma fonksiyonu
@@ -17,16 +17,18 @@ const createSplashWindow = () => {
         splashWindow = new BrowserWindow({
             width: 400,
             height: 300,
-            transparent: true,
-            frame: false,
-            alwaysOnTop: true,
-            resizable: false,
+            transparent: true, // Pencere arka planını şeffaf yap
+            frame: false,      // Pencere çerçevesini (başlık çubuğu, butonlar) kaldır
+            alwaysOnTop: true, // Her zaman en üstte kalsın
+            resizable: false,  // Yeniden boyutlandırılamaz
              webPreferences: {
+                 // Splash screen'de Node.js veya IPC kullanmıyoruz, güvenlik için kapalı kalsın
                  nodeIntegration: false,
                  contextIsolation: true
              }
         });
 
+        // Splash screen HTML dosyasını yükle
         splashWindow.loadFile(path.join(__dirname, 'splash.html'));
 
          splashWindow.on('closed', () => {
@@ -43,7 +45,7 @@ const createSplashWindow = () => {
         console.error("Splash screen oluşturulurken hata:", error);
          dialog.showErrorBox('Splash Screen Hatası', 'Splash screen oluşturulurken bir hata oluştu: ' + error.message);
          // Hata durumunda splash açılamazsa veya kapandıysa, doğrudan login penceresini açmaya çalışalım
-         createLoginWindow(); // --> createLoginWindow çağırıldı
+         createLoginWindow(); // --> createLoginWindow çağırıldı (Hata olursa splash yerine login açılır)
     }
 };
 
@@ -122,25 +124,20 @@ const createMainWindow = () => {
 // Electron uygulaması başlatılmaya hazır olduğunda (init tamamlandığında)
 app.whenReady().then(async () => {
 
-  createSplashWindow(); // <-- Önce splash screen'i göster
+  createSplashWindow(); // <-- Sadece splash screen'i oluştur
 
   try {
-      // <-- Başlangıç işlemleri (Veritabanı init, handler kaydı) -->
-      await database.initialize();
+      await database.initialize(); // Veritabanını başlat
       console.log("Veritabanı başlatma tamamlandı.");
 
       registerIpcHandlers(); // IPC handler'larını kaydet
       console.log("IPC handler'lar kaydedildi.");
-      // <-- Başlangıç işlemleri tamamlandı -->
 
-      // Başlangıç işlemleri bitince splash screen'i kapat
-      if (splashWindow) {
-          splashWindow.destroy();
-      }
-
-      // Başlangıç işlemleri bittikten sonra Giriş Penceresini aç
-      createLoginWindow(); // <-- Giriş Penceresi çağırıldı
-
+      // Başlangıç işlemleri tamamlandı, ancak login/main pencereleri oluşturmuyoruz
+      console.log("Başlangıç işlemleri tamamlandı, login/main pencereleri oluşturulmuyor (Test).");
+      // Uygulamanın kapanmaması için splash screen'i açık tutabiliriz
+      // veya bir süre sonra uygulamayı kapatabiliriz.
+      // setTimeout(() => { app.quit(); }, 5000); // 5 saniye sonra kapat (Test)
 
   } catch (error) {
       console.error("Uygulama başlatılırken hata:", error);
@@ -149,20 +146,9 @@ app.whenReady().then(async () => {
        }
        dialog.showErrorBox('Uygulama Başlatma Hatası', 'Uygulama başlatılırken kritik bir hata oluştu: ' + error.message);
       app.quit();
-
   }
 
-
-  // macOS için ek ayar: Dock simgesine tıklanması durumunda pencere oluştur (eğer ana pencere yoksa)
-  app.on('activate', () => {
-    if (mainWindow === null && loginWindow === null) { // Hem ana pencere hem giriş penceresi yoksa
-         // Uygulama kapatılmış ve tekrar aktif edilmiş.
-         // Giriş akışını yeniden başlatmak gerekir.
-         createLoginWindow(); // Giriş akışını yeniden başlat
-    }
-     // Eğer sadece ana pencere kapalıysa ama giriş penceresi açıksa bir şey yapma.
-     // Eğer hem ana hem giriş açıksa bir şey yapma.
-  });
+  // activate ve window-all-closed eventleri şimdilik olduğu gibi kalsın.
 });
 
 // Tüm pencereler kapandığında uygulamayı kapat (macOS hariç)
@@ -171,15 +157,28 @@ app.on('window-all-closed', () => {
      // Eğer tüm pencereler kapandıysa (hem ana hem giriş), uygulamayı kapat
      // isActive() yöntemi Electron'da genellikle uygulama sürecini kontrol eder.
      // Eğer mainWindow ve loginWindow null ise tüm BrowserWindows kapanmıştır.
+     // Bu durumda uygulamayı kapatabiliriz.
      if (mainWindow === null && loginWindow === null) {
+         console.log("Tüm pencereler kapandı, uygulama kapatılıyor...");
          app.quit();
      }
-     // Not: Eğer sadece biri kapandıysa (örn: Giriş penceresi ama ana pencere açık),
-     // window-all-closed tetiklenmez. Bu olay sadece TÜM pencereler kapandığında tetiklenir.
-     // Bu mantık biraz daha karmaşık, window 'close' eventlerini tek tek dinlemek gerekebilir.
+     // Eğer sadece ana pencere kapalıysa ama giriş penceresi açıksa (loginWindow null değil),
+     // window-all-closed olayı tetiklenmez. Sadece Giriş penceresi kapandığında da tetiklenmez
+     // eğer mainWindow null değilse. Bu event sadece TÜM BrowserWindows kapandığında tetiklenir.
+     // Bu mantık biraz karmaşık, window 'close' eventlerini tek tek dinlemek gerekebilir.
      // Şimdilik basit kalsın.
-     console.log("Tüm pencereler kapandı, uygulama kapatılıyor...");
-     app.quit();
+     // Eğer tüm pencereler kapandıysa (mainWindow ve loginWindow null ise),
+     // window-all-closed tetiklenir ve quit çağrılır.
+     // Eğer sadece biri kapandıysa ve diğeri açıksa, window-all-closed tetiklenmez.
+     // Bu yüzden sadece tüm pencerelerin null olup olmadığını kontrol etmek yeterli olabilir.
+
+     // Gelişmiş Kapanma Kontrolü:
+     // Eğer tüm BrowserWindows kapatıldıysa (getAllWindows().length === 0), uygulamayı kapat.
+     // Bu daha güvenli.
+      if (BrowserWindow.getAllWindows().length === 0) {
+          console.log("Tüm BrowserWindows kapandı, uygulama kapatılıyor...");
+          app.quit();
+      }
 
   }
 });

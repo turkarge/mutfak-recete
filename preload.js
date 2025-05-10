@@ -2,30 +2,40 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Renderer süreci için güvenli bir API sunuyoruz
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 'ipcRenderer.invoke' ile Ana Süreç'e asenkron mesaj gönderiyoruz
-  // Ana Süreç'ten veri almak veya bir işlem yapmasını istemek için kullanılır
-  // Giriş fonksiyonu
-  login: (username, password) => ipcRenderer.invoke('login', username, password),
-  getUrunler: () => ipcRenderer.invoke('get-urunler'), // Ürünleri getirmek için
-  addUrun: (urun) => ipcRenderer.invoke('add-urun', urun), // Ürün eklemek için
+  // Ürünler handler'ları
+  getUrunler: () => ipcRenderer.invoke('get-urunler'),
+  addUrun: (urun) => ipcRenderer.invoke('add-urun', urun),
   deleteUrun: (urunId) => ipcRenderer.invoke('deleteUrun', urunId),
+
+  // Sayfa HTML getirme handler'ı
+  getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName),
+
+  // Birimler handler'ları
   getBirimler: () => ipcRenderer.invoke('get-birimler'),
   addBirim: (birim) => ipcRenderer.invoke('add-birim', birim),
-  getUrunlerByTur: (tur) => ipcRenderer.invoke('get-urunler-by-tur', tur),
+
+  // Porsiyonlar handler'ları
+  getUrunlerByTur: (tur) => ipcRenderer.invoke('get-urunler-by-tur', tur), // Belirli türdeki ürünleri getirme (Son Ürünler için)
   getPorsiyonlar: () => ipcRenderer.invoke('getPorsiyonlar'),
   addPorsiyon: (porsiyon) => ipcRenderer.invoke('addPorsiyon', porsiyon),
+
+  // Reçeteler handler'ları
   getReceteler: () => ipcRenderer.invoke('getReceteler'),
   addRecete: (recete) => ipcRenderer.invoke('addRecete', recete),
   getReceteDetaylari: (receteId) => ipcRenderer.invoke('getReceteDetaylari', receteId),
   addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
-  deleteRecete: (receteId) => ipcRenderer.invoke('deleteRecete', receteId),
-  getPageHtml: (pageName) => ipcRenderer.invoke('get-page-html', pageName),
-  loginSuccess: () => ipcRenderer.send('login-success') // <-- send kullanıyoruz, yanıt beklemiyoruz
-  // Diğer veri tabanı işlemleri (güncelleme, silme) için de buraya fonksiyonlar ekleyeceğiz
-});
 
-// Not: contextBridge.exposeInMainWorld, Renderer süreci içindeki 'window' objesine
-// 'electronAPI' adında bir obje ekler. Bu obje içindeki fonksiyonlar (getUrunler, addUrun),
-// ipcRenderer kullanarak Ana Süreç'e mesaj gönderir.
-// Bu yaklaşım, Node.js API'lerinin doğrudan Renderer'da kullanılmasını engeller ve güvenlik sağlar.
+  // Giriş handler'ı
+  login: (username, password) => ipcRenderer.invoke('login', username, password),
+
+  // <-- BURADAN SONRAKİ KODU EKLEYİN -->
+
+  // Başarılı giriş sinyalini Ana Süreç'e gönderme fonksiyonu
+  // Renderer süreci, başarılı giriş sonrası Ana Süreç'e bu mesajı gönderecek.
+  loginSuccess: () => ipcRenderer.send('login-success') // <-- send kullanıyoruz, yanıt beklemiyoruz
+
+  // <-- BURASI EKLENEN KOD BLOĞUNUN SONU -->
+
+  // TODO: Diğer handler'lar buraya gelecek (silme/düzenleme, alım, gider, satış, analiz)
+});
