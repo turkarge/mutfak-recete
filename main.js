@@ -11,35 +11,36 @@ let splashWindow = null; // Splash screen penceresi (Başlangıçta null)
 
 
 // Splash screen penceresini oluşturma fonksiyonu
+// main.js (createSplashWindow fonksiyonu - hata yakalama eklendi)
 const createSplashWindow = () => {
-    splashWindow = new BrowserWindow({
-        width: 400, // Splash ekran boyutu
-        height: 300,
-        transparent: true, // Pencere arka planını şeffaf yap
-        frame: false,      // Pencere çerçevesini (başlık çubuğu, butonlar) kaldır
-        alwaysOnTop: true, // Her zaman en üstte kalsın
-        resizable: false,  // Yeniden boyutlandırılamaz
-         webPreferences: {
-             // Splash screen'de Node.js veya IPC kullanmıyoruz, güvenlik için kapalı kalsın
-             nodeIntegration: false,
-             contextIsolation: true
-             // Preload script'ine gerek yok (varsa da özel splash preload olmalıydı)
-             // preload: path.join(__dirname, 'preload.js')
-         }
-    });
+    try { // <-- try ekleyin
+        splashWindow = new BrowserWindow({
+            width: 400,
+            height: 300,
+            transparent: true,
+            frame: false,
+            alwaysOnTop: true,
+            resizable: false,
+             webPreferences: {
+                 nodeIntegration: false,
+                 contextIsolation: true
+             }
+        });
 
-    // Splash screen HTML dosyasını yükle
-    // __dirname main.js dosyasının bulunduğu dizini verir. splash.html aynı dizinde.
-    splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+        splashWindow.loadFile(path.join(__dirname, 'splash.html'));
 
+         splashWindow.on('closed', () => {
+             splashWindow = null;
+         });
 
-     // Splash screen penceresi kapandığında veya hata oluştuğunda null yapalım
-     splashWindow.on('closed', () => {
-         splashWindow = null;
-     });
-
-     // Geliştirme araçlarını açmayın (genellikle splash screen için istenmez)
-    // splashWindow.webContents.openDevTools();
+    } catch (error) { // <-- catch ekleyin
+        console.error("Splash screen oluşturulurken hata:", error);
+        // Hata durumunda ana pencereyi hemen gösterebiliriz
+        // veya kullanıcıya hata mesajı verebiliriz.
+         const { dialog } = require('electron');
+         dialog.showErrorBox('Splash Screen Hatası', 'Splash screen oluşturulurken bir hata oluştu: ' + error.message);
+        createMainWindow(); // Ana pencereyi yine de göster
+    }
 };
 
 
