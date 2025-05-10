@@ -15,9 +15,9 @@ let splashWindow = null; // Splash screen penceresi (Başlangıçta null)
 const createSplashWindow = () => {
     try { // <-- try ekleyin
         splashWindow = new BrowserWindow({
-            width: 400,
-            height: 300,
-            transparent: true,
+            width: 640,
+            height: 480,
+            transparent: false,
             frame: false,
             alwaysOnTop: true,
             resizable: false,
@@ -107,9 +107,9 @@ app.whenReady().then(async () => {
 
       // Test için yapay bir gecikme (Örneğin 3 saniye)
       console.log("Yapay gecikme başlatılıyor (3 saniye)...");
-      await new Promise(resolve => setTimeout(resolve, 3000)); // 3000 milisaniye = 3 saniye
+      await new Promise(resolve => setTimeout(resolve, 5000)); // 5000 milisaniye = 3 saniye
       console.log("Yapay gecikme tamamlandı.");
-      
+
       // Şimdi ana pencereyi oluştur
       createMainWindow();
 

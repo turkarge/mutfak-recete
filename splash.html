@@ -1,11 +1,50 @@
-<!-- splash.html (basit versiyon) -->
+<!-- splash.html -->
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:;"> <!-- CSP: SVG img olarak yüklenirse data: gerekebilir -->
   <title>Başlatılıyor...</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px; /* İç boşluk ekleyelim */
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f8f9fa; /* Daha görünür bir arka plan */
+      color: #333;
+      font-family: sans-serif;
+      flex-direction: column;
+    }
+    #splash-content {
+        text-align: center;
+    }
+    #app-logo-svg {
+        width: 150px; /* Logo boyutu (isteğe göre ayarla) */
+        height: auto; /* Oranını koru */
+        margin-bottom: 20px;
+    }
+    #app-title {
+        font-size: 1.8em; /* Daha büyük başlık */
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    #loading-text {
+        font-size: 1em;
+        color: #555;
+    }
+  </style>
 </head>
 <body>
-  Başlatılıyor...
+  <div id="splash-content">
+    <!-- SVG Resmini img etiketi ile ekliyoruz -->
+    <img id="app-logo-svg" src="./assets/svg/Splash.svg" alt="Uygulama Logosu">
+
+    <div id="app-title">Restoran App</div>
+    <div id="loading-text">Başlatılıyor...</div>
+  </div>
 </body>
 </html>
