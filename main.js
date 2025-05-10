@@ -34,7 +34,7 @@ const createSplashWindow = () => {
          splashWindow.once('ready-to-show', () => { // <-- ready-to-show eventini kullan
               splashWindow.show(); // <-- Pencereyi burada göster!
          });
-         
+
          splashWindow.on('closed', () => {
              splashWindow = null;
          });
@@ -105,6 +105,11 @@ app.whenReady().then(async () => {
       console.log("IPC handler'lar kaydedildi.");
       // <-- Başlangıç işlemleri tamamlandı -->
 
+      // Test için yapay bir gecikme (Örneğin 3 saniye)
+      console.log("Yapay gecikme başlatılıyor (3 saniye)...");
+      await new Promise(resolve => setTimeout(resolve, 3000)); // 3000 milisaniye = 3 saniye
+      console.log("Yapay gecikme tamamlandı.");
+      
       // Şimdi ana pencereyi oluştur
       createMainWindow();
 
