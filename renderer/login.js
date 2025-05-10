@@ -1,5 +1,9 @@
 // renderer/login.js
 // Bu dosya, Giriş Sayfası (views/login.html) ile ilgili JavaScript kodlarını içerir.
+// Giriş formunu işler ve başarılı giriş sonrası ana uygulama içeriğini yükler.
+
+// renderer.js dosyasından loadPage fonksiyonunu import edelim
+import { loadPage } from '../renderer.js'; // <-- loadPage fonksiyonunu import ediyoruz
 
 // Bu fonksiyon, login.html içeriği ana sayfaya yüklendiğinde çağrılacak
 export async function loadLoginPage() {
@@ -31,25 +35,31 @@ export async function loadLoginPage() {
 
             // Ana Süreç'e giriş isteği gönder
             try {
-                const loginSuccess = await window.electronAPI.login(username, password); // TODO: login handler'ı Ana Süreç'te eklenecek
+                const loginSuccess = await window.electronAPI.login(username, password); // login handler'ı mevcut
 
                 if (loginSuccess) {
                     console.log(`Kullanıcı başarıyla giriş yaptı: ${username}`);
                     toastr.success('Giriş başarılı! Yönlendiriliyorsunuz...');
 
-                    // Başarılı girişten sonra ana uygulama içeriğini yükle
-                    // renderer.js dosyasındaki loadPage fonksiyonuna erişebilmeliyiz.
-                    // LoadPage fonksiyonunu dış scope'ta tanımlayıp burada kullanabiliriz.
-                    // Veya ana renderer.js'e "giriş başarılı" sinyali göndeririz.
-                    // En temizi, loadPage fonksiyonunun renderer.js'de global (veya export edilmiş) olması.
-                    // loadPage şu an export edilmedi, onu düzeltelim.
-                     // Assuming loadPage is available in the global scope or imported
-                    if (typeof loadPage === 'function') { // loadPage fonksiyonu var mı kontrol et
-                        loadPage('urunler'); // TODO: Giriş başarılı olunca varsayılan sayfayı yükle (örn: 'dashboard' veya 'urunler')
-                    } else {
-                        console.error("loadPage fonksiyonu bulunamadı.");
-                        // Belki Renderer'a sinyal gönderme IPC handler'ı kullanırız.
-                    }
+                    // --- Başarılı girişten sonra ana uygulama içeriğini yükle ---
+                    // 1. Ana uygulama içeriği kapsayıcısını görünür yap
+                     const appContentContainer = document.getElementById('app-content-container'); // <-- Elementi burada tekrar seç
+                     if (appContentContainer) {
+                          appContentContainer.style.display = 'block'; // <-- Görünür yap
+                          console.log("Ana uygulama içeriği görünür yapıldı.");
+                     } else {
+                          console.error("Ana uygulama içeriği kapsayıcısı (app-content-container) bulunamadı.");
+                     }
+
+                    // 2. Ana uygulama içeriğinin varsayılan sayfasını yükle
+                    // loadPage fonksiyonunu import ettik, şimdi çağırabiliriz.
+                     if (typeof loadPage === 'function') {
+                        // loadPage fonksiyonu çağrıldığında, menü aktifliğini de ayarlayacaktır.
+                        loadPage('urunler'); // Varsayılan sayfa: Ürünler (veya 'dashboard' gibi başka bir sayfa)
+                     } else {
+                        console.error("loadPage fonksiyonu bulunamadı (import edilemedi).");
+                     }
+                    // ------------------------------------------------------------
 
 
                 } else {

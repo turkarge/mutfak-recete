@@ -1,31 +1,34 @@
 // renderer.js (Ana Renderer Giriş Noktası)
 // Bu dosya, uygulamanın ana HTML sayfası (index.html) yüklendiğinde çalışır.
 // Menü navigasyonu ve sayfa içeriği yükleme gibi işlemleri yönetir.
+// Uygulama başlangıcında Giriş Sayfasını yükler ve başarılı giriş sonrası ana içeriği gösterir.
 
 console.log('Ana Renderer süreci çalışıyor!');
 
 // Preload script'i ile sağlanan API'ye buradan erişebiliriz: window.electronAPI
 
-// Farklı sayfalara ait JavaScript modüllerini içeri aktaralım
+// Farklı sayfalara ait JavaScript modülleri içeri aktaralım
 import { loadUrunlerPage } from './renderer/urunler.js';
 import { loadBirimlerPage } from './renderer/birimler.js';
 import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
-import { loadRecetelerPage } from './renderer/receteler.js';
-import { loadLoginPage } from './renderer/login.js';
+import { loadRecetelerPage } from './renderer/receler.js';
+import { loadLoginPage } from './renderer/login.js'; // Giriş Sayfası JS'i
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
-// import { loadRecetePage } from './renderer/receler.js';
+// import { loadDashboardPage } from './renderer/dashboard.js'; // Dashboard sayfası JS'i
 // import { loadAlimlarPage } from './renderer/alimlar.js';
 // import { loadGiderlerPage } from './renderer/giderler.js';
 // import { loadSatislarPage } from './renderer/satislar.js';
 // import { loadAnalizPage } from './renderer/analiz.js';
 
 
-// Ana içerik alanını seçelim (index.html'de bu id'ye sahip bir div olmalı)
+// Ana içerik alanı ve ana uygulama kapsayıcısını seçelim
 const mainContentArea = document.getElementById('main-content-area');
+const appContentContainer = document.getElementById('app-content-container'); // Ana uygulama içeriği kapsayıcısı
 
 
 // Belirli bir sayfanın HTML içeriğini yükleyen fonksiyon
-async function loadPage(pageName) {
+// Bu fonksiyonu dışarıdan (login.js gibi) çağırabilmek için export ediyoruz
+export async function loadPage(pageName) {
     // Sayfa adı boş veya aynı ise bir şey yapma (isteğe bağlı, performans için)
     // Şimdilik sadece boş kontrolü yapalım
     if (!pageName) {
@@ -39,76 +42,71 @@ async function loadPage(pageName) {
 
         // Ana içerik alanını temizle ve yeni HTML'i ekle
         if (mainContentArea) {
-            // İçeriği temizlemeden önce, önceki sayfaya ait event listenerları kaldırmak iyi bir uygulama olabilir.
-            // Karmaşık senaryolarda bu önem kazanır. Şimdilik basit tutalım.
-            mainContentArea.innerHTML = pageHtml;
-            console.log(`${pageName}.html içeriği yüklendi.`);
+             // İçeriği temizlemeden önce, önceki sayfaya ait event listenerları kaldırmak iyi bir uygulama olabilir.
+             // Karmaşık senaryolarda bu önem kazanır. Şimdilik basit tutalım.
+             mainContentArea.innerHTML = pageHtml;
+             console.log(`${pageName}.html içeriği yüklendi.`);
 
-            // Menüdeki tüm linkleri seçiyoruz
-            const navItems = document.querySelectorAll('.navbar-nav .nav-item'); // li elementlerini seçiyoruz
-            console.log("Menü li elementleri bulundu:", navItems);
-            console.log("Yüklenmek istenen sayfa:", pageName);
+             // --- Menüdeki aktif linki güncelle (Bu kısım sadece ana içerik görünürken çalışmalı) ---
+             // Eğer ana içerik kapsayıcısı görünürse menü linklerini güncelle
+             if (appContentContainer && appContentContainer.style.display !== 'none') {
+                 const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+                 console.log("Menü linkleri bulundu:", navLinks);
+                 console.log("Yüklenmek istenen sayfa:", pageName);
 
-            // Önce mevcut tüm aktif sınıfları kaldır
-            navItems.forEach(item => {
-                // li elementinin içindeki a elementini bul
-                const link = item.querySelector('.nav-link');
-                if (link && link.dataset.page === pageName) {
-                    // Eğer bu li'nin içindeki a elementi yüklenen sayfaya aitse
-                    item.classList.add('active'); // li elementini aktif yap
-                    link.classList.add('active'); // a elementini de aktif yap (bazı temalar ikisini de isteyebilir)
-                    console.log(`"${pageName}" linki ve li elementleri aktif yapıldı.`);
-                } else {
-                    // Diğer li ve a elementlerini pasif yap
-                    item.classList.remove('active');
-                    if (link) {
-                        link.classList.remove('active');
-                    }
-                }
-            });
-            // ---------------------------------------------------------
+                 // Önce mevcut tüm aktif sınıfları kaldır
+                 navLinks.forEach(link => {
+                      // li elementini de kontrol et
+                     const liItem = link.closest('.nav-item');
+                     if (liItem) liItem.classList.remove('active');
+                     link.classList.remove('active');
+                 });
+
+                 // Sonra, sadece yüklenen sayfaya ait linki bul ve aktif yap
+                 const activeLink = document.querySelector(`.navbar-nav .nav-link[data-page="${pageName}"]`);
+                 if (activeLink) {
+                      // li elementini de aktif yap
+                     const activeLiItem = activeLink.closest('.nav-item');
+                     if (activeLiItem) activeLiItem.classList.add('active');
+                     activeLink.classList.add('active');
+                     console.log(`"${pageName}" linki ve li elementleri aktif yapıldı.`);
+                 } else {
+                     console.warn(`"${pageName}" sayfasına ait menü linki bulunamadı.`);
+                 }
+             }
+             // ----------------------------------------------------------------------------
 
 
-            // Sayfa yüklendikten sonra ilgili JavaScript fonksiyonunu çalıştır.
-            // Hangi sayfanın JS'inin çalışacağını belirlemek için switch kullanalım.
-            switch (pageName) {
-                case 'urunler':
-                    loadUrunlerPage(); // Ürünler sayfası JS'ini çağır
-                    break;
-                case 'birimler':
-                    loadBirimlerPage(); // Birimler sayfası JS'ini çağır
-                    break;
-                case 'porsiyonlar':
-                    loadPorsiyonlarPage(); // Porsiyonlar sayfası JS'ini çağır
-                    break;
-                case 'receler': // <-- Bu case bloğunu ekleyin
-                    loadRecetelerPage();
-                    break;
-                    case 'login': // <-- Bu case bloğunu ekleyin
-                  loadLoginPage();
-                // TODO: Diğer sayfalar için case'ler eklenecek:
-                // case 'receler':
-                //      loadRecetePage();
-                //      break;
-                // case 'alimlar':
-                //      loadAlimlarPage();
-                //      break;
-                // case 'giderler':
-                //      loadGiderlerPage();
-                //      break;
-                // case 'satislar':
-                //      loadSatislarPage();
-                //      break;
-                // case 'analiz':
-                //      loadAnalizPage();
-                //      break;
-                default:
-                    console.warn(`"${pageName}" sayfası için yüklenecek JavaScript fonksiyonu tanımlanmadı.`);
-            }
+             // Sayfa yüklendikten sonra ilgili JavaScript fonksiyonunu çalıştır.
+             // Hangi sayfanın JS'inin çalışacağını belirlemek için switch kullanalım.
+             switch (pageName) {
+                 case 'urunler':
+                     loadUrunlerPage(); // Ürünler sayfası JS'ini çağır
+                     break;
+                 case 'birimler':
+                      loadBirimlerPage(); // Birimler sayfası JS'ini çağır
+                      break;
+                 case 'porsiyonlar':
+                      loadPorsiyonlarPage(); // Porsiyonlar sayfası JS'ini çağır
+                      break;
+                 case 'receler':
+                      loadRecetelerPage(); // Reçete Yönetimi sayfası JS'ini çağır
+                      break;
+                 case 'login': // Giriş sayfası yüklenirse ilgili JS'ini çağır
+                      loadLoginPage();
+                      break;
+                 // TODO: Diğer sayfalar için case'ler eklenecek:
+                 // case 'dashboard':
+                 //      loadDashboardPage();
+                 //      break;
+                 // ... vb.
+                 default:
+                     console.warn(`"${pageName}" sayfası için yüklenecek JavaScript fonksiyonu tanımlanmadı.`);
+             }
 
         } else {
-            console.error("Ana içerik alanı ('main-content-area') bulunamadı.");
-            toastr.error("Uygulama layout hatası: İçerik alanı bulunamadı.");
+             console.error("Ana içerik alanı ('main-content-area') bulunamadı.");
+             toastr.error("Uygulama layout hatası: İçerik alanı bulunamadı.");
         }
 
     } catch (error) {
@@ -121,6 +119,9 @@ async function loadPage(pageName) {
 // Uygulama yüklendiğinde (index.html DOM hazır olduğunda)
 window.addEventListener('DOMContentLoaded', () => {
    // Menü linklerine olay dinleyicileri ekle
+   // Menü linkleri sadece app-content-container görünürken kullanılacak.
+   // Olay dinleyicilerini burada ekleyebiliriz, click olduğunda sadece loadPage çağıracaklar.
+   // loadPage, app-content-container gizliyse menü aktifliğini güncellemeyecek.
    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
 
    if (navLinks.length > 0) {
@@ -139,14 +140,19 @@ window.addEventListener('DOMContentLoaded', () => {
              });
         });
 
-        // Uygulama başladığında (index.html yüklendiğinde) ilk gösterilecek sayfa giriş sayfası olmalı.
-        // Menü linkleri yüklendikten sonra Giriş Sayfasını yükle.
-        loadPage('login'); // <-- Varsayılan olarak Giriş Sayfasını yükle
-
    } else {
        console.warn("Menü linkleri bulunamadı ('.navbar-nav .nav-link').");
        toastr.error("Uygulama layout hatası: Menü linkleri bulunamadı.");
-       // Menü linkleri bulunamazsa giriş sayfasını yüklemeye çalışmak mantıklı değil,
-       // belki sadece bir hata mesajı gösterilir. Şimdilik loadPage('login') kalsın, hata verecektir.
    }
+
+   // Uygulama başladığında (index.html yüklendiğinde) ilk gösterilecek sayfa giriş sayfası olmalı.
+   // Ana uygulama içeriği (menü dahil) başlangıçta gizlidir.
+   loadPage('login'); // <-- Varsayılan olarak Giriş Sayfasını yükle
+
 });
+
+// Not: login.js dosyasında, başarılı giriş sonrası,
+// import { loadPage } from '../renderer.js';
+// ... loadPage('urunler'); ...
+// çağrısı yapılacaktır. loadPage fonksiyonu bu çağrı geldiğinde,
+// appContentContainer.style.display = 'block'; yaparak ana içeriği görünür yapacaktır.
