@@ -21,6 +21,7 @@ const createSplashWindow = () => {
             frame: false,
             alwaysOnTop: true,
             resizable: false,
+            show: false, // <-- Açıkça show: false yapalım
              webPreferences: {
                  nodeIntegration: false,
                  contextIsolation: true
@@ -29,6 +30,11 @@ const createSplashWindow = () => {
 
         splashWindow.loadFile(path.join(__dirname, 'splash.html'));
 
+        // Pencere yüklendiğinde göster (HTML içeriği hazır olunca)
+         splashWindow.once('ready-to-show', () => { // <-- ready-to-show eventini kullan
+              splashWindow.show(); // <-- Pencereyi burada göster!
+         });
+         
          splashWindow.on('closed', () => {
              splashWindow = null;
          });
