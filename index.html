@@ -32,7 +32,6 @@
 
     <!-- Ana Uygulama İçeriği -->
     <!-- index.html artık doğrudan Ana Uygulama Penceresinin içeriğidir. -->
-    <!-- login-container ve app-content-container gibi divlere gerek yok. -->
 
     <!-- Üst Menü (Navbar) -->
     <header class="navbar navbar-expand-md d-print-none">
@@ -81,10 +80,43 @@
 
 
 <!-- Genel Hata Modalı -->
-<div class="modal modal-blur fade" id="errorModal" tabindex="-1" role="dialog" aria-hidden="true"> ... </div>
+<div class="modal modal-blur fade" id="errorModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Hata</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="errorModalBody">
+        <!-- Hata mesajı buraya JavaScript ile eklenecek -->
+        Bir hata oluştu.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Tamam</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Genel Onay Modalı -->
-<div class="modal modal-blur fade" id="confirmationModal" tabindex="-1" role="dialog" aria-hidden="true"> ... </div>
+<div class="modal modal-blur fade" id="confirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-warning">Onay Gerekiyor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="confirmationModalBody">
+        <!-- Onay mesajı buraya JavaScript ile eklenecek -->
+        Bu işlemi yapmak istediğinizden emin misiniz?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-danger" id="confirmActionButton">Sil</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <!-- jQuery (Toastr için gerekli) -->

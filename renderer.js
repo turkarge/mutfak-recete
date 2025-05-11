@@ -1,6 +1,7 @@
 // renderer.js (Ana Renderer Giriş Noktası)
 // Bu dosya, uygulamanın ana HTML sayfası (index.html) yüklendiğinde çalışır.
-// Menü navigasyonu ve sayfa içeriği yükleme gibi işlemleri yönetir.
+// Menü navigasyonunu ve sayfa içeriği yükleme gibi işlemleri yönetir.
+// Splash screen veya Giriş Sayfası mantığı burada değildir.
 
 console.log('Ana Renderer süreci çalışıyor!');
 
@@ -10,8 +11,8 @@ console.log('Ana Renderer süreci çalışıyor!');
 import { loadUrunlerPage } from './renderer/urunler.js';
 import { loadBirimlerPage } from './renderer/birimler.js';
 import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
-import { loadRecetelerPage } from './renderer/receler.js';
-// loadLoginPage artık burada import edilmeyecek
+import { loadRecetelerPage } from './renderer/receteler.js';
+// loadLoginPage artık buradan import edilmeyecek
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
 // import { loadDashboardPage } from './renderer/dashboard.js';
 // import { loadAlimlarPage } from './renderer/alimlar.js';
@@ -23,7 +24,7 @@ import { loadRecetelerPage } from './renderer/receler.js';
 // Ana içerik alanı seçelim (index.html'de bu id'ye sahip bir div olmalı)
 const mainContentArea = document.getElementById('main-content-area');
 
-// login-container ve app-content-container artık index.html'de bu şekilde yönetilmiyor.
+// login-container ve app-content-container gibi divlere gerek yok.
 
 
 // Belirli bir sayfanın HTML içeriğini yükleyen fonksiyon

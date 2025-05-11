@@ -26,16 +26,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
 
-  // Giriş handler'ı
-  login: (username, password) => ipcRenderer.invoke('login', username, password),
-
-  // <-- BURADAN SONRAKİ KODU EKLEYİN -->
-
-  // Başarılı giriş sinyalini Ana Süreç'e gönderme fonksiyonu
-  // Renderer süreci, başarılı giriş sonrası Ana Süreç'e bu mesajı gönderecek.
-  loginSuccess: () => ipcRenderer.send('login-success') // <-- send kullanıyoruz, yanıt beklemiyoruz
-
-  // <-- BURASI EKLENEN KOD BLOĞUNUN SONU -->
-
   // TODO: Diğer handler'lar buraya gelecek (silme/düzenleme, alım, gider, satış, analiz)
 });
