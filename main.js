@@ -126,23 +126,19 @@ app.whenReady().then(async () => {
   createSplashWindow(); // Splash screen'i oluştur
 
   try {
-      // SADECE Veritabanını başlat (tabloları oluşturacak)
-      await database.initialize();
+      await database.initialize(); // Veritabanını başlat
       console.log("Veritabanı başlatma tamamlandı.");
 
-      // !!! IPC handler'larını KAYDETMİYORUZ !!!
-      // registerIpcHandlers(); // <-- Bu satırı yorum satırı yap veya sil
-      console.log("IPC handler'lar kaydedilmiyor (Test).");
+      // *** IPC handler'larını KAYDET ***
+      registerIpcHandlers(); // <-- Bu satır çalışacak
+      console.log("IPC handler'lar kaydedildi.");
 
 
-      // Başlangıç işlemleri tamamlandı (initialize bitti).
-      // Login veya main pencereleri oluşturmuyoruz.
-      // Uygulamanın kapanmaması için splash screen'i açık tutabiliriz
-      // veya bir süre sonra uygulamayı kapatabiliriz.
-       console.log("Test tamamlandı, handler'lar kaydedilmedi. Uygulama kapanacak veya splash açık kalacak.");
-       // Splash screen'i kapatmaya veya uygulama quit etmeye gerek yok
-       // sadece pencere oluşturulmadığı için kendiliğinden kapanabilir.
-       // Eğer kapanmazsa ve splash açıksa başarılı.
+      // Başlangıç işlemleri tamamlandı (initialize ve handler kaydı bitti).
+      // LOGIN veya MAIN pencereleri OLUŞTURMUYORUZ (Test).
+       console.log("Test tamamlandı, login/main pencereleri oluşturulmuyor. Uygulama kapanacak veya splash açık kalacak.");
+       // Uygulamanın kapanmaması için splash screen'i açık tutuyoruz
+       // VEYA bir süre sonra kapatabiliriz.
        // setTimeout(() => {
        //      if (splashWindow) splashWindow.destroy();
        //      app.quit();
