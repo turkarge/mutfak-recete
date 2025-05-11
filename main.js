@@ -129,20 +129,19 @@ app.whenReady().then(async () => {
       await database.initialize(); // Veritabanını başlat
       console.log("Veritabanı başlatma tamamlandı.");
 
-      // *** IPC handler'larını KAYDET ***
-      registerIpcHandlers(); // <-- Bu satır çalışacak
+      registerIpcHandlers(); // IPC handler'larını kaydet
       console.log("IPC handler'lar kaydedildi.");
 
+      // Başlangıç işlemleri tamamlandı, splash screen'i kapat
+      if (splashWindow) {
+          splashWindow.destroy();
+      }
 
-      // Başlangıç işlemleri tamamlandı (initialize ve handler kaydı bitti).
-      // LOGIN veya MAIN pencereleri OLUŞTURMUYORUZ (Test).
-       console.log("Test tamamlandı, login/main pencereleri oluşturulmuyor. Uygulama kapanacak veya splash açık kalacak.");
-       // Uygulamanın kapanmaması için splash screen'i açık tutuyoruz
-       // VEYA bir süre sonra kapatabiliriz.
-       // setTimeout(() => {
-       //      if (splashWindow) splashWindow.destroy();
-       //      app.quit();
-       //  }, 10000); // 10 saniye sonra kapat
+      // *** Giriş Penceresini oluştur ***
+      createLoginWindow(); // <-- Bu satırı ekleyin
+
+
+      // Ana pencereyi burada çağırmıyoruz, giriş başarılı olunca çağrılacak.
 
 
   } catch (error) {
@@ -154,7 +153,7 @@ app.whenReady().then(async () => {
       app.quit();
   }
 
-  // activate ve window-all-closed eventleri şimdilik olduğu gibi kalsın.
+  // activate ve window-all-closed eventleri olduğu gibi kalsın.
 });
 
 // Tüm pencereler kapandığında uygulamayı kapat (macOS hariç)
