@@ -231,7 +231,7 @@ function initializeDatabase() {
            // Dikkat: db.run'ın callback'i this bağlamını koruması için function() olmalı.
           database.getDb().run(sql, params, function(err) { // <-- function() callback'i düzeltildi
             if (err) reject(err);
-            // resolve ederken this.lastID veya this.changes'ı döndürüyoruz.
+            // resolve ederken this.lastID (INSERT) veya this.changes (UPDATE, DELETE) döndürüyoruz.
             // Hangi değerin döneceği çalıştırılan SQL komutuna bağlıdır.
             // INSERT için this.lastID, UPDATE/DELETE için this.changes kullanılır.
             // Handler'lar bu dönen değeri beklemeli.
