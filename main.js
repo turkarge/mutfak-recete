@@ -142,7 +142,7 @@ app.whenReady().then(async () => {
        // setTimeout(() => {
        //      if (splashWindow) splashWindow.destroy();
        //      app.quit();
-       //  }, 10000); // 10 saniye sonra kapat (Test)
+       //  }, 10000); // 10 saniye sonra kapat
 
 
   } catch (error) {
