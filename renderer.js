@@ -11,7 +11,7 @@ console.log('Ana Renderer süreci çalışıyor!');
 import { loadUrunlerPage } from './renderer/urunler.js';
 import { loadBirimlerPage } from './renderer/birimler.js';
 import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
-import { loadRecetelerPage } from './renderer/receteler.js';
+import { loadRecetelerPage } from './renderer/receler.js';
 // loadLoginPage artık buradan import edilmeyecek
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
 // import { loadDashboardPage } from './renderer/dashboard.js';
@@ -58,8 +58,26 @@ async function loadPage(pageName) {
                      link.classList.add('active'); // Hem li hem a aktif
                      console.log(`"${pageName}" linki ve li elementleri aktif yapıldı.`);
                  } else {
-                     item.classList.remove('active');
-                     if (link) link.classList.remove('active');
+                     // Dropdown toggler dışındaki diğer li elementlerini pasif yap
+                     // Dropdown toggler li'sinin active class'ı Tabler JS tarafından yönetilir.
+                     // Sadece data-page attribute'u olan linklerin li'lerini yönetelim.
+                     const itemLink = item.querySelector('.nav-link[data-page]');
+                      if (itemLink && itemLink.dataset.page !== pageName) {
+                           item.classList.remove('active');
+                           itemLink.classList.remove('active');
+                      }
+                     // Dropdown içindeki a elementleri de aktiflik sınıfı almalı.
+                     const dropdownItems = item.querySelectorAll('.dropdown-item');
+                      dropdownItems.forEach(dropdownItem => {
+                          if (dropdownItem.dataset.page === pageName) {
+                               dropdownItem.classList.add('active');
+                                // dropdown-item aktif olunca li dropdown-toggle de aktif olmalı
+                                // Tabler JS bunu otomatik yapabilir veya manuel yapmamız gerekebilir.
+                                // li elementinin kendisini de aktif yapıyoruz yukarıda.
+                          } else {
+                               dropdownItem.classList.remove('active');
+                          }
+                      });
                  }
              });
              // ------------------------------------
@@ -104,31 +122,40 @@ async function loadPage(pageName) {
 // Uygulama yüklendiğinde (index.html DOM hazır olduğunda)
 window.addEventListener('DOMContentLoaded', () => {
    // Menü linklerine olay dinleyicileri ekle
-   const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+   // Hem ana linkleri (.navbar-nav .nav-link) hem de dropdown içindeki linkleri (.dropdown-menu .dropdown-item) seçiyoruz
+   const clickableNavElements = document.querySelectorAll('.navbar-nav .nav-link, .dropdown-menu .dropdown-item'); // <-- Seçici güncellendi
 
-   if (navLinks.length > 0) {
-        navLinks.forEach(link => {
-             link.addEventListener('click', (event) => {
-                 event.preventDefault();
-                 const pageName = event.currentTarget.dataset.page;
+   // console.log("Tıklanabilir menü elementleri bulundu:", clickableNavElements); // Test için log ekleyebilirsiniz
 
-                 if (pageName) {
+   if (clickableNavElements.length > 0) {
+        // data-page attribute'u olan elementler için olay dinleyicisi ekle
+        clickableNavElements.forEach(element => { // <-- Değişken adını element olarak değiştirdim
+             // data-page attribute'u var mı kontrol et
+             if (element.dataset.page) { // <-- data-page attribute'u var mı kontrol et
+                  element.addEventListener('click', (event) => {
+                     event.preventDefault();
+                     const pageName = event.currentTarget.dataset.page; // event.currentTarget her zaman olayın dinlendiği elementtir
+
                      console.log(`Menüden "${pageName}" sayfasına gidiliyor.`);
-                     // Menü tıklamasında loadPage fonksiyonunu çağırıyoruz
+                     // loadPage fonksiyonunu çağırıyoruz
                      loadPage(pageName);
-                 } else {
-                     console.warn("Tıklanan menü linkinde 'data-page' attribute'u bulunamadı.", event.currentTarget);
-                 }
-             });
+
+                     // TODO: Dropdown menü içindeki linke tıklanırsa dropdown'ı kapatma mantığı eklenebilir.
+
+                 });
+             }
+             // else { // data-page attribute'u olmayan elementler (örn: dropdown toggler) için log veya başka işlem yapılabilir
+             //    console.log("data-page attribute'u olmayan menü elementi bulundu:", element);
+             // }
         });
 
        // Varsayılan olarak ana sayfa yüklenecek (Örn: Ürünler veya Dashboard)
-       // Giriş sayfası ayrı pencerede olacağı için burada login yüklemeyeceğiz.
-       loadPage('urunler'); // <-- Varsayılan olarak Ürünler sayfasını yükle
+       loadPage('urunler'); // Varsayılan olarak Ürünler sayfasını yükle (dropdown içindeki 'urunler' linkine karşılık gelecek)
+
 
    } else {
-       console.warn("Menü linkleri bulunamadı ('.navbar-nav .nav-link').");
-       toastr.error("Uygulama layout hatası: Menü linkleri bulunamadı.");
+       console.warn("Menü linkleri ve dropdown elementleri bulunamadı.");
+       toastr.error("Uygulama layout hatası: Menü elementleri bulunamadı.");
    }
 
 });
