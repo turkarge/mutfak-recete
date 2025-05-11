@@ -123,24 +123,30 @@ const createMainWindow = () => {
 // Electron uygulaması başlatılmaya hazır olduğunda (init tamamlandığında)
 app.whenReady().then(async () => {
 
-  createSplashWindow(); // <-- Önce splash screen'i göster
+  createSplashWindow(); // Splash screen'i oluştur
 
   try {
-      // <-- Başlangıç işlemleri (Veritabanı init, handler kaydı) -->
+      // SADECE Veritabanını başlat (tabloları oluşturacak)
       await database.initialize();
       console.log("Veritabanı başlatma tamamlandı.");
 
-      registerIpcHandlers(); // IPC handler'larını kaydet
-      console.log("IPC handler'lar kaydedildi.");
-      // <-- Başlangıç işlemleri tamamlandı -->
+      // !!! IPC handler'larını KAYDETMİYORUZ !!!
+      // registerIpcHandlers(); // <-- Bu satırı yorum satırı yap veya sil
+      console.log("IPC handler'lar kaydedilmiyor (Test).");
 
-      // Başlangıç işlemleri bitince splash screen'i kapat
-      if (splashWindow) {
-          splashWindow.destroy();
-      }
 
-      // Başlangıç işlemleri bittikten sonra Giriş Penceresini aç
-      createLoginWindow(); // <-- Giriş Penceresi çağırıldı
+      // Başlangıç işlemleri tamamlandı (initialize bitti).
+      // Login veya main pencereleri oluşturmuyoruz.
+      // Uygulamanın kapanmaması için splash screen'i açık tutabiliriz
+      // veya bir süre sonra uygulamayı kapatabiliriz.
+       console.log("Test tamamlandı, handler'lar kaydedilmedi. Uygulama kapanacak veya splash açık kalacak.");
+       // Splash screen'i kapatmaya veya uygulama quit etmeye gerek yok
+       // sadece pencere oluşturulmadığı için kendiliğinden kapanabilir.
+       // Eğer kapanmazsa ve splash açıksa başarılı.
+       // setTimeout(() => {
+       //      if (splashWindow) splashWindow.destroy();
+       //      app.quit();
+       //  }, 10000); // 10 saniye sonra kapat (Test)
 
 
   } catch (error) {
@@ -150,19 +156,9 @@ app.whenReady().then(async () => {
        }
        dialog.showErrorBox('Uygulama Başlatma Hatası', 'Uygulama başlatılırken kritik bir hata oluştu: ' + error.message);
       app.quit();
-
   }
 
-
-  // macOS için ek ayar: Dock simgesine tıklanması durumunda pencere oluştur (eğer ana pencere yoksa)
-  app.on('activate', () => {
-    // Eğer uygulama aktif hale getirildiğinde ve hem ana hem giriş penceresi null ise
-    if (mainWindow === null && loginWindow === null) {
-         // Uygulama kapatılmış ve tekrar aktif edilmiş.
-         // Giriş akışını yeniden başlatmak gerekir.
-         createLoginWindow(); // Giriş akışını yeniden başlat
-    }
-  });
+  // activate ve window-all-closed eventleri şimdilik olduğu gibi kalsın.
 });
 
 // Tüm pencereler kapandığında uygulamayı kapat (macOS hariç)
