@@ -1,68 +1,138 @@
 // renderer/urunler.js
-// Bu dosya, Ürünler sayfası (views/urunler.html) ile ilgili JavaScript kodlarını içerir.
 
-// Bu fonksiyon, urunler.html içeriği ana sayfaya yüklendiğinde çağrılacak
+// Form elementlerini global scope'ta tanımla
+let urunEkleForm, urunIdInput, urunAdiInput, urunTuruSelect;
+let urunFormBaslik, urunFormSubmitButton, urunFormCancelButton;
+let urunlerTableBody;
+
+// --- YENİ: Onay Modalı Fonksiyonu (receler.js'den alındı ve uyarlandı) ---
+// Bu fonksiyon, bir onay mesajı gösterir ve kullanıcı onaylayana kadar bekler (Promise döndürür)
+function showConfirmationModal(message, actionButtonText = 'Tamam', actionButtonClass = 'btn-primary') {
+    return new Promise((resolve) => {
+        const confirmationModalElement = document.getElementById('confirmationModal');
+        const confirmationModalBodyElement = document.getElementById('confirmationModalBody'); // ID'yi düzeltelim
+        const confirmActionButtonElement = document.getElementById('confirmActionButton');
+
+        if (!confirmationModalElement || !confirmationModalBodyElement || !confirmActionButtonElement) {
+            console.error("Onay modal elementleri bulunamadı! Lütfen index.html dosyanızı kontrol edin.");
+            toastr.error("Uygulama hatası: Onay modalı için gerekli HTML elementleri eksik.");
+            resolve(false); // Hata durumunda false ile çöz
+            return;
+        }
+
+        if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
+           console.error("Bootstrap Modal JS yüklenmedi veya bootstrap objesi tanımsız.");
+            toastr.error("Uygulama hatası: Bootstrap Modal yüklenemedi.");
+            resolve(false); // Hata durumunda false ile çöz
+            return;
+        }
+
+        confirmationModalBodyElement.textContent = message;
+        confirmActionButtonElement.textContent = actionButtonText;
+        
+        // Buton sınıflarını temizle ve yenisini ekle
+        confirmActionButtonElement.className = 'btn'; // Önce temel sınıf
+        confirmActionButtonElement.classList.add(actionButtonClass);
+
+
+        const modalInstance = bootstrap.Modal.getInstance(confirmationModalElement) || new bootstrap.Modal(confirmationModalElement);
+        
+        let confirmed = false; // Kullanıcının onay verip vermediğini takip etmek için
+
+        const handleConfirm = () => {
+            confirmed = true;
+            modalInstance.hide();
+            // Olay dinleyicileri hidden.bs.modal içinde kaldırılacak
+        };
+
+        const handleDismissOrHide = () => {
+            // Olay dinleyicilerini kaldır
+            confirmActionButtonElement.removeEventListener('click', handleConfirm);
+            confirmationModalElement.removeEventListener('hidden.bs.modal', handleDismissOrHide);
+            resolve(confirmed); // Modal kapandığında, en son onay durumunu döndür
+        };
+
+        // Önceki dinleyicileri kaldır (önlem olarak, normalde gerek olmayabilir)
+        confirmActionButtonElement.removeEventListener('click', handleConfirm);
+        confirmationModalElement.removeEventListener('hidden.bs.modal', handleDismissOrHide);
+        
+        // Yeni dinleyicileri ekle
+        confirmActionButtonElement.addEventListener('click', handleConfirm);
+        confirmationModalElement.addEventListener('hidden.bs.modal', handleDismissOrHide, { once: true });
+
+        modalInstance.show();
+    });
+}
+
+
 export async function loadUrunlerPage() {
     console.log('Ürünler sayfası JavaScript\'i yükleniyor...');
 
-    // !!! DİKKAT: Buradaki kodlar, urunler.html yüklendikten sonra çalışacaktır.
-    // DOM elementlerine bu fonksiyon içinden erişin.
+    // DOM Elementlerini Seçme
+    urunEkleForm = document.querySelector('#urunEkleForm');
+    urunIdInput = document.querySelector('#urunIdInput');
+    urunAdiInput = document.querySelector('#urunAdi');
+    urunTuruSelect = document.querySelector('#urunTuru');
+    urunFormBaslik = document.querySelector('#urunFormBaslik');
+    urunFormSubmitButton = document.querySelector('#urunFormSubmitButton');
+    urunFormCancelButton = document.querySelector('#urunFormCancelButton');
+    urunlerTableBody = document.querySelector('#urunlerTable tbody');
 
-    // --- DOM Elementlerini Seçme ---
-    const urunAdiInput = document.querySelector('#urunAdi');
-    const urunTuruSelect = document.querySelector('#urunTuru');
-    const urunEkleForm = document.querySelector('#urunEkleForm'); // Form elementini tekrar seç (scope dışında)
-    const urunlerTableBody = document.querySelector('#urunlerTable tbody');
+    // Formu Ekleme Moduna Ayarla
+    function switchToAddMode() {
+        if (!urunEkleForm) return;
+        urunEkleForm.reset();
+        if (urunIdInput) urunIdInput.value = '';
+        if (urunFormBaslik) urunFormBaslik.textContent = 'Yeni Ürün/Hammadde Ekle';
+        if (urunFormSubmitButton) {
+            const textSpan = urunFormSubmitButton.querySelector('span');
+            if (textSpan) textSpan.textContent = 'Ürün Ekle';
+            urunFormSubmitButton.classList.remove('btn-success');
+            urunFormSubmitButton.classList.add('btn-primary');
+        }
+        if (urunFormCancelButton) urunFormCancelButton.classList.add('d-none');
+        if (urunAdiInput) urunAdiInput.focus();
+    }
 
-
-    // --- Yardımcı Modal Onay Fonksiyonu (Bu sayfada kullanılmayabilir, genel scope'ta olmalıydı) ---
-    // Modal onay fonksiyonu (showConfirmationModal) renderer.js dosyasında genel scope'ta tanımlı.
-    // Burada tekrar tanımlamaya gerek yok, doğrudan çağırabiliriz.
-
-
-    // --- Tablo Listeleme Fonksiyonu (displayUrunler) ---
+    // Ürünleri Tabloya Ekleme
     function displayUrunler(urunler) {
-        const tableBody = urunlerTableBody; // Seçilmiş tbody elementini kullan
-        tableBody.innerHTML = '';
+        if (!urunlerTableBody) return;
+        urunlerTableBody.innerHTML = '';
 
         if (urunler && urunler.length > 0) {
             urunler.forEach(urun => {
-                const row = tableBody.insertRow();
-
+                const row = urunlerTableBody.insertRow();
                 row.insertCell(0).textContent = urun.id;
                 row.insertCell(1).textContent = urun.ad;
                 row.insertCell(2).textContent = urun.tur;
 
-                // Eylemler hücresi
-                const actionsCell = row.insertCell(3);
+                const eylemlerCell = row.insertCell(3);
+                eylemlerCell.classList.add('text-end');
 
-                // Düzenle butonu oluştur
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Düzenle';
-                editButton.classList.add('btn', 'btn-sm', 'btn-primary', 'me-2');
-                editButton.dataset.id = urun.id;
+                const buttonContainer = document.createElement('div');
 
-                // Tıklama olayına handleEditUrun'ı çağırırken urun.id ve urun objesini gönder
-                 editButton.addEventListener('click', () => handleEditUrun(urun.id, urun));
+                const duzenleButton = document.createElement('button');
+                duzenleButton.type = 'button';
+                duzenleButton.classList.add('btn', 'btn-icon', 'btn-warning');
+                duzenleButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
+                duzenleButton.title = "Düzenle";
+                duzenleButton.addEventListener('click', () => handleEditUrunClick(urun));
+                buttonContainer.appendChild(duzenleButton);
 
+                const silButton = document.createElement('button');
+                silButton.type = 'button';
+                silButton.classList.add('btn', 'btn-icon', 'btn-danger', 'ms-1');
+                silButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
+                silButton.title = "Sil";
+                silButton.setAttribute('data-urun-id', urun.id);
+                silButton.setAttribute('data-urun-adi', urun.ad);
+                silButton.addEventListener('click', handleDeleteUrunClick);
+                buttonContainer.appendChild(silButton);
 
-                // Sil butonu
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Sil';
-                deleteButton.classList.add('btn', 'btn-sm', 'btn-danger');
-                deleteButton.dataset.id = urun.id;
-                 // Tıklama olayına handleDeleteUrun'ı çağırırken urun.id ve urun objesini gönder
-                deleteButton.addEventListener('click', () => handleDeleteUrun(urun.id, urun)); // handleDeleteUrun de urun objesini alacak şekilde güncellenebilir
-
-
-                // Butonları hücreye ekle
-                actionsCell.appendChild(editButton);
-                actionsCell.appendChild(deleteButton);
-
+                eylemlerCell.appendChild(buttonContainer);
             });
-
         } else {
-            const row = tableBody.insertRow();
+            const row = urunlerTableBody.insertRow();
             const cell = row.insertCell(0);
             cell.colSpan = 4;
             cell.textContent = 'Henüz kayıtlı ürün bulunamadı.';
@@ -70,244 +140,131 @@ export async function loadUrunlerPage() {
         }
     }
 
+    // Düzenle Butonuna Tıklandığında Formu Doldur
+    function handleEditUrunClick(urun) {
+        if (!urunEkleForm) return;
+        urunIdInput.value = urun.id;
+        urunAdiInput.value = urun.ad;
+        urunTuruSelect.value = urun.tur;
 
-    // --- Olay Dinleyicileri ve İşlem Fonksiyonları Handler'ları ---
-    // (Bu fonksiyonlar loadUrunlerPage scope'unda tanımlı olacak)
+        if (urunFormBaslik) urunFormBaslik.textContent = `Ürünü Düzenle: ${urun.ad}`;
+        if (urunFormSubmitButton) {
+            const textSpan = urunFormSubmitButton.querySelector('span');
+            if (textSpan) textSpan.textContent = 'Ürünü Güncelle';
+            urunFormSubmitButton.classList.remove('btn-primary');
+            urunFormSubmitButton.classList.add('btn-success');
+        }
+        if (urunFormCancelButton) urunFormCancelButton.classList.remove('d-none');
+        urunAdiInput.focus();
+        window.scrollTo(0, 0);
+    }
 
+    // Sil Butonuna Tıklama (Modal ile Onay)
+    async function handleDeleteUrunClick(event) {
+        const button = event.currentTarget;
+        const urunId = button.getAttribute('data-urun-id');
+        const urunAdi = button.getAttribute('data-urun-adi');
 
-    // Ürün Silme işlemini yönetecek fonksiyon (Modal Onaylı)
-    async function handleDeleteUrun(urunId, urun) { // urun objesini de alalım log için
-        console.log(`"Ürün Sil" butonuna tıklandı, Ürün ID: ${urunId}`);
-        console.log('Silinecek Ürün Obj:', urun); // Loglayalım
-
-        // Modal onayını bekle (showConfirmationModal renderer.js'de genel scope'ta)
         try {
-             const confirmed = await showConfirmationModal(
-                 `"${urun.ad}" ürününü silmek istediğinizden emin misiniz?`,
-                 'Evet, Sil', // Onay butonu metni
-                 'btn-danger' // Onay butonu rengi (kırmızı)
-             );
+            const confirmed = await showConfirmationModal( // Şimdi bu fonksiyon tanımlı olmalı
+                `"${urunAdi}" adlı ürünü silmek istediğinizden emin misiniz?`,
+                'Evet, Sil',
+                'btn-danger'
+            );
 
-             if (!confirmed) { // Kullanıcı iptal butonuna veya kapatma ikonuna tıkladıysa
-                 console.log('Ürün silme işlemi kullanıcı tarafından iptal edildi (Modal).');
-                 toastr.info('Ürün silme işlemi iptal edildi.');
-                 return; // İşlemi durdur
-             }
-
-             // Onaylandıysa silme işlemini yap
-            console.log('Ürün silme işlemi onaylandı (Modal).');
-            // Ana Süreç'e silme isteği gönder
-            const success = await window.electronAPI.deleteUrun(urunId); // deleteUrun handler'ı mevcut
-
-            if (success) {
-                console.log(`Ürün başarıyla silindi, ID: ${urunId}`);
-                toastr.success('Ürün başarıyla silindi!');
-
-                // Tabloyu yenile
-                await fetchAndDisplayUrunler(); // Ürün listesini yeniden çek ve göster
-
-                 // Eğer düzenleme formu silinen ürünle doluysa, formu resetle
-                 if(urunEkleForm && urunEkleForm.dataset.editingId === urunId.toString()) {
-                      resetUrunEkleForm();
-                 }
-
-            } else {
-                // Başarısız olursa (örneğin ürün bulunamazsa)
-                console.warn(`Ürün silme başarısız veya ürün bulunamadı, ID: ${urunId}`);
-                toastr.warning('Ürün silme başarısız veya ürün bulunamadı.');
+            if (!confirmed) {
+                toastr.info('Ürün silme işlemi iptal edildi.');
+                return;
             }
 
-        } catch (error) { // showConfirmationModal hatası veya deleteUrun hatası
-            console.error('Genel Hata Yakalandı (Ürün Sil):', error);
-             // TODO: Veritabanı kısıtlaması hatalarını yakala (örn: Bu ürün başka bir tabloda kullanılıyorsa)
-             if (error.message && error.message.includes('FOREIGN KEY constraint failed')) {
-                  console.warn('Yabancı anahtar kısıtlaması hatası yakalandı (Ürün Sil).');
-                  toastr.error('Bu ürün başka tablolarda kullanıldığı için silinemez.');
-             }
-             else {
-                toastr.error('Ürün silinirken bir hata oluştu: ' + error.message);
-             }
-        }
-    }
-
-
-    // *** Ürün Düzenleme işlemini yönetecek fonksiyon (handleEditUrun) ***
-    // Bu fonksiyon, tıklanan butonun ait olduğu ürün objesini almalı
-    async function handleEditUrun(urunId, urun) { // urun objesini de parametre olarak alıyor
-        console.log(`"Ürün Düzenle" butonuna tıklandı, Ürün ID: ${urunId}`);
-        console.log('Düzenlenecek Ürün Obj:', urun);
-
-        // Formu seçilen ürün bilgileriyle doldur
-        const urunEkleForm = document.querySelector('#urunEkleForm'); // Form elementini tekrar seç (scope dışında)
-        const urunAdiInput = document.querySelector('#urunAdi');
-        const urunTuruSelect = document.querySelector('#urunTuru');
-
-        if (urunEkleForm) {
-             // Düzenleme modunda olduğumuzu belirten data attribute ekle
-             urunEkleForm.dataset.editingId = urun.id; // Düzenlenen ürün ID'sini kaydet
-
-            // Ad ve Tür alanlarını doldur
-            urunAdiInput.value = urun.ad;
-            urunTuruSelect.value = urun.tur; // Select kutusunda doğru option seçili olmalı
-
-
-             // Formun başlığını ve buton metnini değiştir
-             const formTitle = urunEkleForm.previousElementSibling;
-             if(formTitle && formTitle.tagName === 'H2') {
-                 formTitle.textContent = 'Ürün/Hammaddeyi Düzenle';
-             }
-             const submitButton = urunEkleForm.querySelector('button[type="submit"]');
-             if(submitButton) {
-                  submitButton.textContent = 'Güncelle';
-                   submitButton.classList.remove('btn-primary');
-                  submitButton.classList.add('btn-success'); // Yeşil renk yap
-             }
-
-             toastr.info(`Ürün düzenleme formuna yüklendi (ID: ${urunId}).`);
-
-        } else {
-             console.error("Ürün ekleme formu (urunEkleForm) bulunamadı.");
-        }
-    }
-
-
-    // *** Ürün ekleme/düzenleme formunu düzenleme modundan ekleme moduna döndüren fonksiyon ***
-    function resetUrunEkleForm() {
-        const urunEkleForm = document.querySelector('#urunEkleForm'); // Form elementini tekrar seç (scope dışında)
-        const urunAdiInput = document.querySelector('#urunAdi');
-        const urunTuruSelect = document.querySelector('#urunTuru');
-
-        if (urunEkleForm) {
-            urunEkleForm.reset(); // Formu temizle
-            delete urunEkleForm.dataset.editingId; // Düzenleme ID'sini kaldır
-
-             // Formun başlığını ve buton metnini varsayılana döndür
-             const formTitle = urunEkleForm.previousElementSibling;
-             if(formTitle && formTitle.tagName === 'H2') {
-                 formTitle.textContent = 'Yeni Ürün/Hammadde Ekle';
-             }
-             const submitButton = urunEkleForm.querySelector('button[type="submit"]');
-             if(submitButton) {
-                  submitButton.textContent = 'Ürünü Ekle';
-                   submitButton.classList.remove('btn-success');
-                  submitButton.classList.add('btn-primary');
-             }
-        }
-    }
-
-
-    // --- Async Veri Çekme ve Gösterme Yardımcı Fonksiyonları ---
-
-    // Ürün listesini Ana Süreç'ten çekip gösteren yardımcı fonksiyon
-    async function fetchAndDisplayUrunler() {
-        try {
-            const urunler = await window.electronAPI.getUrunler();
-            console.log('Ana Süreçten gelen ürünler:', urunler);
-            displayUrunler(urunler); // Tabloya göster
+            const silindi = await window.electronAPI.deleteUrun(Number(urunId));
+            if (silindi) {
+                toastr.success(`"${urunAdi}" adlı ürün başarıyla silindi.`);
+                await fetchAndDisplayUrunler();
+                if (urunIdInput.value === urunId) { // String ID ile number ID karşılaştırması için toString() veya Number() kullanılabilir, ama === ile direkt karşılaştırma genellikle sorun çıkarmaz eğer ID'ler tutarlıysa.
+                    switchToAddMode();
+                }
+            } else {
+                toastr.warning(`"${urunAdi}" adlı ürün silinemedi veya bulunamadı.`);
+            }
         } catch (error) {
-            console.error('Ürünleri alırken hata oluştu:', error);
-            toastr.error('Ürün listesi yüklenirken hata oluştu.');
+            console.error('Ürün silinirken hata:', error);
+            let errMsg = `Ürün silinirken bir hata oluştu: ${error.message}.`;
+            if (error.message && error.message.toLowerCase().includes('foreign key constraint failed')) {
+                errMsg = `Bu ürün/hammadde başka bir kayıtta (Porsiyon, Reçete Detayı, Alım vb.) kullanıldığı için silinemez.`;
+            }
+            toastr.error(errMsg);
         }
     }
 
-
-    // --- Form Submit Olay Dinleyicileri ---
-
-    // Yeni Ürün Ekleme / Ürün Düzenleme Formu Submit Olayı
+    // Form Submit Olayı (Ekleme ve Güncelleme)
     if (urunEkleForm) {
-        urunEkleForm.addEventListener('submit', async (event) => {
+        urunEkleForm.onsubmit = async (event) => {
             event.preventDefault();
-
-            const urunAdiInput = document.querySelector('#urunAdi');
-            const urunTuruSelect = document.querySelector('#urunTuru');
-
-            const urunData = { // Yeni veya güncellenecek ürün verileri
+            const urunData = {
+                id: urunIdInput.value ? parseInt(urunIdInput.value) : null,
                 ad: urunAdiInput.value.trim(),
                 tur: urunTuruSelect.value
             };
 
-            // Zorunlu alan kontrolü (ekleme ve düzenleme için ortak)
             if (!urunData.ad || !urunData.tur) {
-                toastr.warning('Ürün Adı ve Türü boş bırakılamaz.');
-                return;
+                 toastr.warning('Ürün Adı ve Türü boş bırakılamaz.');
+                 return;
             }
 
-            // Form düzenleme modunda mı kontrol et (data-editing-id attribute'una bak)
-            const editingId = urunEkleForm.dataset.editingId; // data-editing-id attribute'unu al
-
-            if (editingId) {
-                // *** Düzenleme Modunda ***
-                console.log(`Ürün güncelleniyor, ID: ${editingId}`);
-                urunData.id = parseInt(editingId); // Güncellenecek ürünün ID'sini objeye ekle
-
-
-                try {
-                    // Ana Süreç'e güncelleme isteği gönder
-                    const success = await window.electronAPI.updateUrun(urunData); // updateUrun handler'ı mevcut
-
-                    if (success) {
-                        console.log(`Ürün başarıyla güncellendi, ID: ${editingId}`);
-                        toastr.success('Ürün bilgileri güncellendi!');
-
-                        // Formu resetle ve "Ekle" moduna dön
-                        resetUrunEkleForm();
-
-                        // Ürün listesini yenile
-                        await fetchAndDisplayUrunler();
-
+            try {
+                let islemYapildi = false;
+                if (urunData.id) {
+                    const guncellendi = await window.electronAPI.updateUrun(urunData);
+                    if (guncellendi) {
+                        toastr.success(`"${urunData.ad}" başarıyla güncellendi!`);
+                        islemYapildi = true;
                     } else {
-                        console.warn(`Ürün güncelleme başarısız, ID: ${editingId}`);
-                        toastr.warning('Ürün güncelleme başarısız.');
+                        toastr.info(`"${urunData.ad}" için değişiklik yapılmadı veya kayıt bulunamadı.`);
                     }
-
-                } catch (error) {
-                    console.error('Genel Hata Yakalandı (Ürün Güncelle):', error);
-                     // Veritabanı kısıtlaması hatalarını yakala (örn: UNIQUE ad)
-                     if (error.message && error.message.includes('SQLITE_CONSTRAINT_UNIQUE')) {
-                           toastr.error(`"${urunData.ad}" adında bir ürün zaten mevcut.`);
-                     }
-                     else {
-                         toastr.error('Ürün güncellenirken bir hata oluştu: ' + error.message);
-                     }
+                } else {
+                    await window.electronAPI.addUrun(urunData);
+                    toastr.success(`"${urunData.ad}" başarıyla eklendi!`);
+                    islemYapildi = true;
                 }
 
-            } else {
-                // *** Ekleme Modunda ***
-                console.log('Yeni ürün ekleniyor...');
-
-                try {
-                    const eklenenUrunId = await window.electronAPI.addUrun(urunData); // addUrun handler'ı mevcut
-                    console.log('Ürün başarıyla eklendi, ID:', eklenenUrunId);
-                    toastr.success(`"${urunData.ad}" başarıyla eklendi!`);
-
-                    urunEkleForm.reset();
-
+                if (islemYapildi) {
+                    switchToAddMode();
                     await fetchAndDisplayUrunler();
-
-                } catch (error) {
-                     console.error('Genel Hata Yakalandı (Ürün Ekle):', error);
-                     let displayMessage = 'Ürün eklenirken beklenmeyen bir hata oluştu.';
-                     if (error.message && error.message.includes('SQLITE_CONSTRAINT_UNIQUE')) {
-                          displayMessage = `"${urunData.ad}" adında bir ürün zaten mevcut.`;
-                     } else {
-                          displayMessage = 'Ürün eklenirken bir hata oluştu: ' + error.message;
-                     }
-                      toastr.error(displayMessage);
-                 }
+                }
+            } catch (error) {
+                console.error('Ürün Ekle/Güncelle hatası:', error);
+                let displayMessage = 'İşlem sırasında bir hata oluştu.';
+                if (error.message && error.message.toLowerCase().includes('unique constraint failed')) {
+                     displayMessage = `"${urunData.ad}" adında bir ürün zaten mevcut.`;
+                } else {
+                     displayMessage = 'İşlem sırasında bir hata oluştu: ' + error.message;
+                }
+                toastr.error(displayMessage);
             }
-        });
-    } else {
-         console.error("Ürün ekleme formu (urunEkleForm) bulunamadı.");
+        };
     }
 
+    // İptal Butonuna Tıklama
+    if (urunFormCancelButton) {
+        urunFormCancelButton.onclick = () => {
+            switchToAddMode();
+        };
+    }
 
-    // --- Sayfa Yüklendiğinde Çalışacaklar (loadUrunlerPage çağrıldığında) ---
+    // Sayfa Yüklendiğinde Verileri Çek ve Formu Ayarla
+    async function fetchAndDisplayUrunler() {
+        try {
+            const urunler = await window.electronAPI.getUrunler();
+            displayUrunler(urunler);
+        } catch (error) {
+            console.error('Ürünleri alırken hata:', error);
+            toastr.error('Ürün listesi yüklenirken hata oluştu.');
+        }
+    }
 
-    // Ürün listesini çek ve göster
     await fetchAndDisplayUrunler();
-
-    // Başlangıçta formu "Ekle" modunda tut (varsayılan durum)
-    resetUrunEkleForm(); // Sayfa yüklendiğinde formu default hale getir
-
-
-} // loadUrunlerPage fonksiyonunun sonu
+    if (urunEkleForm) {
+       switchToAddMode();
+    }
+}
