@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getReceteler: () => ipcRenderer.invoke('getReceteler'),
   addRecete: (recete) => ipcRenderer.invoke('addRecete', recete),
   deleteRecete: (receteId) => ipcRenderer.invoke('deleteRecete', receteId),
+  updateRecete: (recete) => ipcRenderer.invoke('updateRecete', recete), // YENİ: Ana Reçete güncelleme
   getReceteDetaylari: (receteId) => ipcRenderer.invoke('getReceteDetaylari', receteId),
   addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),

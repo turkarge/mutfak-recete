@@ -339,6 +339,47 @@ function registerIpcHandlers() {
         }
     });
 
+    // YENİ: Ana Reçete Güncelleme handler'ı
+    ipcMain.handle('updateRecete', async (event, recete) => {
+        // Gelen recete objesi: { id, porsiyonId, receteAdi }
+        try {
+            // UNIQUE kısıtlaması (porsiyonId, receteAdi) için kontrol
+            // Aynı porsiyona ait aynı isimde başka bir reçete var mı (mevcut ID hariç)?
+            const existingRecete = await database.get(
+                "SELECT id FROM receler WHERE porsiyonId = ? AND receteAdi = ? COLLATE NOCASE AND id != ?",
+                [recete.porsiyonId, recete.receteAdi, recete.id]
+            );
+
+            if (existingRecete) {
+                // Porsiyon adını alıp daha iyi bir mesaj vermek için
+                const porsiyon = await database.get(
+                    "SELECT p.porsiyonAdi, u.ad AS sonUrunAdi FROM porsiyonlar p JOIN urunler u ON p.sonUrunId = u.id WHERE p.id = ?",
+                    [recete.porsiyonId]
+                );
+                const porsiyonTamAdi = porsiyon ? `${porsiyon.sonUrunAdi} - ${porsiyon.porsiyonAdi}` : "Bilinmeyen Porsiyon";
+                throw new Error(`"${porsiyonTamAdi}" porsiyonu için "${recete.receteAdi}" adında başka bir reçete zaten mevcut.`);
+            }
+
+            const changes = await database.run(
+                "UPDATE receler SET porsiyonId = ?, receteAdi = ? WHERE id = ?",
+                [recete.porsiyonId, recete.receteAdi, recete.id]
+            );
+
+            if (changes > 0) {
+                console.log(`Reçete başarıyla güncellendi (ID: ${recete.id}). Etkilenen satır sayısı: ${changes}`);
+                return true;
+            } else {
+                console.warn(`Reçete güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${recete.id})`);
+                return false; // Değişiklik olmadıysa veya kayıt bulunamadıysa false dön.
+            }
+        } catch (error) {
+            console.error(`Reçete güncelleme hatası (ID: ${recete.id}):`, error.message);
+            // UNIQUE constraint veya diğer özel hatalar zaten anlamlı bir mesajla fırlatılmış olabilir.
+            // if (error.message.includes('FOREIGN KEY constraint failed')) { ... } (porsiyonId geçerli mi kontrolü)
+            throw error;
+        }
+    });
+
 
     ipcMain.handle('getReceteDetaylari', async (event, receteId) => {
         try {

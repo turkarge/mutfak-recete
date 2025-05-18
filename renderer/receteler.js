@@ -1,194 +1,173 @@
 // renderer/receler.js
-// Bu dosya, Reçete Yönetimi sayfası (views/receler.html) ile ilgili JavaScript kodlarını içerir.
-
-// Bu fonksiyon, receler.html içeriği ana sayfaya yüklendiğinde çağrılacak
 export async function loadRecetelerPage() {
     console.log('Reçete Yönetimi sayfası JavaScript\'i yükleniyor...');
 
-    // !!! DİKKAT: Buradaki kodlar, receler.html yüklendikten sonra çalışacaktır.
-    // DOM elementlerine bu fonksiyon içinden erişin.
+    // --- DOM Elementlerini Seçme (Ana Reçete Formu için yeni ID'ler eklendi) ---
+    const receteIdInput = document.querySelector('#receteIdInput'); // Ana reçete formu - Reçete ID (gizli)
+    const recetePorsiyonSelect = document.querySelector('#recetePorsiyonId');
+    const receteAdiInput = document.querySelector('#receteAdi');
+    const receteEkleForm = document.querySelector('#receteEkleForm');
+    const recelerTableBody = document.querySelector('#recelerTable tbody');
+    const receteFormBaslik = document.querySelector('#receteFormBaslik'); // Ana reçete formu başlığı
+    const receteFormSubmitButton = document.querySelector('#receteFormSubmitButton'); // Ana reçete formu submit butonu
+    const receteFormCancelButton = document.querySelector('#receteFormCancelButton'); // Ana reçete formu iptal butonu
 
-    // --- DOM Elementlerini Seçme ---
-    const recetePorsiyonSelect = document.querySelector('#recetePorsiyonId'); // Yeni reçete formu - Porsiyon seçici
-    const receteAdiInput = document.querySelector('#receteAdi');             // Yeni reçete formu - Reçete Adı
-    const receteEkleForm = document.querySelector('#receteEkleForm');       // Yeni reçete formu
-    const recelerTableBody = document.querySelector('#recelerTable tbody'); // Reçete listesi tablosu tbody
+    // Detaylar için olanlar aynı kalıyor
+    const receteDetaylariCard = document.querySelector('#receteDetaylariCard');
+    const receteDetaylariTitle = document.querySelector('#receteDetaylariTitle');
+    const selectedReceteIdInput = document.querySelector('#selectedReceteId');
+    const hammaddeSelect = document.querySelector('#hammaddeId');
+    const miktarInput = document.querySelector('#miktar');
+    const detayBirimSelect = document.querySelector('#detayBirimKisaAd');
+    const receteDetayEkleForm = document.querySelector('#receteDetayEkleForm');
+    const receteDetaylariTableBody = document.querySelector('#receteDetaylariTable tbody');
 
-    const receteDetaylariCard = document.querySelector('#receteDetaylariCard'); // Reçete detayları kartı
-    const receteDetaylariTitle = document.querySelector('#receteDetaylariTitle'); // Reçete detayları kartı başlığı
-    const selectedReceteIdInput = document.querySelector('#selectedReceteId'); // Hammadde ekleme formu - Seçilen reçete ID'si (gizli input)
-    const hammaddeSelect = document.querySelector('#hammaddeId');           // Hammadde ekleme formu - Hammadde seçici
-    const miktarInput = document.querySelector('#miktar');                 // Hammadde ekleme formu - Miktar
-    const detayBirimSelect = document.querySelector('#detayBirimKisaAd'); // Hammadde ekleme formu - Birim seçici
-    const receteDetayEkleForm = document.querySelector('#receteDetayEkleForm'); // Hammadde ekleme formu
-    const receteDetaylariTableBody = document.querySelector('#receteDetaylariTable tbody'); // Reçete detayları tablosu tbody
-
-    // Genel Onay Modalı Elementleri
     const confirmationModal = document.getElementById('confirmationModal');
     const confirmationModalBody = document.getElementById('confirmationModalBody');
     const confirmActionButton = document.getElementById('confirmActionButton');
 
-    // Modal elementlerinin varlığını kontrol et
-     if (!confirmationModal || !confirmationModalBody || !confirmActionButton) {
-         console.error("Onay modal elementleri bulunamadı. Lütfen index.html dosyanızı kontrol edin.");
-          toastr.error("Uygulama hatası: Onay modal elementleri eksik.");
-          return;
-     }
-
-    // Bootstrap Modal JS'inin yüklenip yüklenmediğini kontrol et
-     if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
-        console.error("Bootstrap Modal JS yüklenmedi veya bootstrap objesi tanımsız.");
-         toastr.error("Uygulama hatası: Bootstrap Modal yüklenemedi.");
-         return;
-     }
-
-
-    let currentReceteId = null;
-
-
-    // --- Yardımcı Modal Onay Fonksiyonu ---
-    // Bu fonksiyon, bir onay mesajı gösterir ve kullanıcı onaylayana kadar bekler (Promise döndürür)
-    // Modal elementlerini dış scope'tan (loadRecetelerPage scope'u) alır.
-    function showConfirmationModal(message, actionButtonText = 'Tamam', actionButtonClass = 'btn-primary') {
-        return new Promise((resolve, reject) => {
-            // Modal elementlerinin varlığını kontrol etmeye burada gerek yok,
-            // loadRecetelerPage fonksiyonu başında kontrol ettik.
-
-            confirmationModalBody.textContent = message; // Mesajı ayarla
-            confirmActionButton.textContent = actionButtonText; // Buton metnini ayarla
-
-            // Buton sınıflarını ayarla (mevcutları kaldırıp yeniyi ekle)
-            confirmActionButton.classList.remove('btn-primary', 'btn-secondary', 'btn-success', 'btn-danger', 'btn-info', 'btn-warning');
-            confirmActionButton.classList.add(actionButtonClass);
-
-
-            // Modal kapatıldığında ve onaylanmadığında promise'ı reject et (false ile)
-             const onModalHidden = () => {
-                 console.log("Onay modal kapatıldı (gizlendi).");
-                 resolve(false); // İptal durumunda false döndür
-                 // Olay dinleyicilerini kaldır
-                 confirmationModal.removeEventListener('hidden.bs.modal', onModalHidden);
-                 confirmActionButton.removeEventListener('click', onConfirmActionClick);
-             };
-
-             // Onay butonuna tıklama olayını dinle
-             const onConfirmActionClick = () => {
-                 console.log("Onay butonuna tıklandı.");
-                 // Olay dinleyicilerini kaldır
-                 confirmationModal.removeEventListener('hidden.bs.modal', onModalHidden);
-                 confirmActionButton.removeEventListener('click', onConfirmActionClick);
-                 // Modalı gizle
-                 const modalInstance = bootstrap.Modal.getInstance(confirmationModal); // Bootstrap modal instance'ı al
-                 if (modalInstance) modalInstance.hide(); // Modalı gizle
-                 // Promise'ı çöz (true ile onaylandı)
-                 resolve(true);
-             };
-
-
-            // Olay dinleyicilerini ekle (her zaman yeniden ekliyoruz ve kapatınca kaldırıyoruz)
-            confirmationModal.addEventListener('hidden.bs.modal', onModalHidden);
-            confirmActionButton.addEventListener('click', onConfirmActionClick);
-
-
-            // Modalı göster
-             const modalInstance = bootstrap.Modal.getInstance(confirmationModal) || new bootstrap.Modal(confirmationModal);
-            modalInstance.show(); // Modalı göster
-
-        }); // Promise sonu
+    if (!confirmationModal || !confirmationModalBody || !confirmActionButton) {
+        console.error("Onay modal elementleri bulunamadı.");
+        toastr.error("Uygulama hatası: Onay modal elementleri eksik.");
+        return;
+    }
+    if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
+        console.error("Bootstrap Modal JS yüklenmedi.");
+        toastr.error("Uygulama hatası: Bootstrap Modal yüklenemedi.");
+        return;
     }
 
+    let currentReceteId = null; // Görüntülenen reçete detayı için
 
-    // --- Dropdownları Doldurma Fonksiyonları ---
+    // --- ANA REÇETE FORMU İÇİN MOD DEĞİŞTİRME ---
+    function switchToAddReceteMode() {
+        if (!receteEkleForm) return;
+        receteEkleForm.reset();
+        if (receteIdInput) receteIdInput.value = ''; // Gizli ID'yi temizle
+        if (receteFormBaslik) receteFormBaslik.textContent = 'Yeni Reçete Ekle';
+        if (receteFormSubmitButton) {
+            receteFormSubmitButton.textContent = 'Reçete Ekle';
+            receteFormSubmitButton.classList.remove('btn-success');
+            receteFormSubmitButton.classList.add('btn-primary');
+        }
+        if (receteFormCancelButton) receteFormCancelButton.classList.add('d-none');
+        if (recetePorsiyonSelect) recetePorsiyonSelect.focus();
+    }
 
-    // Yeni reçete formu için Porsiyonlar dropdown'ını doldur
+    function showConfirmationModal(message, actionButtonText = 'Tamam', actionButtonClass = 'btn-primary') {
+        return new Promise((resolve) => {
+            confirmationModalBody.textContent = message;
+            confirmActionButton.textContent = actionButtonText;
+            confirmActionButton.className = 'btn'; // Önce tüm bootstrap btn sınıflarını temizle
+            confirmActionButton.classList.add('btn', actionButtonClass); // Sonra yenilerini ekle
+
+
+            const modalInstance = bootstrap.Modal.getInstance(confirmationModal) || new bootstrap.Modal(confirmationModal);
+            
+            const handleConfirm = () => {
+                modalInstance.hide();
+                resolve(true);
+                cleanupListeners();
+            };
+
+            const handleDismiss = () => {
+                // hide.bs.modal veya hidden.bs.modal daha uygun olabilir,
+                // ancak resolve(false) sadece X veya İptal'e basıldığında olmalı.
+                // Butonla kapatma zaten handleConfirm ile yönetiliyor.
+                // ESC veya dışarı tıklama için 'hidden' daha iyi.
+                 resolve(false);
+                 cleanupListeners();
+            };
+            
+            const cleanupListeners = () => {
+                confirmActionButton.removeEventListener('click', handleConfirm);
+                confirmationModal.removeEventListener('hidden.bs.modal', handleDismiss);
+            };
+
+            confirmActionButton.addEventListener('click', handleConfirm);
+            // 'hidden.bs.modal' olayı, modal tamamen gizlendiğinde tetiklenir.
+            // Eğer kullanıcı X ile veya ESC ile kapatırsa bu olay tetiklenir.
+            confirmationModal.addEventListener('hidden.bs.modal', handleDismiss, { once: true }); // Sadece bir kez çalışsın
+
+            modalInstance.show();
+        });
+    }
+
     async function populateRecetePorsiyonDropdown() {
         try {
-             const porsiyonlar = await window.electronAPI.getPorsiyonlar();
-             console.log('Reçete formu için Porsiyonlar dropdown:', porsiyonlar);
-             recetePorsiyonSelect.innerHTML = '<option value="">-- Porsiyon Seçiniz --</option>';
-             porsiyonlar.forEach(porsiyon => {
+            const porsiyonlar = await window.electronAPI.getPorsiyonlar();
+            recetePorsiyonSelect.innerHTML = '<option value="">-- Porsiyon Seçiniz --</option>';
+            porsiyonlar.forEach(porsiyon => {
                 const option = document.createElement('option');
                 option.value = porsiyon.id;
                 option.textContent = `${porsiyon.sonUrunAdi} - ${porsiyon.porsiyonAdi}`;
                 recetePorsiyonSelect.appendChild(option);
-             });
-
+            });
         } catch (error) {
-             console.error('Porsiyonlar dropdown doldurulurken hata oluştu:', error);
-             toastr.error('Porsiyonlar dropdown yüklenirken bir hata oluştu.');
+            console.error('Porsiyonlar dropdown doldurulurken hata:', error);
+            toastr.error('Porsiyonlar dropdown yüklenirken bir hata oluştu.');
         }
     }
 
-     // Hammadde ekleme formu için Hammadde ve Birimler dropdown'larını doldur
     async function populateReceteDetayDropdowns() {
         try {
-             const hammaddeler = await window.electronAPI.getUrunlerByTur('Hammadde');
-             console.log('Reçete Detay formu için Hammaddeler dropdown:', hammaddeler);
-             hammaddeSelect.innerHTML = '<option value="">-- Hammadde Seçiniz --</option>';
-             hammaddeler.forEach(hammadde => {
+            const hammaddeler = await window.electronAPI.getUrunlerByTur('Hammadde');
+            hammaddeSelect.innerHTML = '<option value="">-- Hammadde Seçiniz --</option>';
+            hammaddeler.forEach(hammadde => {
                 const option = document.createElement('option');
                 option.value = hammadde.id;
                 option.textContent = hammadde.ad;
                 hammaddeSelect.appendChild(option);
-             });
+            });
 
-             const birimler = await window.electronAPI.getBirimler();
-             console.log('Reçete Detay formu için Birimler dropdown:', birimler);
-             detayBirimSelect.innerHTML = '<option value="">-- Birim Seçiniz --</option>';
-              birimler.forEach(birim => {
+            const birimler = await window.electronAPI.getBirimler();
+            detayBirimSelect.innerHTML = '<option value="">-- Birim Seçiniz --</option>';
+            birimler.forEach(birim => {
                 const option = document.createElement('option');
                 option.value = birim.kisaAd;
                 option.textContent = `${birim.birimAdi} (${birim.kisaAd})`;
                 detayBirimSelect.appendChild(option);
-             });
-
+            });
         } catch (error) {
-             console.error('Reçete Detay dropdownları doldurulurken hata oluştu:', error);
-             toastr.error('Reçete Detay dropdownları yüklenirken bir hata oluştu.');
+            console.error('Reçete Detay dropdownları doldurulurken hata:', error);
+            toastr.error('Reçete Detay dropdownları yüklenirken bir hata oluştu.');
         }
     }
 
-
-    // --- Tablo Listeleme Fonksiyonları ---
-
-    // Reçeteleri tabloya ekleyen fonksiyon (displayReceteler)
     function displayReceteler(receler) {
         recelerTableBody.innerHTML = '';
-
         if (receler && receler.length > 0) {
             receler.forEach(recete => {
                 const row = recelerTableBody.insertRow();
-
                 row.insertCell(0).textContent = recete.id;
                 row.insertCell(1).textContent = `${recete.sonUrunAdi} - ${recete.porsiyonAdi}` || 'Porsiyon Bilgisi Eksik';
                 row.insertCell(2).textContent = recete.receteAdi || 'Varsayılan';
 
-                // Eylemler hücresi
                 const actionsCell = row.insertCell(3);
+                actionsCell.classList.add('text-nowrap'); // Butonların alt alta gelmesini engelle
 
-                // Detayları Görüntüle butonu
+                // YENİ: Ana Reçete Düzenle Butonu
+                const editReceteButton = document.createElement('button');
+                editReceteButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
+                editReceteButton.classList.add('btn', 'btn-sm', 'btn-warning', 'me-1'); // 'me-1' sağdan biraz boşluk
+                editReceteButton.title = "Reçeteyi Düzenle";
+                editReceteButton.addEventListener('click', () => handleEditRecete(recete));
+                actionsCell.appendChild(editReceteButton);
+
                 const viewDetailsButton = document.createElement('button');
-                viewDetailsButton.textContent = 'Detayları Görüntüle';
-                viewDetailsButton.classList.add('btn', 'btn-sm', 'btn-info', 'me-2');
-                viewDetailsButton.dataset.id = recete.id;
-
+                viewDetailsButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-notes" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 3m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /><path d="M9 7l6 0" /><path d="M9 11l6 0" /><path d="M9 15l4 0" /></svg>';
+                viewDetailsButton.classList.add('btn', 'btn-sm', 'btn-info', 'me-1');
+                viewDetailsButton.title = "Detayları Görüntüle/Düzenle";
                 viewDetailsButton.addEventListener('click', () => handleViewReceteDetails(recete.id, recete));
-
-                // Sil butonu oluştur
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Sil';
-                deleteButton.classList.add('btn', 'btn-sm', 'btn-danger');
-                deleteButton.dataset.id = recete.id;
-
-                 deleteButton.addEventListener('click', () => handleDeleteRecete(recete.id, recete));
-
-
-                // Butonları hücreye ekle
                 actionsCell.appendChild(viewDetailsButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
+                deleteButton.classList.add('btn', 'btn-sm', 'btn-danger');
+                deleteButton.title = "Reçeteyi Sil";
+                deleteButton.addEventListener('click', () => handleDeleteRecete(recete.id, recete));
                 actionsCell.appendChild(deleteButton);
-
             });
-
         } else {
             const row = recelerTableBody.insertRow();
             const cell = row.insertCell(0);
@@ -198,44 +177,53 @@ export async function loadRecetelerPage() {
         }
     }
 
-    // Seçilen Reçete Detaylarını tabloya ekleyen fonksiyon (displayReceteDetaylari)
-    function displayReceteDetaylari(detaylar) {
-         receteDetaylariTableBody.innerHTML = '';
+    // YENİ: Ana Reçete Düzenleme Formunu Doldurma
+    function handleEditRecete(recete) {
+        if (!receteEkleForm) return;
+        console.log("Ana Reçete düzenleniyor:", recete);
 
+        receteIdInput.value = recete.id;
+        recetePorsiyonSelect.value = recete.porsiyonId;
+        receteAdiInput.value = recete.receteAdi || ''; // null ise boş string
+
+        receteFormBaslik.textContent = `Reçeteyi Düzenle: ${recete.sonUrunAdi} - ${recete.porsiyonAdi}`;
+        receteFormSubmitButton.textContent = 'Reçeteyi Güncelle';
+        receteFormSubmitButton.classList.remove('btn-primary');
+        receteFormSubmitButton.classList.add('btn-success');
+        receteFormCancelButton.classList.remove('d-none');
+
+        recetePorsiyonSelect.focus();
+        // Forma scroll etmeye gerek olmayabilir, çünkü form zaten görünür alanda.
+    }
+
+
+    function displayReceteDetaylari(detaylar) {
+        receteDetaylariTableBody.innerHTML = '';
         if (detaylar && detaylar.length > 0) {
             detaylar.forEach(detay => {
                 const row = receteDetaylariTableBody.insertRow();
-
                 row.insertCell(0).textContent = detay.id;
                 row.insertCell(1).textContent = detay.hammaddeAdi || 'Hammadde Bilgisi Eksik';
-                row.insertCell(2).textContent = detay.miktar;
+                row.insertCell(2).textContent = parseFloat(detay.miktar).toFixed(3); // Miktarı formatla
                 row.insertCell(3).textContent = detay.birimKisaAd || 'Birim Bilgisi Eksik';
 
-
-                // Eylemler hücresi (Düzenle/Sil butonları)
                 const actionsCell = row.insertCell(4);
-                // Düzenle butonu
+                actionsCell.classList.add('text-nowrap');
+
                 const editButton = document.createElement('button');
-                editButton.textContent = 'Düzenle';
-                editButton.classList.add('btn', 'btn-sm', 'btn-primary', 'me-2');
-                editButton.dataset.id = detay.id;
-                // editButton.disabled = true; // <-- Bu satırı kaldırdık, buton artık aktif olacak
-
-                // Tıklama olayına handleEditReceteDetay'ı çağırırken detay.id ve detay objesini gönder
-                 editButton.addEventListener('click', () => handleEditReceteDetay(detay.id, detay));
-
-
-                // Sil butonu
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Sil';
-                deleteButton.classList.add('btn', 'btn-sm', 'btn-danger');
-                deleteButton.dataset.id = detay.id;
-                deleteButton.addEventListener('click', () => handleDeleteReceteDetay(detay.id));
-
+                editButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
+                editButton.classList.add('btn', 'btn-sm', 'btn-warning', 'me-1'); // Renk warning olarak değiştirildi
+                editButton.title = "Detayı Düzenle";
+                editButton.addEventListener('click', () => handleEditReceteDetay(detay.id, detay));
                 actionsCell.appendChild(editButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
+                deleteButton.classList.add('btn', 'btn-sm', 'btn-danger');
+                deleteButton.title = "Detayı Sil";
+                deleteButton.addEventListener('click', () => handleDeleteReceteDetay(detay.id));
                 actionsCell.appendChild(deleteButton);
             });
-
         } else {
             const row = receteDetaylariTableBody.insertRow();
             const cell = row.insertCell(0);
@@ -245,378 +233,302 @@ export async function loadRecetelerPage() {
         }
     }
 
-
-    // --- Olay Dinleyicileri ve İşlem Fonksiyonları Handler'ları ---
-    // (Bu fonksiyonlar loadRecetelerPage scope'unda tanımlı olacak)
-
-
-    // "Detayları Görüntüle" butonuna tıklama handler'ı
     async function handleViewReceteDetails(receteId, recete) {
-        console.log(`"Detayları Görüntüle" butonuna tıklandı, Reçete ID: ${receteId}`);
-        console.log('Seçilen Reçete Obj:', recete);
-
+        console.log(`Detayları Görüntüle: Reçete ID ${receteId}`);
         await fetchAndDisplayReceteDetails(receteId);
-        currentReceteId = receteId;
+        currentReceteId = receteId; // Bu satır önemli
 
         if (receteDetaylariTitle && recete) {
-             receteDetaylariTitle.textContent = `"${recete.sonUrunAdi} - ${recete.porsiyonAdi}" Reçete Detayları`;
-             if (recete.receteAdi) {
-                  receteDetaylariTitle.textContent += ` ("${recete.receteAdi}")`;
-             }
+            receteDetaylariTitle.textContent = `"${recete.sonUrunAdi} - ${recete.porsiyonAdi}" Reçete Detayları`;
+            if (recete.receteAdi) {
+                receteDetaylariTitle.textContent += ` ("${recete.receteAdi}")`;
+            }
         } else {
             receteDetaylariTitle.textContent = 'Seçilen Reçete Detayları';
         }
-
-         receteDetaylariCard.style.display = 'block';
-
-         selectedReceteIdInput.value = receteId;
-
-         // TODO: Reçete detayları kartına scroll yapma efekti eklenebilir
+        receteDetaylariCard.style.display = 'block';
+        selectedReceteIdInput.value = receteId; // Detay ekleme formu için reçete ID'sini ayarla
+        resetReceteDetayForm(); // Detay formunu her zaman ekleme modunda başlat
     }
 
-
-     // Reçete Silme işlemini yönetecek fonksiyon (Modal Onaylı)
     async function handleDeleteRecete(receteId, recete) {
-        console.log(`"Reçete Sil" butonuna tıklandı, Reçete ID: ${receteId}`);
-        console.log('Silinecek Reçete Obj:', recete);
-
+        console.log(`Reçete Sil: ID ${receteId}`);
+        const confirmed = await showConfirmationModal(
+            `"${recete.sonUrunAdi} - ${recete.porsiyonAdi}" (${recete.receteAdi || 'Varsayılan'}) adlı reçeteyi silmek istediğinizden emin misiniz? Bu işlem reçeteye ait tüm detayları da silecektir!`,
+            'Evet, Sil',
+            'btn-danger'
+        );
+        if (!confirmed) {
+            toastr.info('Reçete silme işlemi iptal edildi.');
+            return;
+        }
         try {
-             const confirmed = await showConfirmationModal(
-                 `"${recete.sonUrunAdi} - ${recete.porsiyonAdi}" reçetesini silmek istediğinizden emin misiniz?`,
-                 'Evet, Sil',
-                 'btn-danger'
-             );
-
-             if (!confirmed) {
-                 console.log('Reçete silme işlemi kullanıcı tarafından iptal edildi (Modal).');
-                 toastr.info('Reçete silme işlemi iptal edildi.');
-                 return;
-             }
-
-            console.log('Reçete silme işlemi onaylandı (Modal).');
             const success = await window.electronAPI.deleteRecete(receteId);
-
             if (success) {
-                console.log(`Reçete başarıyla silindi, ID: ${receteId}`);
                 toastr.success('Reçete başarıyla silindi!');
-
                 await fetchAndDisplayReceteler();
-
-                if (currentReceteId === receteId) {
+                if (currentReceteId === receteId) { // Eğer silinen reçetenin detayları açıksa
                     receteDetaylariCard.style.display = 'none';
                     currentReceteId = null;
                 }
-
+                // Eğer silinen reçete ana formda düzenleniyorsa, formu ekleme moduna al
+                if (receteIdInput.value === receteId.toString()) {
+                    switchToAddReceteMode();
+                }
             } else {
-                console.warn(`Reçete silme başarısız veya reçete bulunamadı, ID: ${receteId}`);
-                toastr.warning('Reçete silme başarısız veya reçete bulunamadı.');
+                toastr.warning('Reçete silinemedi veya bulunamadı.');
             }
-
         } catch (error) {
-            console.error('Genel Hata Yakalandı (Reçete Sil):', error);
-             if (error.message && error.message.includes('FOREIGN KEY constraint failed')) {
-                  console.warn('Yabancı anahtar kısıtlaması hatası yakalandı (Reçete Sil).');
-                  toastr.error('Bu reçetenin detayları olduğu için silinemez. Önce detaylarını silin.');
-             }
-             else {
+            console.error('Reçete silme hatası:', error);
+            if (error.message && error.message.includes('FOREIGN KEY constraint failed')) {
+                 toastr.error('Bu reçeteye bağlı detaylar olduğu için silinemedi. Veritabanı ayarlarınızı kontrol edin (ON DELETE CASCADE). Şimdilik detayları manuel silmeniz gerekebilir.');
+            } else {
                 toastr.error('Reçete silinirken bir hata oluştu: ' + error.message);
-             }
+            }
         }
     }
 
-
-     // Reçete Detayları Silme işlemini yönetecek fonksiyon (Modal Onaylı)
-     async function handleDeleteReceteDetay(detayId) {
-        console.log(`"Reçete Detay Sil" butonuna tıklandı, Detay ID: ${detayId}`);
-
+    async function handleDeleteReceteDetay(detayId) {
+        console.log(`Reçete Detay Sil: ID ${detayId}`);
+        const confirmed = await showConfirmationModal(
+            `Bu reçete detayını (hammadde kaydını) silmek istediğinizden emin misiniz?`,
+            'Evet, Sil',
+            'btn-danger'
+        );
+        if (!confirmed) {
+            toastr.info('Reçete detay silme işlemi iptal edildi.');
+            return;
+        }
         try {
-             const confirmed = await showConfirmationModal(
-                 `Bu reçete detayını silmek istediğinizden emin misiniz?`,
-                 'Evet, Sil',
-                 'btn-danger'
-             );
-
-             if (!confirmed) {
-                 console.log('Reçete detay silme işlemi kullanıcı tarafından iptal edildi (Modal).');
-                 toastr.info('Reçete detay silme işlemi iptal edildi.');
-                 return;
-             }
-
-             console.log('Reçete detay silme işlemi onaylandı (Modal).');
             const success = await window.electronAPI.deleteReceteDetay(detayId);
-
             if (success) {
-                console.log(`Reçete Detayı başarıyla silindi, ID: ${detayId}`);
-                toastr.success('Hammadde reçeteden silindi!');
-
+                toastr.success('Hammadde reçeteden başarıyla silindi!');
                 if (currentReceteId) {
                     await fetchAndDisplayReceteDetails(currentReceteId);
-                } else {
-                     console.error("Silme sonrası reçete detayları yenilenemedi: currentReceteId boş.");
                 }
-
+                // Eğer silinen detay, detay formunda düzenleniyorsa formu resetle
+                if (receteDetayEkleForm.dataset.editingId === detayId.toString()) {
+                    resetReceteDetayForm();
+                }
             } else {
-                console.warn(`Reçete Detay silme başarısız veya detay bulunamadı, ID: ${detayId}`);
-                toastr.warning('Reçete detayı silme başarısız veya detay bulunamadı.');
+                toastr.warning('Reçete detayı silinemedi veya bulunamadı.');
             }
+        } catch (error) {
+            console.error('Reçete detay silme hatası:', error);
+            toastr.error('Reçete detayı silinirken bir hata oluştu: ' + error.message);
+        }
+    }
 
-         } catch (error) {
-             console.error('Genel Hata Yakalandı (Reçete Detay Sil):', error);
-              let displayMessage = 'Reçete detayı silinirken beklenmeyen bir hata oluştu.';
-              toastr.error(displayMessage + ': ' + error.message);
-         }
-     }
-
-
-    // *** Reçete Detayı Düzenleme işlemini yönetecek fonksiyon (handleEditReceteDetay) ***
-    async function handleEditReceteDetay(detayId, detay) { // detay objesini de parametre olarak alıyor
-        console.log(`"Reçete Detay Düzenle" butonuna tıklandı, Detay ID: ${detayId}`);
-        console.log('Düzenlenecek Detay Obj:', detay);
-
-        // Formu seçilen detay bilgileriyle doldur
+    async function handleEditReceteDetay(detayId, detay) {
+        console.log(`Reçete Detay Düzenle: ID ${detayId}`);
         if (receteDetayEkleForm) {
-             // selectedReceteIdInput zaten dolu olmalı (Detayları Görüntüle'ye basıldığında)
-             // selectedReceteIdInput.value = detay.receteId; // Emin olmak için tekrar set edilebilir
-
-            // Hammadde, Miktar ve Birim alanlarını doldur
-            // Dropdownlar string değer tuttuğu için value ataması string olmalı
-            hammaddeSelect.value = detay.hammaddeId.toString(); // ID'yi string'e çevir
+            hammaddeSelect.value = detay.hammaddeId.toString();
             miktarInput.value = detay.miktar;
-            detayBirimSelect.value = detay.birimKisaAd; // Kısa Ad zaten string
-
-
-            // Düzenleme modunda olduğumuzu belirten data attribute ekle
+            detayBirimSelect.value = detay.birimKisaAd;
             receteDetayEkleForm.dataset.editingId = detay.id;
 
-             // Formun başlığını ve buton metnini değiştir
-             const formTitle = receteDetayEkleForm.previousElementSibling;
-             if(formTitle && formTitle.tagName === 'H4') {
-                 formTitle.textContent = 'Hammaddeyi Düzenle';
-             }
-             const submitButton = receteDetayEkleForm.querySelector('button[type="submit"]');
-             if(submitButton) {
-                  submitButton.textContent = 'Güncelle';
-                   submitButton.classList.remove('btn-primary');
-                  submitButton.classList.add('btn-success'); // Yeşil renk yap
-             }
-
-             toastr.info(`Hammadde düzenleme formuna yüklendi (ID: ${detayId}).`);
-
-        } else {
-             console.error("Hammadde ekleme formu (receteDetayEkleForm) bulunamadı.");
+            const formTitle = receteDetayEkleForm.previousElementSibling;
+            if (formTitle && formTitle.tagName === 'H4') {
+                formTitle.textContent = 'Hammaddeyi Düzenle';
+            }
+            const submitButton = receteDetayEkleForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.textContent = 'Güncelle';
+                submitButton.classList.remove('btn-primary');
+                submitButton.classList.add('btn-success');
+            }
+            miktarInput.focus(); // Miktar alanına odaklan
+            // Detay formuna scroll etme (genellikle zaten görünür)
         }
     }
 
-
-    // *** Reçete detay formu düzenleme modundan ekleme moduna döndüren fonksiyon ***
     function resetReceteDetayForm() {
         if (receteDetayEkleForm) {
-            receteDetayEkleForm.reset(); // Formu temizle
-            delete receteDetayEkleForm.dataset.editingId; // Düzenleme ID'sini kaldır
-
-             // Formun başlığını ve buton metnini varsayılana döndür
-             const formTitle = receteDetayEkleForm.previousElementSibling;
-             if(formTitle && formTitle.tagName === 'H4') {
-                 formTitle.textContent = 'Hammadde Ekle';
-             }
-             const submitButton = receteDetayEkleForm.querySelector('button[type="submit"]');
-             if(submitButton) {
-                  submitButton.textContent = 'Hammadde Ekle';
-                   submitButton.classList.remove('btn-success');
-                  submitButton.classList.add('btn-primary');
-             }
-             // selectedReceteIdInput değeri aynı kalacak (hangi reçetenin detayları)
+            receteDetayEkleForm.reset();
+            delete receteDetayEkleForm.dataset.editingId;
+            const formTitle = receteDetayEkleForm.previousElementSibling;
+            if (formTitle && formTitle.tagName === 'H4') formTitle.textContent = 'Hammadde Ekle';
+            const submitButton = receteDetayEkleForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.textContent = 'Hammadde Ekle';
+                submitButton.classList.remove('btn-success');
+                submitButton.classList.add('btn-primary');
+            }
+            // selectedReceteIdInput.value kalmalı
         }
     }
 
-
-    // --- Async Veri Çekme ve Gösterme Yardımcı Fonksiyonları ---
-
-    // Reçete listesini Ana Süreç'ten çekip gösteren yardımcı fonksiyon
     async function fetchAndDisplayReceteler() {
         try {
             const receler = await window.electronAPI.getReceteler();
-            console.log('Ana Süreçten gelen reçeteler:', receler);
             displayReceteler(receler);
         } catch (error) {
-            console.error('Reçeteleri alırken hata oluştu:', error);
+            console.error('Reçeteleri alırken hata:', error);
             toastr.error('Reçete listesi yüklenirken hata oluştu.');
         }
     }
 
-    // Seçilen Reçete Detaylarını Ana Süreç'ten çekip gösteren yardımcı fonksiyon
     async function fetchAndDisplayReceteDetails(receteId) {
-         try {
+        try {
             const detaylar = await window.electronAPI.getReceteDetaylari(receteId);
-            console.log(`Ana Süreçten gelen reçete detayları (ID: ${receteId}):`, detaylar);
             displayReceteDetaylari(detaylar);
-
-         } catch (error) {
-            console.error(`Reçete detayları (ID: ${receteId}) alırken hata oluştu:`, error);
+        } catch (error) {
+            console.error(`Reçete detayları (ID: ${receteId}) alırken hata:`, error);
             toastr.error('Reçete detayları yüklenirken bir hata oluştu.');
         }
     }
 
-
-    // --- Form Submit Olay Dinleyicileri ---
-
-    // Yeni Reçete Ekleme Formu Submit Olayı
+    // ANA REÇETE EKLEME/GÜNCELLEME FORMU SUBMIT
     if (receteEkleForm) {
-        receteEkleForm.addEventListener('submit', async (event) => {
+        receteEkleForm.onsubmit = async (event) => { // .addEventListener yerine .onsubmit
             event.preventDefault();
-
+            const id = receteIdInput.value ? parseInt(receteIdInput.value) : null;
             const porsiyonId = recetePorsiyonSelect.value;
-            const receteAdi = receteAdiInput.value.trim() || null;
+            // Reçete adı boşsa "Varsayılan" olarak ayarla
+            let receteAdiValue = receteAdiInput.value.trim();
+            if (receteAdiValue === '') {
+                receteAdiValue = 'Varsayılan';
+            }
 
-            const yeniRecete = {
+
+            const receteData = {
+                id: id,
                 porsiyonId: parseInt(porsiyonId),
-                receteAdi: receteAdi
+                receteAdi: receteAdiValue
             };
 
-             if (!yeniRecete.porsiyonId) {
+            if (!receteData.porsiyonId) {
                 toastr.warning('Porsiyon seçimi boş bırakılamaz.');
                 return;
-             }
+            }
 
             try {
-                const eklenenReceteId = await window.electronAPI.addRecete(yeniRecete);
-                console.log('Reçete başarıyla eklendi, ID:', eklenenReceteId);
-                toastr.success('Reçete başarıyla eklendi!');
+                let islemYapildi = false;
+                let mesaj = "";
 
-                receteEkleForm.reset();
+                if (receteData.id) { // Güncelleme
+                    console.log("Ana Reçete güncelleniyor:", receteData);
+                    const guncellendi = await window.electronAPI.updateRecete(receteData);
+                    if (guncellendi) {
+                        mesaj = `Reçete başarıyla güncellendi!`;
+                        toastr.success(mesaj);
+                        islemYapildi = true;
+                    } else {
+                        toastr.info(`Reçete için herhangi bir değişiklik yapılmadı veya kayıt bulunamadı.`);
+                    }
+                } else { // Ekleme
+                    console.log("Yeni ana reçete ekleniyor:", receteData);
+                    await window.electronAPI.addRecete(receteData);
+                    mesaj = `Reçete başarıyla eklendi!`;
+                    toastr.success(mesaj);
+                    islemYapildi = true;
+                }
 
-                // Yeni reçete eklendikten sonra reçete listesini yenile
-                await fetchAndDisplayReceteler();
-
+                if (islemYapildi) {
+                    switchToAddReceteMode();
+                    await fetchAndDisplayReceteler();
+                    // Eğer güncellenen reçetenin detayları açıksa, başlığını da güncelle
+                    if (receteData.id && currentReceteId === receteData.id) {
+                        const guncelRecete = (await window.electronAPI.getReceteler()).find(r => r.id === receteData.id);
+                        if (guncelRecete && receteDetaylariTitle) {
+                             receteDetaylariTitle.textContent = `"${guncelRecete.sonUrunAdi} - ${guncelRecete.porsiyonAdi}" Reçete Detayları`;
+                             if (guncelRecete.receteAdi && guncelRecete.receteAdi !== 'Varsayılan') { // Sadece "Varsayılan" değilse göster
+                                 receteDetaylariTitle.textContent += ` ("${guncelRecete.receteAdi}")`;
+                             }
+                        }
+                    }
+                }
             } catch (error) {
-                console.error('Genel Hata Yakalandı (Reçete Ekle):', error);
-                let displayMessage = 'Reçete eklenirken beklenmeyen bir hata oluştu.';
-                if (error.message && error.message.includes('UNIQUE constraint failed')) {
-                     console.warn('Benzersizlik kısıtlaması hatası yakalandı (Reçete Ekle).');
-                      const selectedPorsiyonText = recetePorsiyonSelect.options[recetePorsiyonSelect.selectedIndex].text;
-                      if (yeniRecete.receteAdi) {
-                           displayMessage = `"${selectedPorsiyonText}" porsiyonu için "${yeniRecete.receteAdi}" adında bir reçete zaten mevcut.`;
-                      } else {
-                           displayMessage = `"${selectedPorsiyonText}" porsiyonu için varsayılan (adı boş) bir reçete zaten mevcut.`;
-                      }
-
+                console.error('Ana Reçete Ekle/Güncelle hatası:', error);
+                let displayMessage = 'İşlem sırasında bir hata oluştu.';
+                if (error.message.includes('adında başka bir reçete zaten mevcut.')) {
+                    displayMessage = error.message;
+                } else if (error.message && error.message.includes('UNIQUE constraint failed')) {
+                    const selectedPorsiyonText = recetePorsiyonSelect.options[recetePorsiyonSelect.selectedIndex].text;
+                    displayMessage = `"${selectedPorsiyonText}" porsiyonu için "${receteData.receteAdi}" adında bir reçete zaten mevcut.`;
+                } else {
+                    displayMessage = 'İşlem sırasında bir hata oluştu: ' + error.message;
                 }
-                else {
-                     displayMessage = 'Reçete eklenirken bir hata oluştu: ' + error.message;
-                }
-                 toastr.error(displayMessage);
+                toastr.error(displayMessage);
             }
-        });
+        };
     } else {
-         console.error("Yeni reçete ekleme formu (receteEkleForm) bulunamadı.");
+        console.error("Ana reçete formu (receteEkleForm) bulunamadı.");
+    }
+
+    // ANA REÇETE İPTAL BUTONU
+    if (receteFormCancelButton) {
+        receteFormCancelButton.onclick = () => { // .addEventListener yerine .onclick
+            switchToAddReceteMode();
+        };
     }
 
 
-    // Seçilen Reçete Detayları Formu Submit Olayı (Hammadde Ekleme veya Düzenleme)
+    // REÇETE DETAY EKLEME/GÜNCELLEME FORMU SUBMIT
     if (receteDetayEkleForm) {
-        receteDetayEkleForm.addEventListener('submit', async (event) => {
+        receteDetayEkleForm.onsubmit = async (event) => { // .addEventListener yerine .onsubmit
             event.preventDefault();
+            const receteIdForDetay = selectedReceteIdInput.value;
+            const hammaddeIdVal = hammaddeSelect.value;
+            const miktarVal = miktarInput.value;
+            const birimKisaAdVal = detayBirimSelect.value;
 
-            const receteId = selectedReceteIdInput.value; // Gizli inputtan seçilen reçete ID'sini al
-            const hammaddeId = hammaddeSelect.value;
-            const miktar = miktarInput.value;
-            const birimKisaAd = detayBirimSelect.value;
+            const detayData = {
+                receteId: parseInt(receteIdForDetay),
+                hammaddeId: parseInt(hammaddeIdVal),
+                miktar: parseFloat(miktarVal),
+                birimKisaAd: birimKisaAdVal
+            };
 
-             const detayData = {
-                 receteId: parseInt(receteId),
-                 // Hammadde, Miktar ve Birim inputlarından alınan değerler
-                 hammaddeId: parseInt(hammaddeId),
-                 miktar: parseFloat(miktar),
-                 birimKisaAd: birimKisaAd
-             };
+            if (!detayData.receteId || !detayData.hammaddeId || isNaN(detayData.miktar) || !detayData.birimKisaAd) {
+                toastr.warning('Hammadde, geçerli Miktar ve Birim boş bırakılamaz.');
+                return;
+            }
+            if (detayData.miktar <= 0) {
+                toastr.warning('Miktar sıfırdan büyük olmalıdır.');
+                return;
+            }
 
-             if (!detayData.receteId || !detayData.hammaddeId || !detayData.miktar || !detayData.birimKisaAd) {
-                 toastr.warning('Hammadde, Miktar ve Birim boş bırakılamaz.');
-                 return;
-             }
-             if (detayData.miktar <= 0) {
-                  toastr.warning('Miktar sıfırdan büyük olmalıdır.');
-                 return;
-             }
+            const editingId = receteDetayEkleForm.dataset.editingId;
+            try {
+                let islemYapildiDetay = false;
+                if (editingId) { // Detay Güncelleme
+                    detayData.id = parseInt(editingId);
+                    const success = await window.electronAPI.updateReceteDetay(detayData);
+                    if (success) {
+                        toastr.success('Hammadde detayı güncellendi!');
+                        islemYapildiDetay = true;
+                    } else {
+                        toastr.warning('Reçete detayı güncelleme başarısız veya değişiklik yapılmadı.');
+                    }
+                } else { // Detay Ekleme
+                    await window.electronAPI.addReceteDetay(detayData);
+                    toastr.success('Hammadde reçeteye eklendi!');
+                    islemYapildiDetay = true;
+                }
 
-
-             const editingId = receteDetayEkleForm.dataset.editingId;
-
-             if (editingId) {
-                 // *** Düzenleme Modunda ***
-                 console.log(`Reçete detayı güncelleniyor, ID: ${editingId}`);
-                 detayData.id = parseInt(editingId);
-
-
-                 try {
-                     const success = await window.electronAPI.updateReceteDetay(detayData);
-
-                     if (success) {
-                         console.log(`Reçete detayı başarıyla güncellendi, ID: ${editingId}`);
-                         toastr.success('Hammadde detayı güncellendi!');
-
-                         resetReceteDetayForm();
-
-                         if (currentReceteId) {
-                             await fetchAndDisplayReceteDetails(currentReceteId);
-                         } else {
-                              console.error("Güncelleme sonrası reçete detayları yenilenemedi: currentReceteId boş.");
-                         }
-
-                     } else {
-                         console.warn(`Reçete detayı güncelleme başarısız, ID: ${editingId}`);
-                         toastr.warning('Reçete detayı güncelleme başarısız.');
-                     }
-
-                 } catch (error) {
-                     console.error('Genel Hata Yakalandı (Reçete Detay Güncelle):', error);
-                      let displayMessage = 'Reçete detayı güncellenirken beklenmeyen bir hata oluştu.';
-                      toastr.error(displayMessage + ': ' + error.message);
-
-                 }
-
-             } else {
-                 // *** Ekleme Modunda ***
-                 console.log('Yeni reçete detayı ekleniyor...');
-
-                 try {
-                     const eklenenDetayId = await window.electronAPI.addReceteDetay(detayData);
-                     console.log('Reçete Detayı başarıyla eklendi, ID:', eklenenDetayId);
-                     toastr.success('Hammadde reçeteye eklendi!');
-
-                     receteDetayEkleForm.reset();
-                     selectedReceteIdInput.value = detayData.receteId;
-
-                     if (currentReceteId) {
-                         await fetchAndDisplayReceteDetails(currentReceteId);
-                     } else {
-                          console.error("Ekleme sonrası reçete detayları yenilenemedi: currentReceteId boş.");
-                     }
-
-                 } catch (error) {
-                      console.error('Genel Hata Yakalandı (Reçete Detay Ekle):', error);
-                      let displayMessage = 'Reçete detayı eklenirken beklenmeyen bir hata oluştu.';
-                       toastr.error(displayMessage + ': ' + error.message);
-
-                 }
-             }
-        });
+                if (islemYapildiDetay) {
+                    resetReceteDetayForm(); // Detay formunu resetle
+                    if (currentReceteId) { // currentReceteId'nin dolu olduğundan emin ol
+                        await fetchAndDisplayReceteDetails(currentReceteId);
+                    }
+                }
+            } catch (error) {
+                console.error('Reçete Detay Ekle/Güncelle hatası:', error);
+                toastr.error('Reçete detayı işlenirken bir hata oluştu: ' + error.message);
+            }
+        };
     } else {
-         console.error("Hammadde ekleme formu (receteDetayEkleForm) bulunamadı.");
+        console.error("Reçete detay formu (receteDetayEkleForm) bulunamadı.");
     }
 
-
-    // --- Sayfa Yüklendiğinde Çalışacaklar (loadRecetelerPage çağrıldığında) ---
-
-    // Dropdownları doldur
+    // Sayfa Yükleme İşlemleri
     await populateRecetePorsiyonDropdown();
     await populateReceteDetayDropdowns();
-
-    // Reçete listesini çek ve göster
     await fetchAndDisplayReceteler();
 
-    // Başlangıçta reçete detayları kartını gizle (HTML'de display: none yaptık, emin olalım)
-    receteDetaylariCard.style.display = 'none';
-
-
-} // loadRecetelerPage fonksiyonunun sonu
+    if (receteEkleForm) { // Ana reçete formu varsa ekleme modunda başlat
+        switchToAddReceteMode();
+    }
+    receteDetaylariCard.style.display = 'none'; // Detay kartını gizle
+}

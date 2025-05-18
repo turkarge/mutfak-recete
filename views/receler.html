@@ -1,107 +1,97 @@
 <!-- views/receler.html -->
-<!-- Reçete Yönetimi Sayfası -->
-
 <h2>Reçete Yönetimi</h2>
 
-<div class="card mb-4"> <!-- Reçete Listesi ve Yeni Reçete Ekleme Kısmı -->
+<div class="card mb-4">
     <div class="card-header">
-        <h2 class="card-title">Reçete Listesi</h2>
+        <h2 class="card-title">Reçete Listesi & Yönetimi</h2> <!-- Başlık biraz daha genel -->
     </div>
     <div class="card-body">
-
         <div class="row">
-            <div class="col-md-6 mb-4"> <!-- Reçete Listesi Tablosu Sütunu (Sol) -->
-                <!-- Reçete Listesi Tablosu -->
+            <div class="col-md-7 mb-4"> <!-- Liste için biraz daha fazla yer -->
+                 <h4 class="mb-3">Kayıtlı Reçeteler</h4> <!-- Alt başlık eklendi -->
                  <div class="table-responsive">
                     <table id="recelerTable" class="table table-striped table-hover">
                       <thead>
                         <tr>
                           <th>ID</th>
-                          <th>Porsiyon</th> <!-- Porsiyon Adı (ve Son Ürün Adı) görünecek -->
+                          <th>Porsiyon</th>
                           <th>Reçete Adı</th>
-                          <th>Eylemler</th> <!-- Detayları Görüntüle butonu -->
+                          <th>Eylemler</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <!-- Reçeteler buraya JavaScript ile eklenecek -->
                          <tr>
-                            <td colspan="4" class="text-center">Reçeteler yükleniyor...</td> <!-- Yükleniyor mesajı (4 sütun için) -->
+                            <td colspan="4" class="text-center">Reçeteler yükleniyor...</td>
                         </tr>
                       </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="col-md-6 mb-4"> <!-- Yeni Reçete Ekleme Formu Sütunu (Sağ) -->
-                <!-- Yeni Reçete Ekleme Formu -->
-                <h4>Yeni Reçete Ekle</h4>
+            <div class="col-md-5 mb-4"> <!-- Form için kalan yer -->
+                <!-- Başlık JS ile güncellenecek -->
+                <h4 class="mb-3" id="receteFormBaslik">Yeni Reçete Ekle</h4>
                 <form id="receteEkleForm">
+                    <!-- YENİ: Düzenleme modunda reçete ID'sini tutmak için gizli alan -->
+                    <input type="hidden" id="receteIdInput" value="">
+
                     <div class="mb-3">
                         <label class="form-label" for="recetePorsiyonId">Porsiyon:</label>
                         <select class="form-select" id="recetePorsiyonId" required>
                             <option value="">-- Porsiyon Seçiniz --</option>
-                            <!-- Porsiyonlar buraya JavaScript ile doldurulacak -->
                         </select>
                         <small class="form-text text-muted">Hangi porsiyon için reçete ekliyorsunuz?</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="receteAdi">Reçete Adı:</label>
-                        <input type="text" class="form-control" id="receteAdi">
-                        <small class="form-text text-muted">Örn: Normal, Ekstra Acılı (İsteğe bağlı).</small>
+                        <input type="text" class="form-control" id="receteAdi" placeholder="Varsayılan">
+                        <small class="form-text text-muted">Örn: Normal, Ekstra Acılı. Boş bırakılırsa "Varsayılan" olarak kaydedilir.</small>
                     </div>
-                    <button type="submit" class="btn btn-primary">Reçete Ekle</button>
+                    <!-- Buton metni ve rengi JS ile güncellenecek -->
+                    <button type="submit" id="receteFormSubmitButton" class="btn btn-primary">Reçete Ekle</button>
+                    <!-- YENİ: Düzenleme modunda İptal butonu -->
+                    <button type="button" id="receteFormCancelButton" class="btn btn-secondary ms-2 d-none">İptal</button>
                 </form>
             </div>
         </div>
-        <!-- Row sonu -->
-
     </div>
-</div> <!-- Reçete Listesi ve Yeni Reçete Ekleme Kartı Sonu -->
+</div>
 
- <hr> <!-- Üst kart ile alt kart arasına çizgi -->
+<hr>
 
-<!-- Reçete Detayları Kısmı Kartı -->
 <div class="card" id="receteDetaylariCard" style="display: none;">
-    <div class="card-header card-header-info"> <!-- Kart başlığı rengi için Tabler sınıfı -->
-        <h2 class="card-title" id="receteDetaylariTitle">Seçilen Reçete Detayları</h2> <!-- Başlık JS ile dinamik güncellenecek -->
-         <!-- Opsiyonel: Bu başlığın yanına seçilen reçetenin Porsiyon ve Reçete Adı da eklenebilir -->
+    <div class="card-header card-header-info">
+        <h2 class="card-title" id="receteDetaylariTitle">Seçilen Reçete Detayları</h2>
     </div>
     <div class="card-body">
-
-        <div class="row"> <!-- Hammadde Ekleme Formu ve Kullanılan Hammaddeler Tablosu için yeni row -->
-
-            <div class="col-md-6 mb-4"> <!-- Hammadde Ekleme Formu Sütunu (Sol) -->
-                 <!-- Hammadde Ekleme Formu (Seçilen Reçete İçin) -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
                 <h4>Hammadde Ekle</h4>
                 <form id="receteDetayEkleForm">
-                    <input type="hidden" id="selectedReceteId"> <!-- Seçilen reçetenin ID'si burada saklanacak -->
+                    <input type="hidden" id="selectedReceteId">
                     <div class="mb-3">
                         <label class="form-label" for="hammaddeId">Hammadde:</label>
                         <select class="form-select" id="hammaddeId" required>
                             <option value="">-- Hammadde Seçiniz --</option>
-                            <!-- Hammaddeler buraya JavaScript ile doldurulacak -->
                         </select>
-                         <small class="form-text text-muted">Reçetede hangi hammadde kullanılacak?</small>
+                        <small class="form-text text-muted">Reçetede hangi hammadde kullanılacak?</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="miktar">Miktar:</label>
-                        <input type="number" class="form-control" id="miktar" step="0.001" required>
+                        <input type="number" class="form-control" id="miktar" step="0.001" min="0.001" required> <!-- min değeri eklendi -->
                          <small class="form-text text-muted">Kullanılacak hammadde miktarı.</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="birimKisaAd">Birim:</label>
+                        <label class="form-label" for="detayBirimKisaAd">Birim:</label> <!-- ID'si detayBirimKisaAd olarak kalabilir -->
                         <select class="form-select" id="detayBirimKisaAd" required>
                              <option value="">-- Birim Seçiniz --</option>
-                            <!-- Birimler buraya JavaScript ile doldurulacak (kullanım birimleri) -->
                         </select>
                         <small class="form-text text-muted">Miktar hangi birimde? (Gr, Ml, Adet vb.)</small>
                     </div>
                      <button type="submit" class="btn btn-primary">Hammadde Ekle</button>
                 </form>
             </div>
-
-             <div class="col-md-6 mb-4"> <!-- Kullanılan Hammaddeler Tablosu Sütunu (Sağ) -->
-                 <!-- Reçete Detayları Tablosu -->
+             <div class="col-md-6 mb-4">
                 <h4>Kullanılan Hammaddeler</h4>
                  <div class="table-responsive">
                     <table id="receteDetaylariTable" class="table table-striped table-hover">
@@ -111,20 +101,17 @@
                           <th>Hammadde</th>
                           <th>Miktar</th>
                           <th>Birim</th>
-                          <th>Eylemler</th> <!-- Düzenle/Sil butonu -->
+                          <th>Eylemler</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <!-- Reçete Detayları buraya JavaScript ile eklenecek -->
                          <tr>
-                            <td colspan="5" class="text-center">Hammadde bulunamadı.</td> <!-- Yükleniyor/Boş mesajı (5 sütun için) -->
+                            <td colspan="5" class="text-center">Hammadde bulunamadı.</td>
                         </tr>
                       </tbody>
                     </table>
                 </div>
             </div>
-
-        </div> <!-- row sonu -->
-
+        </div>
     </div>
-</div> <!-- Reçete Detayları Kartı Sonu -->
+</div>
