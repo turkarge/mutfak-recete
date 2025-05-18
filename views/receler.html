@@ -1,6 +1,5 @@
 <!-- views/receler.html -->
 <h2>Reçete Yönetimi</h2>
-
 <div class="card mb-4">
     <div class="card-header">
         <h2 class="card-title">Reçete Listesi & Yönetimi</h2> <!-- Başlık biraz daha genel -->
@@ -27,38 +26,35 @@
                     </table>
                 </div>
             </div>
+<div class="col-md-5 mb-4"> <!-- Form için kalan yer -->
+            <!-- Başlık JS ile güncellenecek -->
+            <h4 class="mb-3" id="receteFormBaslik">Yeni Reçete Ekle</h4>
+            <form id="receteEkleForm">
+                <!-- YENİ: Düzenleme modunda reçete ID'sini tutmak için gizli alan -->
+                <input type="hidden" id="receteIdInput" value="">
 
-            <div class="col-md-5 mb-4"> <!-- Form için kalan yer -->
-                <!-- Başlık JS ile güncellenecek -->
-                <h4 class="mb-3" id="receteFormBaslik">Yeni Reçete Ekle</h4>
-                <form id="receteEkleForm">
-                    <!-- YENİ: Düzenleme modunda reçete ID'sini tutmak için gizli alan -->
-                    <input type="hidden" id="receteIdInput" value="">
-
-                    <div class="mb-3">
-                        <label class="form-label" for="recetePorsiyonId">Porsiyon:</label>
-                        <select class="form-select" id="recetePorsiyonId" required>
-                            <option value="">-- Porsiyon Seçiniz --</option>
-                        </select>
-                        <small class="form-text text-muted">Hangi porsiyon için reçete ekliyorsunuz?</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="receteAdi">Reçete Adı:</label>
-                        <input type="text" class="form-control" id="receteAdi" placeholder="Varsayılan">
-                        <small class="form-text text-muted">Örn: Normal, Ekstra Acılı. Boş bırakılırsa "Varsayılan" olarak kaydedilir.</small>
-                    </div>
-                    <!-- Buton metni ve rengi JS ile güncellenecek -->
-                    <button type="submit" id="receteFormSubmitButton" class="btn btn-primary">Reçete Ekle</button>
-                    <!-- YENİ: Düzenleme modunda İptal butonu -->
-                    <button type="button" id="receteFormCancelButton" class="btn btn-secondary ms-2 d-none">İptal</button>
-                </form>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label" for="recetePorsiyonId">Porsiyon:</label>
+                    <select class="form-select" id="recetePorsiyonId" required>
+                        <option value="">-- Porsiyon Seçiniz --</option>
+                    </select>
+                    <small class="form-text text-muted">Hangi porsiyon için reçete ekliyorsunuz?</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="receteAdi">Reçete Adı:</label>
+                    <input type="text" class="form-control" id="receteAdi" placeholder="Varsayılan">
+                    <small class="form-text text-muted">Örn: Normal, Ekstra Acılı. Boş bırakılırsa "Varsayılan" olarak kaydedilir.</small>
+                </div>
+                <!-- Buton metni ve rengi JS ile güncellenecek -->
+                <button type="submit" id="receteFormSubmitButton" class="btn btn-primary">Reçete Ekle</button>
+                <!-- YENİ: Düzenleme modunda İptal butonu -->
+                <button type="button" id="receteFormCancelButton" class="btn btn-secondary ms-2 d-none">İptal</button>
+            </form>
         </div>
     </div>
 </div>
-
+</div>
 <hr>
-
 <div class="card" id="receteDetaylariCard" style="display: none;">
     <div class="card-header card-header-info">
         <h2 class="card-title" id="receteDetaylariTitle">Seçilen Reçete Detayları</h2>
