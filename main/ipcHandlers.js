@@ -242,6 +242,57 @@ function registerIpcHandlers() {
         }
     });
 
+    // YENİ: Porsiyon güncelleme handler'ı
+    ipcMain.handle('updatePorsiyon', async (event, porsiyon) => { // porsiyon objesini (id dahil) alıyor
+        try {
+            // Gelen porsiyon objesi: { id, sonUrunId, porsiyonAdi, satisBirimiKisaAd, varsayilanSatisFiyati }
+            // varsayilanSatisFiyati boş string ise null olarak kaydet
+            const satisFiyatiToSave = (porsiyon.varsayilanSatisFiyati === '' || porsiyon.varsayilanSatisFiyati === null || isNaN(parseFloat(porsiyon.varsayilanSatisFiyati)))
+                ? null
+                : parseFloat(porsiyon.varsayilanSatisFiyati);
+
+            // UNIQUE kısıtlamasını kontrol et: Aynı sonUrunId ve porsiyonAdi ile başka bir kayıt var mı (mevcut ID hariç)?
+            const existingPorsiyon = await database.get(
+                "SELECT id FROM porsiyonlar WHERE sonUrunId = ? AND porsiyonAdi = ? COLLATE NOCASE AND id != ?",
+                [porsiyon.sonUrunId, porsiyon.porsiyonAdi, porsiyon.id]
+            );
+
+            if (existingPorsiyon) {
+                // Seçilen son ürünün adını alıp daha iyi bir mesaj vermek için
+                const sonUrun = await database.get("SELECT ad FROM urunler WHERE id = ?", [porsiyon.sonUrunId]);
+                const sonUrunAdi = sonUrun ? sonUrun.ad : "Bilinmeyen Ürün";
+                throw new Error(`"${sonUrunAdi}" ürünü için "${porsiyon.porsiyonAdi}" adında başka bir porsiyon zaten mevcut.`);
+            }
+
+            const changes = await database.run(
+                "UPDATE porsiyonlar SET sonUrunId = ?, porsiyonAdi = ?, satisBirimiKisaAd = ?, varsayilanSatisFiyati = ? WHERE id = ?",
+                [
+                    porsiyon.sonUrunId,
+                    porsiyon.porsiyonAdi,
+                    porsiyon.satisBirimiKisaAd,
+                    satisFiyatiToSave,
+                    porsiyon.id
+                ]
+            );
+
+            if (changes > 0) {
+                console.log(`Porsiyon başarıyla güncellendi (ID: ${porsiyon.id}). Etkilenen satır sayısı: ${changes}`);
+                return true;
+            } else {
+                console.warn(`Porsiyon güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${porsiyon.id})`);
+                // Güncellenecek porsiyon bulunamadıysa veya gönderilen veriler mevcut verilerle aynıysa
+                // 'changes' 0 olabilir. Bu durumu bir hata olarak değil, bir uyarı olarak ele alabiliriz.
+                // throw new Error('Güncellenecek porsiyon bulunamadı veya verilerde değişiklik yapılmadı.');
+                return false; // Değişiklik olmadıysa veya kayıt bulunamadıysa false dön.
+            }
+        } catch (error) {
+            console.error(`Porsiyon güncelleme hatası (ID: ${porsiyon.id}):`, error.message);
+            // UNIQUE constraint veya diğer özel hatalar zaten anlamlı bir mesajla fırlatılmış olabilir.
+            // if (error.message.includes('FOREIGN KEY constraint failed')) { ... } gibi kontroller eklenebilir.
+            throw error;
+        }
+    });
+
     // Reçeteler handler'ları
     ipcMain.handle('getReceteler', async (event) => {
         try {

@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPorsiyonlar: () => ipcRenderer.invoke('getPorsiyonlar'),
   addPorsiyon: (porsiyon) => ipcRenderer.invoke('addPorsiyon', porsiyon),
   deletePorsiyon: (porsiyonId) => ipcRenderer.invoke('deletePorsiyon', porsiyonId),
+  updatePorsiyon: (porsiyon) => ipcRenderer.invoke('updatePorsiyon', porsiyon),
 
   // Reçeteler handler'ları
   getReceteler: () => ipcRenderer.invoke('getReceteler'),
