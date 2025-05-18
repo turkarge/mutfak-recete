@@ -1,96 +1,132 @@
 <!-- views/receler.html -->
 <h2>Reçete Yönetimi</h2>
-<div class="card mb-4">
-    <div class="card-header">
-        <h2 class="card-title">Reçete Listesi & Yönetimi</h2> <!-- Başlık biraz daha genel -->
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-7 mb-4"> <!-- Liste için biraz daha fazla yer -->
-                 <h4 class="mb-3">Kayıtlı Reçeteler</h4> <!-- Alt başlık eklendi -->
-                 <div class="table-responsive">
-                    <table id="recelerTable" class="table table-striped table-hover">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Porsiyon</th>
-                          <th>Reçete Adı</th>
-                          <th>Eylemler</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                         <tr>
-                            <td colspan="4" class="text-center">Reçeteler yükleniyor...</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                </div>
-            </div>
-<div class="col-md-5 mb-4"> <!-- Form için kalan yer -->
-            <!-- Başlık JS ile güncellenecek -->
-            <h4 class="mb-3" id="receteFormBaslik">Yeni Reçete Ekle</h4>
-            <form id="receteEkleForm">
-                <!-- YENİ: Düzenleme modunda reçete ID'sini tutmak için gizli alan -->
-                <input type="hidden" id="receteIdInput" value="">
 
-                <div class="mb-3">
-                    <label class="form-label" for="recetePorsiyonId">Porsiyon:</label>
-                    <select class="form-select" id="recetePorsiyonId" required>
-                        <option value="">-- Porsiyon Seçiniz --</option>
-                    </select>
-                    <small class="form-text text-muted">Hangi porsiyon için reçete ekliyorsunuz?</small>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="receteAdi">Reçete Adı:</label>
-                    <input type="text" class="form-control" id="receteAdi" placeholder="Varsayılan">
-                    <small class="form-text text-muted">Örn: Normal, Ekstra Acılı. Boş bırakılırsa "Varsayılan" olarak kaydedilir.</small>
-                </div>
-                <!-- Buton metni ve rengi JS ile güncellenecek -->
-                <button type="submit" id="receteFormSubmitButton" class="btn btn-primary">Reçete Ekle</button>
-                <!-- YENİ: Düzenleme modunda İptal butonu -->
-                <button type="button" id="receteFormCancelButton" class="btn btn-secondary ms-2 d-none">İptal</button>
-            </form>
-        </div>
-    </div>
-</div>
-</div>
-<hr>
-<div class="card" id="receteDetaylariCard" style="display: none;">
-    <div class="card-header card-header-info">
-        <h2 class="card-title" id="receteDetaylariTitle">Seçilen Reçete Detayları</h2>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <h4>Hammadde Ekle</h4>
-                <form id="receteDetayEkleForm">
-                    <input type="hidden" id="selectedReceteId">
+<!-- ANA REÇETE YÖNETİMİ BÖLÜMÜ -->
+<div class="row mb-4"> <!-- Ana reçete bölümü için satır -->
+
+    <!-- SOL SÜTUN: Ana Reçete Ekleme/Düzenleme Formu -->
+    <div class="col-md-5 mb-3 mb-md-0">
+        <div class="card h-100">
+            <div class="card-header">
+                <h4 class="card-title" id="receteFormBaslik">Yeni Reçete Ekle</h4>
+            </div>
+            <div class="card-body">
+                <form id="receteEkleForm">
+                    <input type="hidden" id="receteIdInput" value="">
                     <div class="mb-3">
-                        <label class="form-label" for="hammaddeId">Hammadde:</label>
-                        <select class="form-select" id="hammaddeId" required>
-                            <option value="">-- Hammadde Seçiniz --</option>
+                        <label class="form-label" for="recetePorsiyonId">Porsiyon:</label>
+                        <select class="form-select" id="recetePorsiyonId" required>
+                            <option value="">-- Porsiyon Seçiniz --</option>
                         </select>
-                        <small class="form-text text-muted">Reçetede hangi hammadde kullanılacak?</small>
+                        <small class="form-text text-muted">Hangi porsiyon için reçete ekliyorsunuz?</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="miktar">Miktar:</label>
-                        <input type="number" class="form-control" id="miktar" step="0.001" min="0.001" required> <!-- min değeri eklendi -->
-                         <small class="form-text text-muted">Kullanılacak hammadde miktarı.</small>
+                        <label class="form-label" for="receteAdi">Reçete Adı:</label>
+                        <input type="text" class="form-control" id="receteAdi" placeholder="Varsayılan">
+                        <small class="form-text text-muted">Örn: Normal, Ekstra Acılı. Boş bırakılırsa "Varsayılan" olarak kaydedilir.</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="detayBirimKisaAd">Birim:</label> <!-- ID'si detayBirimKisaAd olarak kalabilir -->
-                        <select class="form-select" id="detayBirimKisaAd" required>
-                             <option value="">-- Birim Seçiniz --</option>
-                        </select>
-                        <small class="form-text text-muted">Miktar hangi birimde? (Gr, Ml, Adet vb.)</small>
+                    <div class="d-flex">
+                        <button type="submit" id="receteFormSubmitButton" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
+                            <span class="ms-1">Kaydet</span>
+                        </button>
+                        <button type="button" id="receteFormCancelButton" class="btn btn-ghost-secondary ms-2 d-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+                            <span class="ms-1">İptal</span>
+                        </button>
                     </div>
-                     <button type="submit" class="btn btn-primary">Hammadde Ekle</button>
                 </form>
             </div>
-             <div class="col-md-6 mb-4">
-                <h4>Kullanılan Hammaddeler</h4>
+        </div>
+    </div> <!-- Ana reçete formu sütun sonu -->
+
+    <!-- SAĞ SÜTUN: Kayıtlı Reçeteler Listesi -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header">
+                 <h4 class="card-title">Kayıtlı Reçeteler</h4>
+            </div>
+            <div class="table-responsive">
+                <table id="recelerTable" class="table table-striped table-hover card-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Porsiyon</th>
+                      <th>Reçete Adı</th>
+                      <th>Eylemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td colspan="4" class="text-center">Reçeteler yükleniyor...</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- Ana reçete listesi sütun sonu -->
+
+</div> <!-- Ana reçete bölümü satır sonu -->
+
+<hr class="my-4">
+
+<!-- REÇETE DETAYLARI YÖNETİMİ BÖLÜMÜ -->
+<div id="receteDetaylariAlani" style="display: none;"> <!-- ESKİ receteDetaylariCard ID'Sİ BU ANA DIV'E TAŞINDI -->
+    <h3 id="receteDetaylariGenelBaslik" class="mb-3">Seçilen Reçete Detayları</h3> <!-- ESKİ receteDetaylariTitle ID'Sİ BU BAŞLIĞA TAŞINDI -->
+    <div class="row"> <!-- Reçete detayları için ana satır -->
+
+        <!-- SOL SÜTUN: Hammadde Ekleme/Düzenleme Formu -->
+        <div class="col-md-5 mb-3 mb-md-0"> <!-- Sütun genişliği ana formla aynı -->
+            <div class="card h-100"> <!-- Detay formu için KART -->
+                <div class="card-header">
+                    <h4 class="card-title" id="receteDetayFormBaslik">Hammadde Ekle</h4>
+                </div>
+                <div class="card-body">
+                    <form id="receteDetayEkleForm">
+                        <input type="hidden" id="selectedReceteId">
+                        <input type="hidden" id="receteDetayIdInput" value="">
+                        <div class="mb-3">
+                            <label class="form-label" for="hammaddeId">Hammadde:</label>
+                            <select class="form-select" id="hammaddeId" required>
+                                <option value="">-- Hammadde Seçiniz --</option>
+                            </select>
+                            <small class="form-text text-muted">Reçetede hangi hammadde kullanılacak?</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="miktar">Miktar:</label>
+                            <input type="number" class="form-control" id="miktar" step="0.001" min="0.001" required>
+                             <small class="form-text text-muted">Kullanılacak hammadde miktarı.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="detayBirimKisaAd">Birim:</label>
+                            <select class="form-select" id="detayBirimKisaAd" required>
+                                 <option value="">-- Birim Seçiniz --</option>
+                            </select>
+                            <small class="form-text text-muted">Miktar hangi birimde? (Gr, Ml, Adet vb.)</small>
+                        </div>
+                        <div class="d-flex">
+                             <button type="submit" id="receteDetaySubmitButton" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+                                <span class="ms-1">Ekle</span>
+                            </button>
+                            <button type="button" id="receteDetayFormCancelButton" class="btn btn-ghost-secondary ms-2 d-none">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+                                <span class="ms-1">İptal</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div> <!-- Hammadde formu sütun sonu -->
+
+        <!-- SAĞ SÜTUN: Kullanılan Hammaddeler Listesi -->
+         <div class="col-md-7"> <!-- Sütun genişliği ana listeyle aynı -->
+            <div class="card h-100"> <!-- Detay listesi için KART -->
+                <div class="card-header">
+                    <h4 class="card-title">Kullanılan Hammaddeler</h4>
+                </div>
                  <div class="table-responsive">
-                    <table id="receteDetaylariTable" class="table table-striped table-hover">
+                    <table id="receteDetaylariTable" class="table table-striped table-hover card-table">
                       <thead>
                         <tr>
                           <th>ID</th>
@@ -108,6 +144,6 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        </div> <!-- Hammadde listesi sütun sonu -->
+    </div> <!-- Detaylar iç satır sonu -->
+</div> <!-- Reçete detayları alanı sonu -->
