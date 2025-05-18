@@ -4,7 +4,7 @@
 let confirmationModalInstance;
 let confirmActionCallback;
 
-// Form elementlerini global olarak tanımlayalım ki her yerden erişebilelim
+// Form elementlerini global olarak tanımlayalım
 let birimEkleForm, birimIdInput, birimAdiInput, kisaAdInput, anaBirimKisaAdInput;
 let birimFormBaslik, birimFormSubmitButton, birimFormCancelButton;
 
@@ -14,14 +14,13 @@ export async function loadBirimlerPage() {
 
     // Form elementlerini DOM'dan seçelim
     birimEkleForm = document.querySelector('#birimEkleForm');
-    birimIdInput = document.querySelector('#birimIdInput'); // Gizli ID alanı
+    birimIdInput = document.querySelector('#birimIdInput');
     birimAdiInput = document.querySelector('#birimAdi');
     kisaAdInput = document.querySelector('#kisaAd');
     anaBirimKisaAdInput = document.querySelector('#anaBirimKisaAd');
     birimFormBaslik = document.querySelector('#birimFormBaslik');
     birimFormSubmitButton = document.querySelector('#birimFormSubmitButton');
     birimFormCancelButton = document.querySelector('#birimFormCancelButton');
-
 
     // Onay modalını ve butonunu al
     const confirmationModalElement = document.getElementById('confirmationModal');
@@ -48,25 +47,32 @@ export async function loadBirimlerPage() {
         console.error('#confirmationModal bulunamadı. index.html dosyasını kontrol edin.');
     }
 
-    // Formu Ekleme Moduna Ayarla (sayfa ilk yüklendiğinde ve iptal edildiğinde)
+    // Formu Ekleme Moduna Ayarla
     function switchToAddMode() {
-        if (!birimEkleForm) return; // Form yoksa işlem yapma
+        if (!birimEkleForm) return;
 
-        birimEkleForm.reset(); // Formu temizle
-        if (birimIdInput) birimIdInput.value = ''; // Gizli ID'yi temizle
+        birimEkleForm.reset();
+        if (birimIdInput) birimIdInput.value = '';
         if (birimFormBaslik) birimFormBaslik.textContent = 'Yeni Birim Ekle';
         if (birimFormSubmitButton) {
-            birimFormSubmitButton.textContent = 'Birim Ekle';
-            birimFormSubmitButton.classList.remove('btn-success'); // Eğer düzenleme modu için farklı renk kullandıysak
+            const textSpan = birimFormSubmitButton.querySelector('span');
+            if (textSpan) textSpan.textContent = 'Birim Ekle';
+
+            birimFormSubmitButton.classList.remove('btn-success');
             birimFormSubmitButton.classList.add('btn-primary');
         }
-        if (birimFormCancelButton) birimFormCancelButton.classList.add('d-none'); // İptal butonunu gizle
-        if (birimAdiInput) birimAdiInput.focus(); // İlk inputa odaklan
+        if (birimFormCancelButton) birimFormCancelButton.classList.add('d-none');
+        if (birimAdiInput) birimAdiInput.focus();
     }
 
-    // Birimleri tabloya ekleyen fonksiyon
+
+// Birimleri tabloya ekleyen fonksiyon
     function displayBirimler(birimler) {
         const tableBody = document.querySelector('#birimlerTable tbody');
+        if (!tableBody) {
+            console.error("Birimler tablosu body'si bulunamadı.");
+            return;
+        }
         tableBody.innerHTML = '';
 
         if (birimler && birimler.length > 0) {
@@ -81,56 +87,69 @@ export async function loadBirimlerPage() {
                 const eylemlerCell = row.insertCell(4);
                 eylemlerCell.classList.add('text-end');
 
-                // YENİ: Düzenle Butonu
-                const duzenleButton = document.createElement('button');
-                duzenleButton.classList.add('btn', 'btn-warning', 'btn-sm');
-                duzenleButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
-                duzenleButton.title = "Düzenle";
-                duzenleButton.addEventListener('click', () => handleEditBirimClick(birim)); // Tüm birim objesini gönder
-                eylemlerCell.appendChild(duzenleButton);
+                // btn-group'u doğrudan eylemler hücresine ekleyebiliriz ya da bir div içinde tutabiliriz.
+                // Şimdilik ayrı bir div kullanmaya devam edelim, daha fazla kontrol sağlayabilir.
+                const buttonContainer = document.createElement('div');
+                // buttonContainer.classList.add('btn-list'); // Alternatif: btn-group yerine btn-list (aralarında boşluk bırakır)
+                                                            // Ancak btn-group daha yaygın.
 
+                // Düzenle Butonu - btn-icon ile
+                const duzenleButton = document.createElement('button');
+                duzenleButton.type = 'button';
+                // 'btn-icon' sınıfı ikonu ortalar ve butonu kare yapar.
+                // 'btn-sm' ile daha küçük, sadece 'btn btn-icon' ile varsayılan boyutta olur.
+                duzenleButton.classList.add('btn', 'btn-icon', 'btn-warning');
+                // İkon boyutunu biraz küçültelim, btn-icon ile daha iyi durabilir.
+                duzenleButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
+                duzenleButton.title = "Düzenle";
+                // Explicit padding'i kaldıralım, btn ve btn-icon sınıfları halletsin.
+                // duzenleButton.style.padding = "0.25rem 0.5rem"; // KALDIRILDI
+                duzenleButton.addEventListener('click', () => handleEditBirimClick(birim));
+                buttonContainer.appendChild(duzenleButton);
+
+                // Sil Butonu - btn-icon ile ve arada boşluk
                 const silButton = document.createElement('button');
-                silButton.classList.add('btn', 'btn-danger', 'btn-sm', 'ms-1');
-                silButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
+                silButton.type = 'button';
+                silButton.classList.add('btn', 'btn-icon', 'btn-danger', 'ms-1'); // 'ms-1' soldan margin ekler (butonlar arasında boşluk)
+                silButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
+                silButton.title = "Sil";
+                // silButton.style.padding = "0.25rem 0.5rem"; // KALDIRILDI
                 silButton.setAttribute('data-birim-id', birim.id);
                 silButton.setAttribute('data-birim-adi', birim.birimAdi);
-                silButton.title = "Sil";
                 silButton.addEventListener('click', handleDeleteBirimClick);
-                eylemlerCell.appendChild(silButton);
+                buttonContainer.appendChild(silButton);
+
+                eylemlerCell.appendChild(buttonContainer);
             });
         } else {
-            const row = tableBody.insertRow();
-            const cell = row.insertCell(0);
-            cell.colSpan = 5;
-            cell.textContent = 'Henüz kayıtlı birim bulunamadı.';
-            cell.style.textAlign = 'center';
+            // ... (liste boş mesajı aynı)
         }
     }
 
-    // YENİ: Düzenle butonuna tıklandığında formu doldurur
+    // Düzenle butonuna tıklandığında formu doldurur
     function handleEditBirimClick(birim) {
-        if (!birimEkleForm || !birimIdInput || !birimAdiInput || !kisaAdInput || !anaBirimKisaAdInput || !birimFormBaslik || !birimFormSubmitButton || !birimFormCancelButton) {
-            console.error('Form elementlerinden biri bulunamadı, düzenleme moduna geçilemiyor.');
-            toastr.error('Form düzgün yüklenemedi, düzenleme yapılamıyor.');
-            return;
-        }
+        if (!birimEkleForm) return;
 
         birimIdInput.value = birim.id;
         birimAdiInput.value = birim.birimAdi;
         kisaAdInput.value = birim.kisaAd;
-        anaBirimKisaAdInput.value = birim.anaBirimKisaAd || ''; // null ise boş string
+        anaBirimKisaAdInput.value = birim.anaBirimKisaAd || '';
 
         birimFormBaslik.textContent = `Birimi Düzenle: ${birim.birimAdi}`;
-        birimFormSubmitButton.textContent = 'Birimi Güncelle';
-        birimFormSubmitButton.classList.remove('btn-primary');
-        birimFormSubmitButton.classList.add('btn-success'); // Güncelleme için farklı renk
-        birimFormCancelButton.classList.remove('d-none'); // İptal butonunu göster
+        if (birimFormSubmitButton) {
+            const textSpan = birimFormSubmitButton.querySelector('span');
+            if (textSpan) textSpan.textContent = 'Birimi Güncelle';
 
-        birimAdiInput.focus(); // İlk inputa odaklan
-        window.scrollTo(0, 0); // Sayfanın başına git (formu görmek için)
+            birimFormSubmitButton.classList.remove('btn-primary');
+            birimFormSubmitButton.classList.add('btn-success');
+        }
+        if (birimFormCancelButton) birimFormCancelButton.classList.remove('d-none');
+
+        birimAdiInput.focus();
+        window.scrollTo(0, 0);
     }
 
-    // Silme işlemi için olay yöneticisi (Mevcut)
+    // Silme işlemi için olay yöneticisi
     async function handleDeleteBirimClick(event) {
         const button = event.currentTarget;
         const birimId = button.getAttribute('data-birim-id');
@@ -146,7 +165,7 @@ export async function loadBirimlerPage() {
         const modalBody = confirmationModalElement.querySelector('#confirmationModalBody');
         if (modalTitle) modalTitle.textContent = 'Birim Silme Onayı';
         if (modalBody) modalBody.innerHTML = `<p><strong>"${birimAdi}"</strong> adlı birimi silmek istediğinizden emin misiniz?</p>
-                                              <p class="text-danger small">Bu işlem geri alınamaz.</p>`;
+                                              <p class="text-danger small">Bu işlem geri alınamaz. Bu birim başka kayıtlarda kullanılıyorsa silinemeyebilir.</p>`;
         
         confirmActionCallback = async () => {
             try {
@@ -155,7 +174,9 @@ export async function loadBirimlerPage() {
                     toastr.success(`"${birimAdi}" adlı birim başarıyla silindi.`);
                     const guncelBirimler = await window.electronAPI.getBirimler();
                     displayBirimler(guncelBirimler);
-                    switchToAddMode(); // Silme sonrası formu ekleme moduna al
+                    if (birimIdInput.value === birimId) {
+                        switchToAddMode();
+                    }
                 } else {
                     toastr.warning(`"${birimAdi}" adlı birim silinemedi. Kayıt bulunamadı veya başka bir sorun oluştu.`);
                 }
@@ -167,14 +188,12 @@ export async function loadBirimlerPage() {
         confirmationModalInstance.show();
     }
 
-    // Form submit olayını dinle (Ekleme ve Güncelleme için)
+    // Form submit olayını dinle
     if (birimEkleForm) {
         birimEkleForm.onsubmit = async (event) => {
             event.preventDefault();
-
-            // Formdan güncel değerleri al
             const birimData = {
-                id: birimIdInput.value ? parseInt(birimIdInput.value) : null, // ID varsa integer, yoksa null
+                id: birimIdInput.value ? parseInt(birimIdInput.value) : null,
                 birimAdi: birimAdiInput.value.trim(),
                 kisaAd: kisaAdInput.value.trim(),
                 anaBirimKisaAd: anaBirimKisaAdInput.value.trim() || null
@@ -186,73 +205,67 @@ export async function loadBirimlerPage() {
             }
 
             try {
-                if (birimData.id) { // ID varsa güncelleme işlemi
-                    console.log("Birim güncelleniyor:", birimData);
+                let islemYapildi = false;
+                let mesaj = "";
+                if (birimData.id) {
                     const guncellendi = await window.electronAPI.updateBirim(birimData);
                     if (guncellendi) {
-                        toastr.success(`"${birimData.birimAdi}" başarıyla güncellendi!`);
+                        mesaj = `"${birimData.birimAdi}" başarıyla güncellendi!`;
+                        toastr.success(mesaj);
+                        islemYapildi = true;
                     } else {
                         toastr.info(`"${birimData.birimAdi}" için herhangi bir değişiklik yapılmadı veya kayıt bulunamadı.`);
                     }
-                } else { // ID yoksa ekleme işlemi
-                    console.log("Yeni birim ekleniyor:", birimData);
-                    const eklenenBirimId = await window.electronAPI.addBirim(birimData); // addBirim artık ID dönüyor
-                    toastr.success(`"${birimData.birimAdi}" başarıyla eklendi!`);
+                } else {
+                    await window.electronAPI.addBirim(birimData);
+                    mesaj = `"${birimData.birimAdi}" başarıyla eklendi!`;
+                    toastr.success(mesaj);
+                    islemYapildi = true;
                 }
 
-                // İşlem sonrası formu temizle ve ekleme moduna dön
-                switchToAddMode();
-                // Listeyi yenile
-                const guncelBirimler = await window.electronAPI.getBirimler();
-                displayBirimler(guncelBirimler);
-
+                if (islemYapildi) {
+                    switchToAddMode();
+                    const guncelBirimler = await window.electronAPI.getBirimler();
+                    displayBirimler(guncelBirimler);
+                }
             } catch (error) {
                 console.error('Genel Hata Yakalandı (Birim Ekle/Güncelle):', error);
                 let displayMessage = 'İşlem sırasında beklenmeyen bir hata oluştu.';
                 let toastrType = 'error';
-
-                if (error.message && error.message.includes('UNIQUE constraint failed')) {
+                if (error.message.includes('UNIQUE constraint failed')) {
                      if (error.message.includes('birimler.birimAdi')) {
                           displayMessage = `"${birimData.birimAdi}" adında bir birim zaten mevcut.`;
                      } else if (error.message.includes('birimler.kisaAd')) {
                           displayMessage = `"${birimData.kisaAd}" kısa adında bir birim zaten mevcut.`;
                      } else {
-                         displayMessage = 'Eklemeye/Güncellemeye çalıştığınız birim adı veya kısa adı zaten mevcut.';
+                         displayMessage = error.message;
                      }
                      toastrType = 'warning';
-                }
-                // main/ipcHandlers.js'den gelen özel hata mesajlarını yakala (updateBirim için)
-                else if (error.message.startsWith('"') && error.message.endsWith('zaten mevcut.') || error.message.endsWith('kullanılıyor.')) {
+                } else if (error.message.startsWith('"') && (error.message.endsWith('zaten mevcut.') || error.message.endsWith('kullanılıyor.'))) {
                     displayMessage = error.message;
                     toastrType = 'warning';
-                }
-                else {
+                } else {
                      displayMessage = 'İşlem sırasında bir hata oluştu: ' + error.message;
-                     toastrType = 'error';
                 }
-
                 if (toastrType === 'warning') toastr.warning(displayMessage);
                 else toastr.error(displayMessage);
             }
         };
     } else {
-        console.error("Birim ekleme formu (birimEkleForm) bulunamadı. birimler.html yüklü mü?");
+        console.error("Birim ekleme formu (birimEkleForm) bulunamadı.");
     }
 
-    // YENİ: İptal butonuna olay dinleyici ekle
+    // İptal butonuna olay dinleyici ekle
     if (birimFormCancelButton) {
         birimFormCancelButton.onclick = () => {
             switchToAddMode();
         };
     }
 
-    // Sayfa ilk yüklendiğinde formu ekleme moduna al
-    if (birimEkleForm) { // Sadece form varsa bu işlemi yap
+    if (birimEkleForm) {
        switchToAddMode();
     }
 
-
-    // Sayfa yüklendiğinde birimleri çek ve göster
      try {
         const birimler = await window.electronAPI.getBirimler();
         displayBirimler(birimler);

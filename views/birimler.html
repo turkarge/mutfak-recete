@@ -1,58 +1,73 @@
-<!-- views/birimler.html -->
+<!-- views/birimler.html (Güncellenmiş Form Butonları) -->
 
 <h2>Birim Yönetimi</h2>
 
-<div class="card mb-4">
-    <div class="card-header">
-        <!-- Başlık JS ile güncellenecek -->
-        <h2 class="card-title" id="birimFormBaslik">Yeni Birim Ekle</h2>
-    </div>
-    <div class="card-body">
-        <form id="birimEkleForm">
-            <!-- YENİ: Düzenleme modunda birim ID'sini tutmak için gizli alan -->
-            <input type="hidden" id="birimIdInput" value="">
+<div class="row">
+    <div class="col-md-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2 class="card-title" id="birimFormBaslik">Yeni Birim Ekle</h2>
+            </div>
+            <div class="card-body">
+                <form id="birimEkleForm">
+                    <input type="hidden" id="birimIdInput" value="">
 
-            <div class="mb-3">
-                <label class="form-label" for="birimAdi">Birim Adı:</label>
-                <input type="text" class="form-control" id="birimAdi" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label" for="kisaAd">Kısa Ad:</label>
-                <input type="text" class="form-control" id="kisaAd" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label" for="anaBirimKisaAd">Ana Birim (Kısa Ad):</label>
-                <input type="text" class="form-control" id="anaBirimKisaAd">
-                <small class="form-text text-muted">Bu birimin ait olduğu ana birimin kısa adını girin (örn: gr için kg, ml için lt). Kendisi ana birim ise kendi kısa adını girin veya boş bırakın.</small>
-            </div>
-            <!-- Buton metni ve belki rengi JS ile güncellenecek -->
-            <button type="submit" id="birimFormSubmitButton" class="btn btn-primary">Birim Ekle</button>
-            <!-- YENİ: Düzenleme modunda İptal butonu (isteğe bağlı) -->
-            <button type="button" id="birimFormCancelButton" class="btn btn-secondary ms-2 d-none">İptal</button>
-        </form>
-    </div>
-</div>
+                    <div class="mb-3">
+                        <label class="form-label" for="birimAdi">Birim Adı:</label>
+                        <input type="text" class="form-control" id="birimAdi" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="kisaAd">Kısa Ad:</label>
+                        <input type="text" class="form-control" id="kisaAd" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="anaBirimKisaAd">Ana Birim (Kısa Ad):</label>
+                        <input type="text" class="form-control" id="anaBirimKisaAd">
+                        <small class="form-text text-muted">Bu birimin ait olduğu ana birimin kısa adını girin (örn: gr için kg, ml için lt). Kendisi ana birim ise kendi kısa adını girin veya boş bırakın.</small>
+                    </div>
 
-<div class="card">
-    <div class="card-header">
-        <h2 class="card-title">Birim Listesi</h2>
+                    <!-- Güncellenmiş Butonlar -->
+                    <div class="d-flex"> <!-- Butonları yan yana getirmek için flex container -->
+                        <button type="submit" id="birimFormSubmitButton" class="btn btn-primary">
+                            <!-- İkon (Kaydet/Onayla) -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
+                            <span class="ms-1">Kaydet</span> <!-- Metin JS ile değişebilir -->
+                        </button>
+                        <button type="button" id="birimFormCancelButton" class="btn btn-ghost-secondary ms-2 d-none"> <!-- btn-ghost-secondary daha az dikkat çekici -->
+                            <!-- İkon (İptal/Geri) -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+                            <span class="ms-1">İptal</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="table-responsive">
-        <table id="birimlerTable" class="table table-striped table-hover">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Birim Adı</th>
-              <th>Kısa Ad</th>
-              <th>Ana Birim</th>
-              <th>Eylemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-                <td colspan="5" class="text-center">Birimler yükleniyor...</td>
-            </tr>
-          </tbody>
-        </table>
+
+    <!-- Sağ Sütun: Birim Listesi (Değişiklik yok) -->
+    <div class="col-md-7 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2 class="card-title">Birim Listesi</h2>
+            </div>
+            <div class="table-responsive">
+                <table id="birimlerTable" class="table table-striped table-hover card-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Birim Adı</th>
+                      <th>Kısa Ad</th>
+                      <th>Ana Birim</th>
+                      <th>Eylemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                        <td colspan="5" class="text-center">Birimler yükleniyor...</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
