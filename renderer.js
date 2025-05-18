@@ -15,7 +15,7 @@ import { loadRecetelerPage } from './renderer/receteler.js';
 // loadLoginPage artık buradan import edilmeyecek
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
 // import { loadDashboardPage } from './renderer/dashboard.js';
-// import { loadAlimlarPage } from './renderer/alimlar.js';
+import { loadAlimlarPage } from './renderer/alimlar.js';
 // import { loadGiderlerPage } from './renderer/giderler.js';
 // import { loadSatislarPage } from './renderer/satislar.js';
 // import { loadAnalizPage } from './renderer/analiz.js';
@@ -94,8 +94,11 @@ async function loadPage(pageName) {
                 case 'porsiyonlar':
                     loadPorsiyonlarPage(); // Porsiyonlar sayfası JS'ini çağır
                     break;
-                case 'receler':
+                case 'receteler':
                     loadRecetelerPage(); // Reçete Yönetimi sayfası JS'ini çağır
+                    break;
+                case 'alimlar':
+                    loadAlimlarPage();
                     break;
                 // 'login' case'i artık burada olmayacak
                 // TODO: Diğer sayfalar için case'ler eklenecek:

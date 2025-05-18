@@ -102,6 +102,17 @@ RestoranMaliyetApp/
     *   Reçete Detayları Düzenleme (`updateReceteDetay` handler'ı, form doldurma).
     *   Dropdownların Doldurulması (Porsiyonlar, Hammaddeler, Birimler).
     *   Görünüm Düzenlemeleri (Form/Liste Ayrımı, Detay Kartı Düzeni, Başlık Güncelleme).
+15. **Alım Yönetimi:**
+    *   Veritabanına `alimlar` tablosu eklendi (`fisNo` alanı dahil).
+    *   `views/alimlar.html` sayfası oluşturuldu (Form solda, liste sağda, ayrı kartlarda).
+    *   Form butonları ve tablo eylem butonları standart stile getirildi.
+    *   `renderer/alimlar.js` dosyası oluşturuldu:
+        *   Dropdown'ların (Ürünler, Birimler) doldurulması.
+        *   Toplam tutarın otomatik hesaplanması.
+        *   Alım ekleme, listeleme, düzenleme ve silme işlevleri.
+        *   Onay modalı kullanımı.
+    *   `main/ipcHandlers.js` ve `preload.js` dosyalarına `addAlim`, `getAlimlar`, `updateAlim`, `deleteAlim` handler'ları/API'leri eklendi.
+    *   Menüye "Alımlar" linki eklendi ve sayfa yükleme mantığı entegre edildi.
 
 ## Gelecek Adımlar (Yapılacaklar)
 

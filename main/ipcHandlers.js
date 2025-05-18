@@ -442,6 +442,118 @@ function registerIpcHandlers() {
         }
     });
 
+// --- Alımlar için Handler'lar ---
+  ipcMain.handle('addAlim', async (event, alim) => {
+    // alim objesi: { tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamTutar, fisNo }
+    try {
+      const sql = `INSERT INTO alimlar (tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamFiyat, fisNo)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)`; // fisNo eklendi
+      const params = [
+        alim.tarih,
+        alim.urunId,
+        alim.miktar,
+        alim.birimKisaAd,
+        alim.birimFiyat,
+        alim.toplamTutar,
+        alim.fisNo // fisNo parametresi eklendi
+      ];
+      const lastID = await database.run(sql, params);
+      console.log(`Alım başarıyla eklendi. ID: ${lastID}, Fiş No: ${alim.fisNo}`);
+      return lastID;
+    } catch (error) {
+      console.error('Alım ekleme hatası:', error.message);
+      if (error.message.includes('FOREIGN KEY constraint failed')) { /* ... (hata yönetimi aynı) ... */ }
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getAlimlar', async (event) => {
+    try {
+      const sql = `
+        SELECT
+          a.id,
+          a.tarih,
+          a.urunId,
+          u.ad AS urunAdi,
+          u.tur AS urunTuru,
+          a.miktar,
+          a.birimKisaAd,
+          b.birimAdi AS alimBirimAdi,
+          a.birimFiyat,
+          a.toplamFiyat AS toplamTutar,
+          a.fisNo                             -- fisNo seçime eklendi
+        FROM alimlar a
+        JOIN urunler u ON a.urunId = u.id
+        JOIN birimler b ON a.birimKisaAd = b.kisaAd
+        ORDER BY a.tarih DESC, a.id DESC;
+      `;
+      const alimlar = await database.all(sql);
+      console.log(`${alimlar.length} adet alım kaydı başarıyla getirildi.`);
+      return alimlar;
+    } catch (error) {
+      console.error('Alımları getirme hatası:', error.message);
+      throw error;
+    }
+  });
+
+  // YENİ: Alım Silme Handler'ı
+  ipcMain.handle('deleteAlim', async (event, alimId) => {
+    try {
+      // İleride bu alım kaydının başka bir yerde kullanılıp kullanılmadığı kontrol edilebilir (stok hareketleri vb.)
+      // Şimdilik direkt silme yapıyoruz.
+      const changes = await database.run("DELETE FROM alimlar WHERE id = ?", [alimId]);
+      if (changes > 0) {
+        console.log(`Alım kaydı başarıyla silindi (ID: ${alimId}).`);
+        return true;
+      } else {
+        console.warn(`Alım kaydı silinirken bulunamadı (ID: ${alimId})`);
+        throw new Error('Silinecek alım kaydı bulunamadı.');
+      }
+    } catch (error) {
+      console.error(`Alım silme hatası (ID: ${alimId}):`, error.message);
+      throw error;
+    }
+  });
+
+  // YENİ: Alım Güncelleme Handler'ı
+  ipcMain.handle('updateAlim', async (event, alim) => {
+    // alim objesi: { id, tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamTutar, fisNo }
+    try {
+      const sql = `
+        UPDATE alimlar SET
+          tarih = ?,
+          urunId = ?,
+          miktar = ?,
+          birimKisaAd = ?,
+          birimFiyat = ?,
+          toplamFiyat = ?,
+          fisNo = ?
+        WHERE id = ?`;
+      const params = [
+        alim.tarih,
+        alim.urunId,
+        alim.miktar,
+        alim.birimKisaAd,
+        alim.birimFiyat,
+        alim.toplamTutar,
+        alim.fisNo,
+        alim.id
+      ];
+      const changes = await database.run(sql, params);
+      if (changes > 0) {
+        console.log(`Alım kaydı başarıyla güncellendi (ID: ${alim.id}).`);
+        return true;
+      } else {
+        console.warn(`Alım güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${alim.id})`);
+        throw new Error('Güncellenecek alım kaydı bulunamadı veya verilerde değişiklik yapılmadı.');
+      }
+    } catch (error) {
+      console.error(`Alım güncelleme hatası (ID: ${alim.id}):`, error.message);
+      if (error.message.includes('FOREIGN KEY constraint failed')) { /* ... (hata yönetimi eklenebilir) ... */ }
+      throw error;
+    }
+  });
+
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)
     // - Birim düzenleme

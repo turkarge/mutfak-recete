@@ -133,8 +133,9 @@ function initializeDatabase() {
                         birimKisaAd TEXT NOT NULL,
                         birimFiyat REAL NOT NULL,
                         toplamFiyat REAL NOT NULL,
-                        FOREIGN KEY (urunId) REFERENCES urunler(id),
-                        FOREIGN KEY (birimKisaAd) REFERENCES birimler(kisaAd)
+                        fisNo TEXT,
+                        FOREIGN KEY (urunId) REFERENCES urunler(id) ON DELETE RESTRICT,
+                        FOREIGN KEY (birimKisaAd) REFERENCES birimler(kisaAd) ON DELETE RESTRICT
                       )`, (err) => {
                         if (err) console.error('alimlar tablosu oluşturma hatası:', err.message);
                         else console.log('alimlar tablosu hazır.');

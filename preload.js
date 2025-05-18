@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
   updateReceteDetay: (detay) => ipcRenderer.invoke('updateReceteDetay', detay),
 
+  // Alımlar Handler'ları
+  addAlim: (alim) => ipcRenderer.invoke('addAlim', alim),
+  getAlimlar: () => ipcRenderer.invoke('getAlimlar'),
+  deleteAlim: (alimId) => ipcRenderer.invoke('deleteAlim', alimId),
+  updateAlim: (alim) => ipcRenderer.invoke('updateAlim', alim),
 
   // TODO: Diğer handler'lar buraya gelecek (Birim/Porsiyon düzenleme, alım, gider, satış, analiz)
 });
