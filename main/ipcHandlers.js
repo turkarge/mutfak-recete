@@ -97,6 +97,25 @@ function registerIpcHandlers() {
       }
   });
 
+  // YENİ: Birim silme handler'ı
+  ipcMain.handle('deleteBirim', async (event, birimId) => {
+    try {
+        // TODO: İleride bu birimin porsiyonlarda veya reçete detaylarında kullanılıp kullanılmadığını kontrol et.
+        // Eğer kullanılıyorsa, silme işlemi engellenmeli veya kullanıcıya uyarı verilmeli.
+        // Şimdilik basit silme yapıyoruz.
+        const changes = await database.run("DELETE FROM birimler WHERE id = ?", [birimId]);
+        console.log(`Birim silme işlemi tamamlandı (ID: ${birimId}). Etkilenen satır sayısı: ${changes}`);
+        return changes > 0; // Silme başarılıysa true, değilse false döner
+    } catch (error) {
+        console.error(`Birim silme hatası (ID: ${birimId}):`, error.message);
+        // FOREIGN KEY constraint failed hatasını kontrol et
+        if (error.message.includes('FOREIGN KEY constraint failed')) {
+            throw new Error('Bu birim başka kayıtlarda (örn: Porsiyonlar, Reçete Detayları) kullanıldığı için silinemez.');
+        }
+        throw error; // Diğer hataları olduğu gibi fırlat
+    }
+  });
+
   // Belirli bir türdeki ürünleri getirme isteğini dinle (örn: Sadece Son Ürünler)
   ipcMain.handle('get-urunler-by-tur', async (event, tur) => {
       try {
@@ -104,7 +123,6 @@ function registerIpcHandlers() {
           console.log(`'${tur}' türündeki ürünler başarıyla getirildi. (${urunler.length} adet)`);
           return urunler;
       } catch (error) {
-          // Hata mesajındaki karakter hatasını düzeltildi: ' hatası:', error.message
           console.error(`'${tur}' türündeki ürünleri getirme hatası:`, error.message);
           throw error;
       }
@@ -238,7 +256,7 @@ function registerIpcHandlers() {
       }
   });
 
-   ipcMain.handle('updateReceteDetay', async (event, detay) => { // Detay objesini (id dahil) alıyor
+   ipcMain.handle('updateReceteDetay', async (event, detay) => {
       try {
            const changes = await database.run(
                "UPDATE receteDetaylari SET hammaddeId = ?, miktar = ?, birimKisaAd = ? WHERE id = ?",
@@ -252,10 +270,9 @@ function registerIpcHandlers() {
       }
   });
 
-
   // TODO: Diğer handler'lar buraya gelecek:
   // - Reçete düzenleme (updateRecete)
-  // - Birim silme/düzenleme
+  // - Birim düzenleme
   // - Porsiyon silme/düzenleme
   // - Alım ekleme/silme/getirme handlerları
   // - Gider ekleme/silme/getirme handlerları
