@@ -45,14 +45,16 @@ RestoranMaliyetApp/
 │ ├── porsiyonlar.js # Porsiyon yönetimi (CRUD, Dropdown)
 │ ├── receler.js # Reçete yönetimi (Ana ve Detay CRUD, Dropdown)
 │ ├── alimlar.js # Alım yönetimi (CRUD, Dropdown, Otomatik Hesaplama)
-│ └── giderler.js # Gider yönetimi (CRUD)
+│ ├── giderler.js # Gider yönetimi (CRUD)
+│ └── satislar.js # Satış yönetimi (CRUD, Dropdown, Otomatik Hesaplama)
 ├── views/ # Uygulama sayfalarının HTML şablonları
 │ ├── urunler.html
 │ ├── birimler.html
 │ ├── porsiyonlar.html
 │ ├── receler.html
 │ ├── alimlar.html
-│ └── giderler.html
+│ ├── giderler.html
+│ └── satislar.html
 ├── index.html # Ana HTML layout (menü, içerik alanı, genel JS/CSS, Modal)
 ├── preload.js # Güvenli IPC köprüsü
 ├── style.css # Uygulamaya özel CSS
@@ -82,17 +84,14 @@ RestoranMaliyetApp/
 14. **Birim Yönetimi:** CRUD işlevleri tamamlandı.
 15. **Porsiyon Yönetimi:** CRUD işlevleri ve ilgili dropdown'lar tamamlandı.
 16. **Reçete Yönetimi:** Ana reçete ve reçete detayları için CRUD işlevleri, dropdown'lar ve görünüm düzenlemeleri tamamlandı.
-17. **Alım Yönetimi:**
-    *   Veritabanına `alimlar` tablosu eklendi (`fisNo` alanı dahil).
-    *   `views/alimlar.html` ve `renderer/alimlar.js` oluşturuldu.
-    *   CRUD işlevleri (Ekleme, Listeleme, Düzenleme, Silme), dropdown'lar ve otomatik toplam tutar hesaplaması tamamlandı.
+17. **Alım Yönetimi:** CRUD işlevleri, dropdown'lar ve otomatik toplam tutar hesaplaması tamamlandı. Menü linki eklendi.
+18. **Gider Yönetimi:** CRUD işlevleri tamamlandı. Menü linki eklendi.
+19. **Satış Yönetimi:**
+    *   Veritabanına `satislar` tablosu güncellendi (`toplamSatisTutari`, `aciklama` alanları eklendi).
+    *   `views/satislar.html` ve `renderer/satislar.js` oluşturuldu.
+    *   CRUD işlevleri (Ekleme, Listeleme, Düzenleme, Silme), porsiyon dropdown'ı, varsayılan fiyat getirme ve otomatik toplam tutar hesaplaması tamamlandı.
     *   İlgili IPC handler'ları ve API'ler eklendi.
-    *   Menüye "Alımlar" linki eklendi.
-18. **Gider Yönetimi:**
-    *   `views/giderler.html` ve `renderer/giderler.js` oluşturuldu.
-    *   CRUD işlevleri (Ekleme, Listeleme, Düzenleme, Silme) tamamlandı.
-    *   İlgili IPC handler'ları ve API'ler eklendi.
-    *   Menüye "Giderler" linki eklendi.
+    *   Menüye "Satışlar" linki eklendi.
 
 ## Gelecek Adımlar (Yapılacaklar)
 
@@ -103,29 +102,24 @@ Planlanan gelecek adımlar ve tamamlanacak özellikler sırasıyla (önceliklend
     *   ~~Porsiyonlar için silme ve düzenleme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
     *   ~~Alımlar için düzenleme ve silme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
     *   ~~Giderler için düzenleme ve silme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
-    *   Satışlar için düzenleme ve silme işlevlerini ekleme.
+    *   ~~Satışlar için düzenleme ve silme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
 2.  **Birim çevrim mantığının** (Hammadde kullanım biriminden alış birimine çevirme) Reçete Maliyeti hesaplanırken kodda uygulanması.
 3.  **Alım Fişi Girişi:** `✓ TAMAMLANDI`
-    *   ~~`views/alimlar.html` sayfası oluşturma.~~
-    *   ~~`renderer/alimlar.js` dosyası oluşturma.~~
-    *   ~~`main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.~~
-    *   ~~Ekleme, Listeleme, Düzenleme, Silme işlevleri.~~
 4.  **Gider Girişi:** `✓ TAMAMLANDI`
-    *   ~~`views/giderler.html` sayfası oluşturma.~~
-    *   ~~`renderer/giderler.js` dosyası oluşturma.~~
+5.  **Satılan Ürün Kaydı:** `✓ TAMAMLANDI`
+    *   ~~`views/satislar.html` sayfası oluşturma.~~
+    *   ~~`renderer/satislar.js` dosyası oluşturma.~~
     *   ~~`main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.~~
     *   ~~Ekleme, Listeleme, Düzenleme, Silme işlevleri.~~
-5.  **Satılan Ürün Kaydı:**
-    *   `views/satislar.html` sayfası oluşturma.
-    *   `renderer/satislar.js` dosyası oluşturma.
-    *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.
-    *   Ekleme, Listeleme, Düzenleme, Silme işlevleri.
 6.  **Analiz ve Raporlama:**
-    *   ... (diğer alt maddeler)
-7.  **Uygulama Ayarları:** ...
-8.  **Hata Yönetimi İyileştirme:** ...
-9.  **Uygulama İyileştirmeleri:** ...
-10. **Dağıtım:** ...
-11. **Yedekleme/Geri Yükleme:** ...
-12. **Kullanıcı Yönetimi:** ...
-13. **Splash Screen ve Giriş Ekranı:** ...
+    *   `views/analiz.html` sayfası oluşturma.
+    *   `renderer/analiz.js` dosyası oluşturma (Veri tabanından verileri çekip hesaplamaları yapma ve grafik/tablo şeklinde gösterme).
+    *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme (Özel SQL sorguları gerektirecek).
+    *   Maliyet, Alım, Gider, Satış ve Kâr/Zarar raporlarını oluşturma.
+7.  **Uygulama Ayarları:** `ayarlar` tablosunu kullanarak genel ayarları yönetme arayüzü.
+8.  **Hata Yönetimi İyileştirme:** Daha kapsamlı hata yakalama ve loglama.
+9.  **Uygulama İyileştirmeleri:** Kullanıcı arayüzü detayları, performans optimizasyonları vb.
+10. **Dağıtım:** Uygulamayı farklı işletim sistemlerinde çalıştırılabilir hale getirme (Electron-builder gibi araçlarla).
+11. **Yedekleme/Geri Yükleme:** Veri tabanının yedeklenmesi ve geri yüklenmesi işlevi.
+12. **Kullanıcı Yönetimi:** Rol ve izin tabanlı erişim kontrolü.
+13. **Splash Screen ve Giriş Ekranı:** Uygulama başlatma akışına splash screen ve giriş ekranı ekleme.

@@ -1,11 +1,9 @@
 // renderer/satislar.js
 
-// Form elementleri ve tablo body'si için global değişkenler
 let satisEkleForm, satisIdInput, satisTarihInput, satisPorsiyonIdSelect, satisMiktarInput, satisFiyatiInput, satisToplamTutarInput, satisAciklamaInput;
 let satisFormBaslik, satisFormSubmitButton, satisFormCancelButton;
 let satislarTableBody;
 
-// Onay Modalı Fonksiyonu (Diğer sayfalardaki gibi)
 function showConfirmationModal(message, actionButtonText = 'Tamam', actionButtonClass = 'btn-primary') {
     return new Promise((resolve) => {
         const confirmationModalElement = document.getElementById('confirmationModal');
@@ -41,11 +39,9 @@ function showConfirmationModal(message, actionButtonText = 'Tamam', actionButton
     });
 }
 
-// Sayfa yüklendiğinde çalışacak ana fonksiyon
 export async function loadSatislarPage() {
     console.log('Satışlar sayfası JavaScript\'i yükleniyor...');
 
-    // DOM Elementlerini Seçme
     satisEkleForm = document.querySelector('#satisEkleForm');
     satisIdInput = document.querySelector('#satisIdInput');
     satisTarihInput = document.querySelector('#satisTarih');
@@ -59,46 +55,28 @@ export async function loadSatislarPage() {
     satisFormCancelButton = document.querySelector('#satisFormCancelButton');
     satislarTableBody = document.querySelector('#satislarTable tbody');
 
-    // --- Olay Dinleyicileri ---
-    // Miktar veya Satış Fiyatı değiştikçe Toplam Tutarı hesapla
-    if (satisMiktarInput && satisFiyatiInput && satisToplamTutarInput) {
-        const calculateTotal = () => {
-            const miktar = parseFloat(satisMiktarInput.value) || 0;
-            const satisFiyati = parseFloat(satisFiyatiInput.value) || 0;
-            satisToplamTutarInput.value = (miktar * satisFiyati).toFixed(2);
-        };
-        satisMiktarInput.addEventListener('input', calculateTotal);
-        satisFiyatiInput.addEventListener('input', calculateTotal);
-    }
+    const calculateTotal = () => {
+        const miktar = parseFloat(satisMiktarInput.value) || 0;
+        const satisFiyati = parseFloat(satisFiyatiInput.value) || 0;
+        if (satisToplamTutarInput) satisToplamTutarInput.value = (miktar * satisFiyati).toFixed(2);
+    };
 
-    // Porsiyon seçildiğinde varsayılan satış fiyatını getirme (İsteğe Bağlı Özellik)
+    if (satisMiktarInput) satisMiktarInput.addEventListener('input', calculateTotal);
+    if (satisFiyatiInput) satisFiyatiInput.addEventListener('input', calculateTotal);
+
     if (satisPorsiyonIdSelect && satisFiyatiInput) {
-        satisPorsiyonIdSelect.addEventListener('change', async (event) => {
-            const porsiyonId = event.target.value;
-            if (porsiyonId) {
-                try {
-                    // Porsiyon detaylarını çekmek için bir IPC handler'a ihtiyacımız olacak
-                    // Şimdilik varsayalım ki porsiyonlar listesiyle birlikte varsayılan fiyat geliyor
-                    // Ya da getPorsiyonlar'dan dönen porsiyon objesinde bu bilgi var.
-                    // Bu kısmı IPC handler'ları ekledikten sonra dolduracağız.
-                    // Örnek: const porsiyon = await window.electronAPI.getPorsiyonById(porsiyonId);
-                    // if(porsiyon && porsiyon.varsayilanSatisFiyati) {
-                    //     satisFiyatiInput.value = porsiyon.varsayilanSatisFiyati.toFixed(2);
-                    //     calculateTotal(); // Toplamı yeniden hesapla
-                    // }
-                    console.log("Porsiyon değişti, ID:", porsiyonId, "- Varsayılan fiyat getirme TODO");
-                } catch (error) {
-                    console.error("Porsiyon için varsayılan fiyat getirilirken hata:", error);
-                }
+        satisPorsiyonIdSelect.addEventListener('change', (event) => {
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const varsayilanFiyat = selectedOption.dataset.varsayilanFiyat;
+            if (varsayilanFiyat && varsayilanFiyat !== 'null' && varsayilanFiyat !== 'undefined') {
+                satisFiyatiInput.value = parseFloat(varsayilanFiyat).toFixed(2);
             } else {
-                satisFiyatiInput.value = ""; // Porsiyon seçilmemişse fiyatı temizle
-                if(satisToplamTutarInput) satisToplamTutarInput.value = "0.00";
+                satisFiyatiInput.value = "";
             }
+            calculateTotal(); // Fiyat değişince toplamı güncelle
         });
     }
 
-
-    // Formu Ekleme Moduna Ayarla
     function switchToAddMode() {
         if (!satisEkleForm) return;
         satisEkleForm.reset();
@@ -118,17 +96,14 @@ export async function loadSatislarPage() {
         if(satisToplamTutarInput) satisToplamTutarInput.value = "0.00";
     }
 
-    // Dropdownları Doldurma Fonksiyonu
     async function populateDropdowns() {
         try {
-            // Porsiyonlar Dropdown
             if (satisPorsiyonIdSelect) {
-                const porsiyonlar = await window.electronAPI.getPorsiyonlar(); // Bu handler zaten var
+                const porsiyonlar = await window.electronAPI.getPorsiyonlar();
                 satisPorsiyonIdSelect.innerHTML = '<option value="">-- Porsiyon Seçiniz --</option>';
                 porsiyonlar.forEach(porsiyon => {
                     const option = document.createElement('option');
                     option.value = porsiyon.id;
-                    // Porsiyon objesinden varsayılan fiyatı da alıp data attribute olarak saklayabiliriz
                     option.dataset.varsayilanFiyat = porsiyon.varsayilanSatisFiyati || '0';
                     option.textContent = `${porsiyon.sonUrunAdi} - ${porsiyon.porsiyonAdi}`;
                     satisPorsiyonIdSelect.appendChild(option);
@@ -136,36 +111,175 @@ export async function loadSatislarPage() {
             }
         } catch (error) {
             console.error('Satışlar sayfası dropdownları doldurulurken hata:', error);
-            toastr.error('Form alanları yüklenirken bir hata oluştu.');
+            toastr.error('Porsiyon listesi yüklenirken bir hata oluştu.');
         }
     }
 
-    // --- Sayfa Yüklendiğinde Çalışacaklar ---
-    await populateDropdowns(); // Dropdownları doldur
+    function displaySatislar(satislar) {
+        if (!satislarTableBody) return;
+        satislarTableBody.innerHTML = '';
+
+        if (satislar && satislar.length > 0) {
+            satislar.forEach(satis => {
+                const row = satislarTableBody.insertRow();
+                row.insertCell(0).textContent = satis.id;
+                const tarihObj = new Date(satis.tarih);
+                row.insertCell(1).textContent = `${tarihObj.getDate().toString().padStart(2, '0')}.${(tarihObj.getMonth() + 1).toString().padStart(2, '0')}.${tarihObj.getFullYear()}`;
+                row.insertCell(2).textContent = `${satis.sonUrunAdi} - ${satis.porsiyonAdi}`;
+                const miktarCell = row.insertCell(3);
+                miktarCell.textContent = satis.miktar;
+                miktarCell.classList.add('text-end');
+                const satisFiyatiCell = row.insertCell(4);
+                satisFiyatiCell.textContent = satis.satisFiyati.toFixed(2);
+                satisFiyatiCell.classList.add('text-end');
+                const toplamTutarCell = row.insertCell(5);
+                toplamTutarCell.textContent = satis.toplamSatisTutari.toFixed(2);
+                toplamTutarCell.classList.add('text-end');
+                row.insertCell(6).textContent = satis.aciklama || '-';
+
+                const eylemlerCell = row.insertCell(7);
+                eylemlerCell.classList.add('text-end');
+                const buttonContainer = document.createElement('div');
+
+                const duzenleButton = document.createElement('button');
+                duzenleButton.type = 'button';
+                duzenleButton.classList.add('btn', 'btn-icon', 'btn-warning');
+                duzenleButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
+                duzenleButton.title = "Düzenle";
+                duzenleButton.addEventListener('click', () => handleEditSatis(satis));
+                buttonContainer.appendChild(duzenleButton);
+
+                const silButton = document.createElement('button');
+                silButton.type = 'button';
+                silButton.classList.add('btn', 'btn-icon', 'btn-danger', 'ms-1');
+                silButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
+                silButton.title = "Sil";
+                silButton.setAttribute('data-satis-id', satis.id);
+                silButton.setAttribute('data-satis-desc', `${new Date(satis.tarih).toLocaleDateString('tr-TR')} - ${satis.sonUrunAdi} - ${satis.porsiyonAdi}`);
+                silButton.addEventListener('click', handleDeleteSatis);
+                buttonContainer.appendChild(silButton);
+
+                eylemlerCell.appendChild(buttonContainer);
+            });
+        } else {
+            const row = satislarTableBody.insertRow();
+            const cell = row.insertCell(0);
+            cell.colSpan = 8;
+            cell.textContent = 'Henüz satış kaydı bulunamadı.';
+            cell.style.textAlign = 'center';
+        }
+    }
+
+    async function fetchAndDisplaySatislar() {
+        try {
+            const satislar = await window.electronAPI.getSatislar();
+            displaySatislar(satislar);
+        } catch (error) {
+            console.error('Satışlar getirilirken hata oluştu:', error);
+            toastr.error('Satış kayıtları yüklenirken bir hata oluştu.');
+        }
+    }
+
+    function handleEditSatis(satis) {
+        if (!satisEkleForm) return;
+        satisIdInput.value = satis.id;
+        satisTarihInput.value = satis.tarih.split('T')[0];
+        satisPorsiyonIdSelect.value = satis.porsiyonId.toString(); // porsiyonId integer olabilir
+        satisMiktarInput.value = satis.miktar;
+        satisFiyatiInput.value = satis.satisFiyati.toFixed(2);
+        satisToplamTutarInput.value = satis.toplamSatisTutari.toFixed(2);
+        satisAciklamaInput.value = satis.aciklama || "";
+
+        if (satisFormBaslik) satisFormBaslik.textContent = `Satış Kaydını Düzenle (ID: ${satis.id})`;
+        if (satisFormSubmitButton) {
+            const textSpan = satisFormSubmitButton.querySelector('span');
+            if (textSpan) textSpan.textContent = 'Güncelle';
+            satisFormSubmitButton.classList.remove('btn-primary');
+            satisFormSubmitButton.classList.add('btn-success');
+        }
+        if (satisFormCancelButton) satisFormCancelButton.classList.remove('d-none');
+        satisTarihInput.focus();
+        window.scrollTo(0, 0);
+    }
+
+    async function handleDeleteSatis(event) {
+        const button = event.currentTarget;
+        const satisId = button.getAttribute('data-satis-id');
+        const satisDesc = button.getAttribute('data-satis-desc');
+
+        const confirmed = await showConfirmationModal(
+            `"${satisDesc}" satış kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+            'Evet, Sil', 'btn-danger'
+        );
+
+        if (!confirmed) {
+            toastr.info('Silme işlemi iptal edildi.');
+            return;
+        }
+
+        try {
+            const silindi = await window.electronAPI.deleteSatis(Number(satisId));
+            if (silindi) {
+                toastr.success('Satış kaydı başarıyla silindi.');
+                await fetchAndDisplaySatislar();
+                if (satisIdInput.value === satisId) {
+                    switchToAddMode();
+                }
+            } else {
+                toastr.warning('Satış kaydı silinemedi veya bulunamadı.');
+            }
+        } catch (error) {
+            console.error('Satış silinirken hata:', error);
+            toastr.error(`Satış silinirken bir hata oluştu: ${error.message}`);
+        }
+    }
 
     if (satisEkleForm) {
-        switchToAddMode(); // Formu başlangıçta ekleme moduna al
-    }
+        satisEkleForm.onsubmit = async (event) => {
+            event.preventDefault();
+            const satisId = satisIdInput.value ? parseInt(satisIdInput.value) : null;
 
-    // Porsiyon seçildiğinde varsayılan satış fiyatını doldurma (populateDropdowns sonrası)
-    if (satisPorsiyonIdSelect && satisFiyatiInput) {
-        satisPorsiyonIdSelect.addEventListener('change', (event) => {
-            const selectedOption = event.target.options[event.target.selectedIndex];
-            const varsayilanFiyat = selectedOption.dataset.varsayilanFiyat;
-            if (varsayilanFiyat && varsayilanFiyat !== 'null' && varsayilanFiyat !== 'undefined') {
-                satisFiyatiInput.value = parseFloat(varsayilanFiyat).toFixed(2);
-            } else {
-                satisFiyatiInput.value = ""; // Varsayılan fiyat yoksa boşalt
+            const satisData = {
+                id: satisId,
+                tarih: satisTarihInput.value,
+                porsiyonId: parseInt(satisPorsiyonIdSelect.value),
+                miktar: parseFloat(satisMiktarInput.value),
+                satisFiyati: parseFloat(satisFiyatiInput.value),
+                toplamSatisTutari: parseFloat(satisToplamTutarInput.value),
+                aciklama: satisAciklamaInput.value.trim() || null
+            };
+
+            if (!satisData.tarih || !satisData.porsiyonId || isNaN(satisData.miktar) || satisData.miktar <=0 || isNaN(satisData.satisFiyati) || satisData.satisFiyati < 0) {
+                toastr.warning('Lütfen tüm zorunlu alanları (Tarih, Porsiyon, Miktar > 0, Satış Fiyatı >= 0) doğru bir şekilde doldurun.');
+                return;
             }
-            // Toplamı yeniden hesapla
-            const miktar = parseFloat(satisMiktarInput.value) || 0;
-            const satisFiyati = parseFloat(satisFiyatiInput.value) || 0;
-            if(satisToplamTutarInput) satisToplamTutarInput.value = (miktar * satisFiyati).toFixed(2);
-        });
+
+            try {
+                if (satisData.id) {
+                    await window.electronAPI.updateSatis(satisData);
+                    toastr.success('Satış kaydı başarıyla güncellendi!');
+                } else {
+                    await window.electronAPI.addSatis(satisData);
+                    toastr.success('Satış kaydı başarıyla eklendi!');
+                }
+                switchToAddMode();
+                await fetchAndDisplaySatislar();
+            } catch (error) {
+                console.error('Satış eklerken/güncellerken hata:', error);
+                toastr.error(`İşlem sırasında bir hata oluştu: ${error.message}`);
+            }
+        };
     }
 
-    // TODO: Satışları listeleme (fetchAndDisplaySatislar)
-    // TODO: Form submit olayı (addSatis / updateSatis)
-    // TODO: Silme butonu olayı (handleDeleteSatis)
-    // TODO: Düzenleme butonu olayı (handleEditSatis)
+    if (satisFormCancelButton) {
+        satisFormCancelButton.onclick = () => {
+            switchToAddMode();
+        };
+    }
+
+    await populateDropdowns();
+    await fetchAndDisplaySatislar();
+    if (satisEkleForm) {
+        switchToAddMode();
+    }
 }
