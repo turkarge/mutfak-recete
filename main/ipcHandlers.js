@@ -442,34 +442,34 @@ function registerIpcHandlers() {
         }
     });
 
-// --- Alımlar için Handler'lar ---
-  ipcMain.handle('addAlim', async (event, alim) => {
-    // alim objesi: { tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamTutar, fisNo }
-    try {
-      const sql = `INSERT INTO alimlar (tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamFiyat, fisNo)
+    // --- Alımlar için Handler'lar ---
+    ipcMain.handle('addAlim', async (event, alim) => {
+        // alim objesi: { tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamTutar, fisNo }
+        try {
+            const sql = `INSERT INTO alimlar (tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamFiyat, fisNo)
                    VALUES (?, ?, ?, ?, ?, ?, ?)`; // fisNo eklendi
-      const params = [
-        alim.tarih,
-        alim.urunId,
-        alim.miktar,
-        alim.birimKisaAd,
-        alim.birimFiyat,
-        alim.toplamTutar,
-        alim.fisNo // fisNo parametresi eklendi
-      ];
-      const lastID = await database.run(sql, params);
-      console.log(`Alım başarıyla eklendi. ID: ${lastID}, Fiş No: ${alim.fisNo}`);
-      return lastID;
-    } catch (error) {
-      console.error('Alım ekleme hatası:', error.message);
-      if (error.message.includes('FOREIGN KEY constraint failed')) { /* ... (hata yönetimi aynı) ... */ }
-      throw error;
-    }
-  });
+            const params = [
+                alim.tarih,
+                alim.urunId,
+                alim.miktar,
+                alim.birimKisaAd,
+                alim.birimFiyat,
+                alim.toplamTutar,
+                alim.fisNo // fisNo parametresi eklendi
+            ];
+            const lastID = await database.run(sql, params);
+            console.log(`Alım başarıyla eklendi. ID: ${lastID}, Fiş No: ${alim.fisNo}`);
+            return lastID;
+        } catch (error) {
+            console.error('Alım ekleme hatası:', error.message);
+            if (error.message.includes('FOREIGN KEY constraint failed')) { /* ... (hata yönetimi aynı) ... */ }
+            throw error;
+        }
+    });
 
-  ipcMain.handle('getAlimlar', async (event) => {
-    try {
-      const sql = `
+    ipcMain.handle('getAlimlar', async (event) => {
+        try {
+            const sql = `
         SELECT
           a.id,
           a.tarih,
@@ -487,39 +487,39 @@ function registerIpcHandlers() {
         JOIN birimler b ON a.birimKisaAd = b.kisaAd
         ORDER BY a.tarih DESC, a.id DESC;
       `;
-      const alimlar = await database.all(sql);
-      console.log(`${alimlar.length} adet alım kaydı başarıyla getirildi.`);
-      return alimlar;
-    } catch (error) {
-      console.error('Alımları getirme hatası:', error.message);
-      throw error;
-    }
-  });
+            const alimlar = await database.all(sql);
+            console.log(`${alimlar.length} adet alım kaydı başarıyla getirildi.`);
+            return alimlar;
+        } catch (error) {
+            console.error('Alımları getirme hatası:', error.message);
+            throw error;
+        }
+    });
 
-  // YENİ: Alım Silme Handler'ı
-  ipcMain.handle('deleteAlim', async (event, alimId) => {
-    try {
-      // İleride bu alım kaydının başka bir yerde kullanılıp kullanılmadığı kontrol edilebilir (stok hareketleri vb.)
-      // Şimdilik direkt silme yapıyoruz.
-      const changes = await database.run("DELETE FROM alimlar WHERE id = ?", [alimId]);
-      if (changes > 0) {
-        console.log(`Alım kaydı başarıyla silindi (ID: ${alimId}).`);
-        return true;
-      } else {
-        console.warn(`Alım kaydı silinirken bulunamadı (ID: ${alimId})`);
-        throw new Error('Silinecek alım kaydı bulunamadı.');
-      }
-    } catch (error) {
-      console.error(`Alım silme hatası (ID: ${alimId}):`, error.message);
-      throw error;
-    }
-  });
+    // YENİ: Alım Silme Handler'ı
+    ipcMain.handle('deleteAlim', async (event, alimId) => {
+        try {
+            // İleride bu alım kaydının başka bir yerde kullanılıp kullanılmadığı kontrol edilebilir (stok hareketleri vb.)
+            // Şimdilik direkt silme yapıyoruz.
+            const changes = await database.run("DELETE FROM alimlar WHERE id = ?", [alimId]);
+            if (changes > 0) {
+                console.log(`Alım kaydı başarıyla silindi (ID: ${alimId}).`);
+                return true;
+            } else {
+                console.warn(`Alım kaydı silinirken bulunamadı (ID: ${alimId})`);
+                throw new Error('Silinecek alım kaydı bulunamadı.');
+            }
+        } catch (error) {
+            console.error(`Alım silme hatası (ID: ${alimId}):`, error.message);
+            throw error;
+        }
+    });
 
-  // YENİ: Alım Güncelleme Handler'ı
-  ipcMain.handle('updateAlim', async (event, alim) => {
-    // alim objesi: { id, tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamTutar, fisNo }
-    try {
-      const sql = `
+    // YENİ: Alım Güncelleme Handler'ı
+    ipcMain.handle('updateAlim', async (event, alim) => {
+        // alim objesi: { id, tarih, urunId, miktar, birimKisaAd, birimFiyat, toplamTutar, fisNo }
+        try {
+            const sql = `
         UPDATE alimlar SET
           tarih = ?,
           urunId = ?,
@@ -529,30 +529,109 @@ function registerIpcHandlers() {
           toplamFiyat = ?,
           fisNo = ?
         WHERE id = ?`;
-      const params = [
-        alim.tarih,
-        alim.urunId,
-        alim.miktar,
-        alim.birimKisaAd,
-        alim.birimFiyat,
-        alim.toplamTutar,
-        alim.fisNo,
-        alim.id
-      ];
-      const changes = await database.run(sql, params);
-      if (changes > 0) {
-        console.log(`Alım kaydı başarıyla güncellendi (ID: ${alim.id}).`);
-        return true;
-      } else {
-        console.warn(`Alım güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${alim.id})`);
-        throw new Error('Güncellenecek alım kaydı bulunamadı veya verilerde değişiklik yapılmadı.');
-      }
-    } catch (error) {
-      console.error(`Alım güncelleme hatası (ID: ${alim.id}):`, error.message);
-      if (error.message.includes('FOREIGN KEY constraint failed')) { /* ... (hata yönetimi eklenebilir) ... */ }
-      throw error;
-    }
-  });
+            const params = [
+                alim.tarih,
+                alim.urunId,
+                alim.miktar,
+                alim.birimKisaAd,
+                alim.birimFiyat,
+                alim.toplamTutar,
+                alim.fisNo,
+                alim.id
+            ];
+            const changes = await database.run(sql, params);
+            if (changes > 0) {
+                console.log(`Alım kaydı başarıyla güncellendi (ID: ${alim.id}).`);
+                return true;
+            } else {
+                console.warn(`Alım güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${alim.id})`);
+                throw new Error('Güncellenecek alım kaydı bulunamadı veya verilerde değişiklik yapılmadı.');
+            }
+        } catch (error) {
+            console.error(`Alım güncelleme hatası (ID: ${alim.id}):`, error.message);
+            if (error.message.includes('FOREIGN KEY constraint failed')) { /* ... (hata yönetimi eklenebilir) ... */ }
+            throw error;
+        }
+    });
+    // --- Giderler için Handler'lar ---
+    ipcMain.handle('addGider', async (event, gider) => {
+        // gider objesi: { tarih, giderKalemi, tutar, aciklama }
+        try {
+            const sql = `INSERT INTO giderler (tarih, giderKalemi, tutar, aciklama)
+                   VALUES (?, ?, ?, ?)`;
+            const params = [
+                gider.tarih,
+                gider.giderKalemi,
+                gider.tutar,
+                gider.aciklama
+            ];
+            const lastID = await database.run(sql, params);
+            console.log(`Gider başarıyla eklendi. ID: ${lastID}, Kalem: ${gider.giderKalemi}`);
+            return lastID;
+        } catch (error) {
+            console.error('Gider ekleme hatası:', error.message);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('getGiderler', async (event) => {
+        try {
+            const sql = `SELECT * FROM giderler ORDER BY tarih DESC, id DESC`;
+            const giderler = await database.all(sql);
+            console.log(`${giderler.length} adet gider kaydı başarıyla getirildi.`);
+            return giderler;
+        } catch (error) {
+            console.error('Giderleri getirme hatası:', error.message);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('updateGider', async (event, gider) => {
+        // gider objesi: { id, tarih, giderKalemi, tutar, aciklama }
+        try {
+            const sql = `
+        UPDATE giderler SET
+          tarih = ?,
+          giderKalemi = ?,
+          tutar = ?,
+          aciklama = ?
+        WHERE id = ?`;
+            const params = [
+                gider.tarih,
+                gider.giderKalemi,
+                gider.tutar,
+                gider.aciklama,
+                gider.id
+            ];
+            const changes = await database.run(sql, params);
+            if (changes > 0) {
+                console.log(`Gider kaydı başarıyla güncellendi (ID: ${gider.id}).`);
+                return true;
+            } else {
+                console.warn(`Gider güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${gider.id})`);
+                throw new Error('Güncellenecek gider kaydı bulunamadı veya verilerde değişiklik yapılmadı.');
+            }
+        } catch (error) {
+            console.error(`Gider güncelleme hatası (ID: ${gider.id}):`, error.message);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('deleteGider', async (event, giderId) => {
+        try {
+            const changes = await database.run("DELETE FROM giderler WHERE id = ?", [giderId]);
+            if (changes > 0) {
+                console.log(`Gider kaydı başarıyla silindi (ID: ${giderId}).`);
+                return true;
+            } else {
+                console.warn(`Gider kaydı silinirken bulunamadı (ID: ${giderId})`);
+                throw new Error('Silinecek gider kaydı bulunamadı.');
+            }
+        } catch (error) {
+            console.error(`Gider silme hatası (ID: ${giderId}):`, error.message);
+            throw error;
+        }
+    });
 
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)

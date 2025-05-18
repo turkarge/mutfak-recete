@@ -1,0 +1,78 @@
+<!-- views/giderler.html -->
+<h2>Gider Yönetimi</h2>
+
+<div class="row">
+    <!-- Sol Sütun: Gider Ekleme/Düzenleme Formu -->
+    <div class="col-md-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h4 class="card-title" id="giderFormBaslik">Yeni Gider Kaydı</h4>
+            </div>
+            <div class="card-body">
+                <form id="giderEkleForm">
+                    <input type="hidden" id="giderIdInput" value="">
+
+                    <div class="mb-3">
+                        <label class="form-label" for="giderTarih">Tarih:</label>
+                        <input type="date" class="form-control" id="giderTarih" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="giderKalemi">Gider Kalemi:</label>
+                        <input type="text" class="form-control" id="giderKalemi" placeholder="Örn: Kira, Elektrik Faturası, Personel Maaşı" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="giderTutar">Tutar (₺):</label>
+                        <input type="number" class="form-control" id="giderTutar" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="giderAciklama">Açıklama:</label>
+                        <textarea class="form-control" id="giderAciklama" rows="3" placeholder="İsteğe bağlı ek notlar..."></textarea>
+                    </div>
+
+                    <div class="d-flex">
+                        <button type="submit" id="giderFormSubmitButton" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
+                            <span class="ms-1">Gideri Kaydet</span>
+                        </button>
+                        <button type="button" id="giderFormCancelButton" class="btn btn-ghost-secondary ms-2 d-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+                            <span class="ms-1">İptal</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- Sol sütun sonu -->
+
+    <!-- Sağ Sütun: Gider Listesi -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header">
+                 <h4 class="card-title">Gider Kayıtları</h4>
+            </div>
+            <div class="table-responsive">
+                <table id="giderlerTable" class="table table-striped table-hover card-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Tarih</th>
+                      <th>Gider Kalemi</th>
+                      <th class="text-end">Tutar (₺)</th> <!-- Sağa yaslı -->
+                      <th>Açıklama</th>
+                      <th>Eylemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td colspan="6" class="text-center">Gider kayıtları yükleniyor...</td> <!-- Colspan güncellendi -->
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- Sağ sütun sonu -->
+
+</div> <!-- Ana satır sonu -->
