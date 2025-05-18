@@ -218,7 +218,7 @@ export async function loadRecetelerPage() {
                 const editButton = document.createElement('button');
                 editButton.textContent = 'Düzenle';
                 editButton.classList.add('btn', 'btn-sm', 'btn-primary', 'me-2');
-                editButton.dataset.id = detay.id; // Butona detay ID'sini ekle
+                editButton.dataset.id = detay.id;
                 // editButton.disabled = true; // <-- Bu satırı kaldırdık, buton artık aktif olacak
 
                 // Tıklama olayına handleEditReceteDetay'ı çağırırken detay.id ve detay objesini gönder
@@ -379,9 +379,11 @@ export async function loadRecetelerPage() {
              // selectedReceteIdInput.value = detay.receteId; // Emin olmak için tekrar set edilebilir
 
             // Hammadde, Miktar ve Birim alanlarını doldur
-            hammaddeSelect.value = detay.hammaddeId;
+            // Dropdownlar string değer tuttuğu için value ataması string olmalı
+            hammaddeSelect.value = detay.hammaddeId.toString(); // ID'yi string'e çevir
             miktarInput.value = detay.miktar;
-            detayBirimSelect.value = detay.birimKisaAd;
+            detayBirimSelect.value = detay.birimKisaAd; // Kısa Ad zaten string
+
 
             // Düzenleme modunda olduğumuzu belirten data attribute ekle
             receteDetayEkleForm.dataset.editingId = detay.id;
@@ -429,8 +431,31 @@ export async function loadRecetelerPage() {
 
 
     // --- Async Veri Çekme ve Gösterme Yardımcı Fonksiyonları ---
-    // ... fetchAndDisplayReceteler ...
-    // ... fetchAndDisplayReceteDetails ...
+
+    // Reçete listesini Ana Süreç'ten çekip gösteren yardımcı fonksiyon
+    async function fetchAndDisplayReceteler() {
+        try {
+            const receler = await window.electronAPI.getReceteler();
+            console.log('Ana Süreçten gelen reçeteler:', receler);
+            displayReceteler(receler);
+        } catch (error) {
+            console.error('Reçeteleri alırken hata oluştu:', error);
+            toastr.error('Reçete listesi yüklenirken hata oluştu.');
+        }
+    }
+
+    // Seçilen Reçete Detaylarını Ana Süreç'ten çekip gösteren yardımcı fonksiyon
+    async function fetchAndDisplayReceteDetails(receteId) {
+         try {
+            const detaylar = await window.electronAPI.getReceteDetaylari(receteId);
+            console.log(`Ana Süreçten gelen reçete detayları (ID: ${receteId}):`, detaylar);
+            displayReceteDetaylari(detaylar);
+
+         } catch (error) {
+            console.error(`Reçete detayları (ID: ${receteId}) alırken hata oluştu:`, error);
+            toastr.error('Reçete detayları yüklenirken bir hata oluştu.');
+        }
+    }
 
 
     // --- Form Submit Olay Dinleyicileri ---
@@ -460,6 +485,7 @@ export async function loadRecetelerPage() {
 
                 receteEkleForm.reset();
 
+                // Yeni reçete eklendikten sonra reçete listesini yenile
                 await fetchAndDisplayReceteler();
 
             } catch (error) {
@@ -478,7 +504,7 @@ export async function loadRecetelerPage() {
                 else {
                      displayMessage = 'Reçete eklenirken bir hata oluştu: ' + error.message;
                 }
-                 toastr.error(displayMessage); // Toastr ile hata göster
+                 toastr.error(displayMessage);
             }
         });
     } else {
@@ -496,7 +522,7 @@ export async function loadRecetelerPage() {
             const miktar = miktarInput.value;
             const birimKisaAd = detayBirimSelect.value;
 
-             const detayData = { // Yeni veya güncellenecek detay verileri
+             const detayData = {
                  receteId: parseInt(receteId),
                  // Hammadde, Miktar ve Birim inputlarından alınan değerler
                  hammaddeId: parseInt(hammaddeId),
@@ -504,7 +530,6 @@ export async function loadRecetelerPage() {
                  birimKisaAd: birimKisaAd
              };
 
-             // Zorunlu alan kontrolü (ekleme ve düzenleme için ortak)
              if (!detayData.receteId || !detayData.hammaddeId || !detayData.miktar || !detayData.birimKisaAd) {
                  toastr.warning('Hammadde, Miktar ve Birim boş bırakılamaz.');
                  return;
@@ -515,28 +540,28 @@ export async function loadRecetelerPage() {
              }
 
 
-            // Form düzenleme modunda mı kontrol et (data-editing-id attribute'una bak)
              const editingId = receteDetayEkleForm.dataset.editingId;
 
              if (editingId) {
                  // *** Düzenleme Modunda ***
                  console.log(`Reçete detayı güncelleniyor, ID: ${editingId}`);
-                 detayData.id = parseInt(editingId); // Güncellenecek detayın ID'sini objeye ekle
+                 detayData.id = parseInt(editingId);
 
 
                  try {
-                     // Ana Süreç'e güncelleme isteği gönder
-                     const success = await window.electronAPI.updateReceteDetay(detayData); // updateReceteDetay handler'ı mevcut
+                     const success = await window.electronAPI.updateReceteDetay(detayData);
 
                      if (success) {
                          console.log(`Reçete detayı başarıyla güncellendi, ID: ${editingId}`);
                          toastr.success('Hammadde detayı güncellendi!');
 
-                         // Formu resetle ve "Ekle" moduna dön
                          resetReceteDetayForm();
 
-                         // Reçete Detayları listesini yenile
-                         await fetchAndDisplayReceteDetails(currentReceteId);
+                         if (currentReceteId) {
+                             await fetchAndDisplayReceteDetails(currentReceteId);
+                         } else {
+                              console.error("Güncelleme sonrası reçete detayları yenilenemedi: currentReceteId boş.");
+                         }
 
                      } else {
                          console.warn(`Reçete detayı güncelleme başarısız, ID: ${editingId}`);
@@ -547,6 +572,7 @@ export async function loadRecetelerPage() {
                      console.error('Genel Hata Yakalandı (Reçete Detay Güncelle):', error);
                       let displayMessage = 'Reçete detayı güncellenirken beklenmeyen bir hata oluştu.';
                       toastr.error(displayMessage + ': ' + error.message);
+
                  }
 
              } else {
@@ -554,16 +580,13 @@ export async function loadRecetelerPage() {
                  console.log('Yeni reçete detayı ekleniyor...');
 
                  try {
-                      // Yeni reçete detayını (hammadde) Ana Süreç'e gönder
-                     const eklenenDetayId = await window.electronAPI.addReceteDetay(detayData); // addReceteDetay handler'ı mevcut
+                     const eklenenDetayId = await window.electronAPI.addReceteDetay(detayData);
                      console.log('Reçete Detayı başarıyla eklendi, ID:', eklenenDetayId);
                      toastr.success('Hammadde reçeteye eklendi!');
 
-                     // Formu temizle
                      receteDetayEkleForm.reset();
-                     selectedReceteIdInput.value = detayData.receteId; // Gizli inputu tekrar ayarla
+                     selectedReceteIdInput.value = detayData.receteId;
 
-                     // Reçete Detayları listesini yenile
                      if (currentReceteId) {
                          await fetchAndDisplayReceteDetails(currentReceteId);
                      } else {
@@ -586,8 +609,8 @@ export async function loadRecetelerPage() {
     // --- Sayfa Yüklendiğinde Çalışacaklar (loadRecetelerPage çağrıldığında) ---
 
     // Dropdownları doldur
-    await populateRecetePorsiyonDropdown(); // Yeni reçete formu için
-    await populateReceteDetayDropdowns(); // Hammadde ekleme formu için
+    await populateRecetePorsiyonDropdown();
+    await populateReceteDetayDropdowns();
 
     // Reçete listesini çek ve göster
     await fetchAndDisplayReceteler();
