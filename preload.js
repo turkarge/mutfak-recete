@@ -27,5 +27,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
   deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
 
+  // Reçete detayı güncelleme fonksiyonu
+  // Renderer süreci, Ana Süreç'teki 'updateReceteDetay' handler'ını bu fonksiyonla çağıracak.
+  updateReceteDetay: (detay) => ipcRenderer.invoke('updateReceteDetay', detay)
+
+
   // TODO: Diğer handler'lar buraya gelecek (silme/düzenleme, alım, gider, satış, analiz)
 });
