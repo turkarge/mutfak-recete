@@ -170,8 +170,21 @@ function initializeDatabase() {
                         anahtar TEXT PRIMARY KEY,
                         deger TEXT
                       )`, (err) => {
-                         if (err) console.error('ayarlar tablosu oluşturma hatası:', err.message);
-                         else console.log('ayarlar tablosu hazır.');
+                         if (err) {
+                            console.error('ayarlar tablosu oluşturma hatası:', err.message);
+                         } else {
+                            console.log('ayarlar tablosu hazır.');
+                            // Ayarlar tablosu oluşturulduktan veya zaten var olduktan sonra varsayılan ayarları ekle
+                            // INSERT OR IGNORE kullanarak, eğer kayıt zaten varsa hata vermez, eklemez.
+                            db.run("INSERT OR IGNORE INTO ayarlar (anahtar, deger) VALUES (?, ?)", ['kullaniciAdi', 'admin'], (insertErr) => {
+                                if (insertErr) console.error("Varsayılan kullanıcı adı ekleme hatası:", insertErr.message);
+                                else console.log("Varsayılan kullanıcı adı ayarı kontrol edildi/eklendi.");
+                            });
+                            db.run("INSERT OR IGNORE INTO ayarlar (anahtar, deger) VALUES (?, ?)", ['sifre', 'admin'], (insertErr) => {
+                                if (insertErr) console.error("Varsayılan şifre ekleme hatası:", insertErr.message);
+                                else console.log("Varsayılan şifre ayarı kontrol edildi/eklendi.");
+                            });
+                         }
                       });
 
                       // Tüm serialize işlemleri bittiğinde Promise'ı çöz

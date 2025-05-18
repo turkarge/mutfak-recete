@@ -1,0 +1,66 @@
+<!-- views/ayarlar.html -->
+<h2>Uygulama Ayarları</h2>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+                    <li class="nav-item">
+                        <a href="#tab-kullanici-ayarlari" class="nav-link active" data-bs-toggle="tab">Kullanıcı Ayarları</a>
+                    </li>
+                    <!-- Gelecekteki diğer ayar sekmeleri buraya eklenebilir -->
+                    <!--
+                    <li class="nav-item">
+                        <a href="#tab-genel-ayarlar" class="nav-link" data-bs-toggle="tab">Genel Ayarlar</a>
+                    </li>
+                    -->
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Kullanıcı Ayarları Sekmesi İçeriği -->
+                    <div class="tab-pane active show" id="tab-kullanici-ayarlari">
+                        <h4>Kullanıcı Bilgileri ve Şifre Değiştirme</h4>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Kullanıcı Adı:</label>
+                                    <input type="text" class="form-control" id="ayarKullaniciAdi" readonly>
+                                </div>
+                                <hr>
+                                <h5>Şifre Değiştir</h5>
+                                <form id="sifreDegistirForm">
+                                    <div class="mb-3">
+                                        <label class="form-label" for="ayarMevcutSifre">Mevcut Şifre:</label>
+                                        <input type="password" class="form-control" id="ayarMevcutSifre" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="ayarYeniSifre">Yeni Şifre:</label>
+                                        <input type="password" class="form-control" id="ayarYeniSifre" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="ayarYeniSifreTekrar">Yeni Şifre (Tekrar):</label>
+                                        <input type="password" class="form-control" id="ayarYeniSifreTekrar" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-key" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12.694 12.323a5.001 5.001 0 0 1 -5.374 5.354l-4.32 -4.32a5 5 0 1 1 7.072 -7.071l2.124 2.123" /><path d="M16 4l-2.533 2.533" /><path d="M18.533 6.533l-2.533 2.533" /></svg>
+                                        <span class="ms-1">Şifreyi Güncelle</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Genel Ayarlar Sekmesi İçeriği (Gelecekte) -->
+                    <!--
+                    <div class="tab-pane" id="tab-genel-ayarlar">
+                        <h4>Genel Uygulama Ayarları</h4>
+                        <p>Bu kısım gelecekte eklenecek genel ayarları içerecektir (Örn: Para Birimi, Tema vb.).</p>
+                    </div>
+                    -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

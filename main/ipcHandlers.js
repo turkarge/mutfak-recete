@@ -738,6 +738,37 @@ function registerIpcHandlers() {
         }
     });
 
+    // --- Ayarlar için Handler'lar ---
+    ipcMain.handle('getAyar', async (event, anahtar) => {
+        try {
+            const sql = "SELECT deger FROM ayarlar WHERE anahtar = ?";
+            const row = await database.get(sql, [anahtar]);
+            if (row) {
+                console.log(`Ayar getirildi: ${anahtar} = ${row.deger}`);
+                return row.deger;
+            } else {
+                console.log(`Ayar bulunamadı: ${anahtar}`);
+                return null; // Anahtar bulunamazsa null dön
+            }
+        } catch (error) {
+            console.error(`Ayar (${anahtar}) getirme hatası:`, error.message);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('setAyar', async (event, anahtar, deger) => {
+        try {
+            // INSERT OR REPLACE: Eğer anahtar varsa değeri günceller, yoksa yeni kayıt ekler.
+            const sql = "INSERT OR REPLACE INTO ayarlar (anahtar, deger) VALUES (?, ?)";
+            await database.run(sql, [anahtar, deger]);
+            console.log(`Ayar güncellendi/eklendi: ${anahtar} = ${deger}`);
+            return true;
+        } catch (error) {
+            console.error(`Ayar (${anahtar}) kaydetme hatası:`, error.message);
+            throw error;
+        }
+    });
+
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)
     // - Birim düzenleme

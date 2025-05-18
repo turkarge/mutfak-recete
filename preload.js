@@ -51,5 +51,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateSatis: (satis) => ipcRenderer.invoke('updateSatis', satis),
   deleteSatis: (satisId) => ipcRenderer.invoke('deleteSatis', satisId),
 
+  // Ayarlar Handler'ları
+  getAyar: (anahtar) => ipcRenderer.invoke('getAyar', anahtar),
+  setAyar: (anahtar, deger) => ipcRenderer.invoke('setAyar', anahtar, deger),
+
   // TODO: Diğer handler'lar buraya gelecek (Birim/Porsiyon düzenleme, alım, gider, satış, analiz)
 });
