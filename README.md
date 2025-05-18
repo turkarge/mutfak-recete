@@ -139,12 +139,14 @@ Uygulamanın veri tabanı yapısı SQLite üzerinde kuruludur ve aşağıdaki ta
 21. Porsiyon Listeleme ve Tabloda Görüntüleme İşlevi (`getPorsiyonlar` handler'ı, `displayPorsiyonlar` JOIN ile Son Ürün Adı getiriliyor).
 22. Porsiyon Ekleme Formu için Son Ürünler Dropdown'ını Doldurma (`get-urunler-by-tur` handler'ı).
 23. Porsiyon Ekleme Formu için Birimler Dropdown'ını Doldurma (`getBirimler` handler'ı).
-24. **Reçete Yönetimi Sayfasının Temel İşlevlerinin Oluşturulması** (`views/receler.html`, `renderer/receler.js`)
+24. Reçete Yönetimi Sayfasının Temel İşlevlerinin Oluşturulması (`views/receler.html`, `renderer/receler.js`)
     *   Reçete Listeleme (`getReceteler` handler'ı).
     *   Yeni Reçete Ekleme (`addRecete` handler'ı).
+    *   Reçete Silme (`deleteRecete` handler'ı).
     *   Reçete Detaylarını Görüntüleme (`getReceteDetaylari` handler'ı).
     *   Reçete Detayları Ekleme (`addReceteDetay` handler'ı).
     *   Reçete Detayları Silme (`deleteReceteDetay` handler'ı).
+    *   **Reçete Detayları Düzenleme** (Buton, Form Doldurma, Güncelleme Mantığı, `updateReceteDetay` handler'ı) - **TAMAMLANDI**
     *   Dropdownların Doldurulması (Porsiyonlar, Hammaddeler, Birimler).
     *   Görünüm Düzenlemeleri (Form/Liste Ayrımı, Detay Kartı Düzeni, Başlık Güncelleme, Card Başlık Rengi).
     *   Modal Onay Kutusu Entegrasyonu (Silme işlemleri için).
