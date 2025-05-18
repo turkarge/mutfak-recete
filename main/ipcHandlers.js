@@ -247,6 +247,22 @@ function registerIpcHandlers() {
       }
   });
 
+    // Reçete detayı güncelleme isteğini dinle
+  ipcMain.handle('updateReceteDetay', async (event, detay) => { // Detay objesini (id dahil) alıyor
+      try {
+           // database.run fonksiyonu güncelleme durumunda this.changes dönecek şekilde ayarlı.
+           const changes = await database.run(
+               "UPDATE receteDetaylari SET hammaddeId = ?, miktar = ?, birimKisaAd = ? WHERE id = ?",
+               [detay.hammaddeId, detay.miktar, detay.birimKisaAd, detay.id]
+           );
+           console.log(`Reçete detayı başarıyla güncellendi (ID: ${detay.id}). Etkilenen satır sayısı: ${changes}`);
+           return changes > 0; // 1 veya daha fazla satır etkilendiyse true döndür
+      } catch (error) {
+           console.error(`Reçete detayı güncelleme hatası (ID: ${detay.id}):`, error.message);
+           throw error;
+      }
+  });
+  
   // TODO: Diğer handler'lar buraya gelecek:
   // - Reçete silme (deleteRecete)
   // - Birim silme (delete-birim)
