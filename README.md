@@ -26,7 +26,7 @@ Uygulamanın temel işlevleri şunlardır:
 *   **Kullanıcı Arayüzü Framework:** Temel HTML/CSS/JS + Tabler Tema
 *   **Bildirimler:** Toastr JavaScript kütüphanesi
 *   **JS Bağımlılığı:** jQuery (Toastr için)
-*   **Modal Onay:** Tabler Modal Bileşeni
+*   **Modal Onay:** Tabler Modal Bileşeni (`index.html` içinde genel onay modalı)
 *   **Paket Yönetimi:** npm (Node Package Manager)
 
 ## Proje Yapısı (Mevcut Durum)
@@ -40,9 +40,9 @@ RestoranMaliyetApp/
 │ ├── db.js # Veri tabanı bağlantısı ve temel CRUD fonksiyonları, DB initialize
 │ └── ipcHandlers.js # Renderer'dan gelen IPC mesajlarını işleyen handler'lar (Ürünler, Birimler, Porsiyonlar, Reçeteler, Reçete Detayları)
 ├── renderer/ # Electron Renderer Süreci Modülleri
-│ ├── birimler.js # Birim yönetimi sayfasının JavaScript kodları (Ekleme, Listeleme)
-│ ├── porsiyonlar.js # Porsiyon yönetimi sayfasının JavaScript kodları (Dropdown doldurma, Ekleme, Listeleme)
-│ └── receler.js # Reçete yönetimi sayfasının JavaScript kodları (Dropdown doldurma, Ekleme, Listeleme, Detay Görüntüleme, Detay Ekleme, Detay Silme, Detay Düzenleme)
+│ ├── birimler.js # Birim yönetimi sayfasının JavaScript kodları (Ekleme, Listeleme, Düzenleme, Silme)
+│ ├── porsiyonlar.js # Porsiyon yönetimi sayfasının JavaScript kodları (Dropdown doldurma, Ekleme, Listeleme, Düzenleme, Silme)
+│ └── receler.js # Reçete yönetimi sayfasının JavaScript kodları (Dropdown doldurma, Ekleme, Listeleme, Ana Reçete Düzenleme/Silme, Detay Görüntüleme, Detay Ekleme, Detay Silme, Detay Düzenleme)
 ├── views/ # Uygulama sayfalarının HTML şablonları
 │ ├── birimler.html # Birim yönetimi sayfası HTML'i
 │ ├── porsiyonlar.html# Porsiyon yönetimi sayfası HTML'i
@@ -56,7 +56,7 @@ RestoranMaliyetApp/
 
 ## Veri Modeli (Güncel Plan)
 
-... (Veri modeli kısmı aynı kalıyor)
+... (Veri modeli kısmı aynı kalıyor - Lütfen bu kısmı kendi projenizdeki güncel haliyle değiştirin veya olduğu gibi bırakın)
 
 ## Tamamlanan Adımlar (Güncel)
 
@@ -66,76 +66,76 @@ RestoranMaliyetApp/
 4.  IPC (Inter-Process Communication) Altyapısı Kurulumu (`preload.js` ve `main/ipcHandlers.js`).
 5.  Kullanıcı Arayüzü için Tabler Tema Entegrasyonu.
 6.  Bildirimler için Toastr Kütüphanesi Entegrasyonu.
-7.  Modal Onay Kutusu Entegrasyonu (Silme işlemleri için).
+7.  Modal Onay Kutusu Entegrasyonu (Silme işlemleri için, `index.html`'de genel modal).
 8.  Ana Layout ve Menü Yapısı Oluşturma (`index.html`).
 9.  Renderer'da Sayfa Yükleme Mekanizması (`renderer.js`'deki `loadPage` fonksiyonu).
 10. Menü Navigasyonu ve Aktiflik Durumu Yönetimi.
-11. Ürün/Hammadde Yönetimi Sayfasının Oluşturulması (`views/urunler.html`, `renderer/urunler.js`).
-12. Ürün Ekleme Formu ve Veri Tabanına Kayıt İşlevi (`add-urun` handler'ı).
-13. Ürün Listeleme ve Tabloda Görüntüleme İşlevi (`get-urunler` handler'ı, `displayUrunler`).
-14. **Ürün Silme İşlevi** (Butonlar, Modal Onay, `deleteUrun` handler'ı) - **TAMAMLANDI**
-15. **Ürün Düzenleme İşlevi** (Buton, Form Doldurma, Güncelleme Mantığı, `updateUrun` handler'ı) - **TAMAMLANDI**
-16. Aynı Ürün Adının Tekrar Kaydedilmesini Engelleme (`UNIQUE COLLATE NOCASE`).
-17. Birim Yönetimi Sayfasının Oluşturulması (`views/birimler.html`, `renderer/birimler.js`).
-18. Birim Ekleme Formu ve Veri Tabanına Kayıt İşlevi (`add-birim` handler'ı).
-19. Birim Listeleme ve Tabloda Görüntüleme İşlevi (`get-birimler` handler'ı, `displayBirimler`).
-20. Porsiyon Yönetimi Sayfasının Oluşturulması (`views/porsiyonlar.html`, `renderer/porsiyonlar.js`).
-21. Porsiyon Ekleme Formu ve Veri Tabanına Kayıt İşlevi (`addPorsiyon` handler'ı).
-22. Porsiyon Listeleme ve Tabloda Görüntüleme İşlevi (`getPorsiyonlar` handler'ı, `displayPorsiyonlar` JOIN ile Son Ürün Adı getiriliyor).
-23. Porsiyon Ekleme Formu için Son Ürünler Dropdown'ını Doldurma (`get-urunler-by-tur` handler'ı).
-24. Porsiyon Ekleme Formu için Birimler Dropdown'ını Doldurma (`getBirimler` handler'ı).
-25. Reçete Yönetimi Sayfasının Temel İşlevlerinin Oluşturulması (`views/receler.html`, `renderer/receler.js`)
+11. **Ürün/Hammadde Yönetimi:**
+    *   Sayfa Oluşturma (`views/urunler.html`, `renderer/urunler.js`).
+    *   Ürün Ekleme (`add-urun` handler'ı).
+    *   Ürün Listeleme (`get-urunler` handler'ı, `displayUrunler`).
+    *   Ürün Silme (`deleteUrun` handler'ı, modal onay).
+    *   Ürün Düzenleme (`updateUrun` handler'ı, form doldurma).
+    *   Aynı Ürün Adının Tekrar Kaydedilmesini Engelleme (`UNIQUE COLLATE NOCASE`).
+12. **Birim Yönetimi:**
+    *   Sayfa Oluşturma (`views/birimler.html`, `renderer/birimler.js`).
+    *   Birim Ekleme (`add-birim` handler'ı).
+    *   Birim Listeleme (`get-birimler` handler'ı, `displayBirimler`).
+    *   Birim Silme (`deleteBirim` handler'ı, modal onay, FOREIGN KEY kontrolü).
+    *   Birim Düzenleme (`updateBirim` handler'ı, form doldurma, UNIQUE kontrolü).
+13. **Porsiyon Yönetimi:**
+    *   Sayfa Oluşturma (`views/porsiyonlar.html`, `renderer/porsiyonlar.js`).
+    *   Porsiyon Ekleme (`addPorsiyon` handler'ı).
+    *   Porsiyon Listeleme (`getPorsiyonlar` handler'ı, `displayPorsiyonlar` JOIN ile Son Ürün Adı).
+    *   Dropdown Doldurma (Son Ürünler, Birimler).
+    *   Porsiyon Silme (`deletePorsiyon` handler'ı, modal onay, reçetede kullanım kontrolü).
+    *   Porsiyon Düzenleme (`updatePorsiyon` handler'ı, form doldurma, UNIQUE kontrolü).
+14. **Reçete Yönetimi:**
+    *   Sayfa Oluşturma (`views/receler.html`, `renderer/receler.js`).
     *   Reçete Listeleme (`getReceteler` handler'ı).
-    *   Yeni Reçete Ekleme (`addRecete` handler'ı).
-    *   Reçete Silme (`deleteRecete` handler'ı).
+    *   Yeni Reçete Ekleme (`addRecete` handler'ı, boş reçete adı için "Varsayılan" atama).
+    *   Reçete Silme (`deleteRecete` handler'ı, modal onay).
+    *   **Ana Reçete Düzenleme** (`updateRecete` handler'ı, form doldurma, UNIQUE kontrolü).
     *   Reçete Detaylarını Görüntüleme (`getReceteDetaylari` handler'ı).
     *   Reçete Detayları Ekleme (`addReceteDetay` handler'ı).
-    *   Reçete Detayları Silme (`deleteReceteDetay` handler'ı).
-    *   **Reçete Detayları Düzenleme** (Buton, Form Doldurma, Güncelleme Mantığı, `updateReceteDetay` handler'ı) - **TAMAMLANDI**
+    *   Reçete Detayları Silme (`deleteReceteDetay` handler'ı, modal onay).
+    *   Reçete Detayları Düzenleme (`updateReceteDetay` handler'ı, form doldurma).
     *   Dropdownların Doldurulması (Porsiyonlar, Hammaddeler, Birimler).
-    *   Görünüm Düzenlemeleri (Form/Liste Ayrımı, Detay Kartı Düzeni, Başlık Güncelleme, Card Başlık Rengi).
-    *   Modal Onay Kutusu Entegrasyonu (Silme işlemleri için).
-    *   Renderer tarafında `renderer/receler.js` kodunun yazılması.
-    *   Main/IPC handler'larının yazılması.
-    *   Preload güncellemeleri.
-    *   Menü linki eklenmesi.
+    *   Görünüm Düzenlemeleri (Form/Liste Ayrımı, Detay Kartı Düzeni, Başlık Güncelleme).
 
 ## Gelecek Adımlar (Yapılacaklar)
 
 Planlanan gelecek adımlar ve tamamlanacak özellikler sırasıyla (önceliklendirme tartışılabilir):
 
-1.  **Reçete Yönetimi İçin Kalan İşlevler:**
-    *   Reçete Düzenleme (Buton, Form Doldurma, `updateRecete` handler'ı - Ana reçeteyi düzenleme).
-2.  **Tablo Güncelleme ve Silme (Kalan Sayfalar):**
-    *   Birimler için silme ve düzenleme işlevlerini ekleme.
-    *   Porsiyonlar için silme ve düzenleme işlevlerini ekleme.
+1.  **Tablo Güncelleme ve Silme (Kalan Sayfalar):**
+    *   ~~Birimler için silme ve düzenleme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
+    *   ~~Porsiyonlar için silme ve düzenleme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
     *   Alımlar, Giderler, Satışlar için düzenleme ve silme işlevlerini ekleme.
-3.  **Birim çevrim mantığının** (Hammadde kullanım biriminden alış birimine çevirme) Reçete Maliyeti hesaplanırken kodda uygulanması.
-4.  **Alım Fişi Girişi:**
+2.  **Birim çevrim mantığının** (Hammadde kullanım biriminden alış birimine çevirme) Reçete Maliyeti hesaplanırken kodda uygulanması.
+3.  **Alım Fişi Girişi:**
     *   `views/alimlar.html` sayfası oluşturma.
     *   `renderer/alimlar.js` dosyası oluşturma.
     *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.
     *   Ekleme, Listeleme, Düzenleme, Silme işlevleri.
-5.  **Gider Girişi:**
+4.  **Gider Girişi:**
     *   `views/giderler.html` sayfası oluşturma.
     *   `renderer/giderler.js` dosyası oluşturma.
     *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.
     *   Ekleme, Listeleme, Düzenleme, Silme işlevleri.
-6.  **Satılan Ürün Kaydı:**
+5.  **Satılan Ürün Kaydı:**
     *   `views/satislar.html` sayfası oluşturma.
     *   `renderer/satislar.js` dosyası oluşturma.
     *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.
     *   Ekleme, Listeleme, Düzenleme, Silme işlevleri.
-7.  **Analiz ve Raporlama:**
+6.  **Analiz ve Raporlama:**
     *   `views/analiz.html` sayfası oluşturma.
     *   `renderer/analiz.js` dosyası oluşturma (Veri tabanından verileri çekip hesaplamaları yapma ve grafik/tablo şeklinde gösterme).
     *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme (Özel SQL sorguları gerektirecek).
     *   Maliyet, Alım, Gider, Satış ve Kâr/Zarar raporlarını oluşturma.
-8.  **Uygulama Ayarları:** `ayarlar` tablosunu kullanarak genel ayarları yönetme arayüzü.
-9.  **Hata Yönetimi İyileştirme:** Daha kapsamlı hata yakalama ve loglama.
-10. **Uygulama İyileştirmeleri:** Kullanıcı arayüzü detayları, performans optimizasyonları vb.
-11. **Dağıtım:** Uygulamayı farklı işletim sistemlerinde çalıştırılabilir hale getirme (Electron-builder gibi araçlarla).
-12. **Yedekleme/Geri Yükleme:** Veri tabanının yedeklenmesi ve geri yüklenmesi işlevi.
-13. **Kullanıcı Yönetimi:** Rol ve izin tabanlı erişim kontrolü.
-14. **Splash Screen ve Giriş Ekranı:** Uygulama başlatma akışına splash screen ve giriş ekranı ekleme.
-
+7.  **Uygulama Ayarları:** `ayarlar` tablosunu kullanarak genel ayarları yönetme arayüzü.
+8.  **Hata Yönetimi İyileştirme:** Daha kapsamlı hata yakalama ve loglama.
+9.  **Uygulama İyileştirmeleri:** Kullanıcı arayüzü detayları, performans optimizasyonları vb.
+10. **Dağıtım:** Uygulamayı farklı işletim sistemlerinde çalıştırılabilir hale getirme (Electron-builder gibi araçlarla).
+11. **Yedekleme/Geri Yükleme:** Veri tabanının yedeklenmesi ve geri yüklenmesi işlevi.
+12. **Kullanıcı Yönetimi:** Rol ve izin tabanlı erişim kontrolü.
+13. **Splash Screen ve Giriş Ekranı:** Uygulama başlatma akışına splash screen ve giriş ekranı ekleme.
