@@ -177,6 +177,9 @@ function initializeDatabase() {
                       // Tüm serialize işlemleri bittiğinde Promise'ı çöz
                       // Bu, main.js'deki await database.initialize()'ın burada tamamlanmasını sağlar
                       // ve handler'lar kaydedildiğinde tabloların oluşmuş olmasını garanti eder.
+                      
+                      
+                      
                       resolve(); // <-- Promise'ı serialize bloğu sonunda çözüyoruz
 
                     }); // serialize sonu
