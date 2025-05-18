@@ -17,7 +17,7 @@ import { loadRecetelerPage } from './renderer/receteler.js';
 // import { loadDashboardPage } from './renderer/dashboard.js';
 import { loadAlimlarPage } from './renderer/alimlar.js';
 import { loadGiderlerPage } from './renderer/giderler.js';
-// import { loadSatislarPage } from './renderer/satislar.js';
+import { loadSatislarPage } from './renderer/satislar.js';
 // import { loadAnalizPage } from './renderer/analiz.js';
 
 
@@ -102,6 +102,9 @@ async function loadPage(pageName) {
                     break;
                 case 'giderler':
                     loadGiderlerPage();
+                    break;
+                case 'satislar':
+                    loadSatislarPage();
                     break;
                 // 'login' case'i artık burada olmayacak
                 // TODO: Diğer sayfalar için case'ler eklenecek:

@@ -158,7 +158,9 @@ function initializeDatabase() {
                         tarih TEXT NOT NULL,
                         miktar REAL NOT NULL,
                         satisFiyati REAL NOT NULL,
-                        FOREIGN KEY (porsiyonId) REFERENCES porsiyonlar(id)
+                        toplamSatisTutari REAL NOT NULL,
+                        aciklama TEXT,
+                        FOREIGN KEY (porsiyonId) REFERENCES porsiyonlar(id) ON DELETE RESTRICT
                       )`, (err) => {
                         if (err) console.error('satislar tablosu oluşturma hatası:', err.message);
                         else console.log('satislar tablosu hazır.');

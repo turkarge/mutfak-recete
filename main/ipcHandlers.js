@@ -633,6 +633,111 @@ function registerIpcHandlers() {
         }
     });
 
+    // --- Satışlar için Handler'lar ---
+    ipcMain.handle('addSatis', async (event, satis) => {
+        // satis objesi: { tarih, porsiyonId, miktar, satisFiyati, toplamSatisTutari, aciklama }
+        try {
+            const sql = `INSERT INTO satislar (tarih, porsiyonId, miktar, satisFiyati, toplamSatisTutari, aciklama)
+                   VALUES (?, ?, ?, ?, ?, ?)`;
+            const params = [
+                satis.tarih,
+                satis.porsiyonId,
+                satis.miktar,
+                satis.satisFiyati,
+                satis.toplamSatisTutari, // JS'de hesaplanıp gönderilecek
+                satis.aciklama
+            ];
+            const lastID = await database.run(sql, params);
+            console.log(`Satış başarıyla eklendi. ID: ${lastID}, Porsiyon ID: ${satis.porsiyonId}`);
+            return lastID;
+        } catch (error) {
+            console.error('Satış ekleme hatası:', error.message);
+            if (error.message.includes('FOREIGN KEY constraint failed')) {
+                throw new Error('Seçilen porsiyon geçerli değil veya bulunamadı.');
+            }
+            throw error;
+        }
+    });
+
+    ipcMain.handle('getSatislar', async (event) => {
+        try {
+            // Satışları listelerken porsiyon adını ve son ürün adını da getirelim.
+            const sql = `
+        SELECT
+          s.id,
+          s.tarih,
+          s.porsiyonId,
+          p.porsiyonAdi,
+          u.ad AS sonUrunAdi,
+          s.miktar,
+          s.satisFiyati,
+          s.toplamSatisTutari,
+          s.aciklama
+        FROM satislar s
+        JOIN porsiyonlar p ON s.porsiyonId = p.id
+        JOIN urunler u ON p.sonUrunId = u.id
+        ORDER BY s.tarih DESC, s.id DESC;
+      `;
+            const satislar = await database.all(sql);
+            console.log(`${satislar.length} adet satış kaydı başarıyla getirildi.`);
+            return satislar;
+        } catch (error) {
+            console.error('Satışları getirme hatası:', error.message);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('updateSatis', async (event, satis) => {
+        try {
+            const sql = `
+        UPDATE satislar SET
+          tarih = ?,
+          porsiyonId = ?,
+          miktar = ?,
+          satisFiyati = ?,
+          toplamSatisTutari = ?,
+          aciklama = ?
+        WHERE id = ?`;
+            const params = [
+                satis.tarih,
+                satis.porsiyonId,
+                satis.miktar,
+                satis.satisFiyati,
+                satis.toplamSatisTutari,
+                satis.aciklama,
+                satis.id
+            ];
+            const changes = await database.run(sql, params);
+            if (changes > 0) {
+                console.log(`Satış kaydı başarıyla güncellendi (ID: ${satis.id}).`);
+                return true;
+            } else {
+                throw new Error('Güncellenecek satış kaydı bulunamadı veya verilerde değişiklik yapılmadı.');
+            }
+        } catch (error) {
+            console.error(`Satış güncelleme hatası (ID: ${satis.id}):`, error.message);
+            if (error.message.includes('FOREIGN KEY constraint failed')) {
+                throw new Error('Seçilen porsiyon geçerli değil veya bulunamadı.');
+            }
+            throw error;
+        }
+    });
+
+    ipcMain.handle('deleteSatis', async (event, satisId) => {
+        try {
+            const changes = await database.run("DELETE FROM satislar WHERE id = ?", [satisId]);
+            if (changes > 0) {
+                console.log(`Satış kaydı başarıyla silindi (ID: ${satisId}).`);
+                return true;
+            } else {
+                throw new Error('Silinecek satış kaydı bulunamadı.');
+            }
+        } catch (error) {
+            console.error(`Satış silme hatası (ID: ${satisId}):`, error.message);
+            throw error;
+        }
+    });
+
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)
     // - Birim düzenleme
