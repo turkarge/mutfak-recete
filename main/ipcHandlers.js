@@ -97,6 +97,49 @@ function registerIpcHandlers() {
       }
   });
 
+  // YENİ: Birim güncelleme handler'ı
+  ipcMain.handle('updateBirim', async (event, birim) => { // birim objesini (id dahil) alıyor
+    try {
+        // Ana birim kisa adı boş string ise null olarak kaydet
+        const anaBirimKisaAdToSave = birim.anaBirimKisaAd === '' ? null : birim.anaBirimKisaAd;
+
+        // UNIQUE kısıtlamalarını kontrol etmek için, güncelleme yapmadan önce
+        // aynı birimAdi veya kisaAd ile başka bir birim var mı diye bakabiliriz (mevcut ID hariç).
+        // Şimdilik veritabanının UNIQUE kısıtlamasına güveniyoruz.
+        const changes = await database.run(
+            "UPDATE birimler SET birimAdi = ?, kisaAd = ?, anaBirimKisaAd = ? WHERE id = ?",
+            [birim.birimAdi, birim.kisaAd, anaBirimKisaAdToSave, birim.id]
+        );
+        if (changes > 0) {
+            console.log(`Birim başarıyla güncellendi (ID: ${birim.id}). Etkilenen satır sayısı: ${changes}`);
+            return true;
+        } else {
+            console.warn(`Birim güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${birim.id})`);
+            // Güncellenecek birim bulunamadıysa veya gönderilen veriler mevcut verilerle aynıysa
+            // 'changes' 0 olabilir. Bu durumu bir hata olarak değil, bir uyarı olarak ele alabiliriz.
+            // Ya da renderer tarafında, gerçekten bir değişiklik yapılıp yapılmadığına bakılabilir.
+            // Şimdilik, değişiklik olmadıysa false dönüyoruz. İsteğe bağlı olarak hata da fırlatılabilir.
+            // throw new Error('Güncellenecek birim bulunamadı veya verilerde değişiklik yapılmadı.');
+            return false;
+        }
+    } catch (error) {
+        console.error(`Birim güncelleme hatası (ID: ${birim.id}):`, error.message);
+        // UNIQUE constraint hatasını daha spesifik ele alabiliriz
+        if (error.message.includes('UNIQUE constraint failed')) {
+            if (error.message.includes('birimler.birimAdi')) {
+                 throw new Error(`"${birim.birimAdi}" adında başka bir birim zaten mevcut.`);
+            } else if (error.message.includes('birimler.kisaAd')) {
+                 throw new Error(`"${birim.kisaAd}" kısa adında başka bir birim zaten mevcut.`);
+            } else {
+                throw new Error('Güncellemeye çalıştığınız birim adı veya kısa adı zaten başka bir birim tarafından kullanılıyor.');
+            }
+        }
+        // TODO: Yabancı anahtar hatasını da yakalayabiliriz (ana birim bulunamadığında)
+        // if (error.message && error.message.includes('FOREIGN KEY constraint failed')) { ... }
+        throw error; // Diğer hataları olduğu gibi fırlat
+    }
+  });
+  
   // YENİ: Birim silme handler'ı
   ipcMain.handle('deleteBirim', async (event, birimId) => {
     try {

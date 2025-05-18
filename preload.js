@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Birimler handler'ları
   getBirimler: () => ipcRenderer.invoke('get-birimler'),
   addBirim: (birim) => ipcRenderer.invoke('add-birim', birim),
+  updateBirim: (birim) => ipcRenderer.invoke('updateBirim', birim),
   deleteBirim: (birimId) => ipcRenderer.invoke('deleteBirim', birimId), // YENİ: Birim silme
 
   // Porsiyonlar handler'ları
