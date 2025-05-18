@@ -22,15 +22,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Reçeteler handler'ları
   getReceteler: () => ipcRenderer.invoke('getReceteler'),
   addRecete: (recete) => ipcRenderer.invoke('addRecete', recete),
-  deleteRecete: (receteId) => ipcRenderer.invoke('deleteRecete', receteId),
+  deleteRecete: (receteId) => ipcRenderer.invoke('deleteRecete', receteId), // Reçete silme mevcut
   getReceteDetaylari: (receteId) => ipcRenderer.invoke('getReceteDetaylari', receteId),
   addReceteDetay: (detay) => ipcRenderer.invoke('addReceteDetay', detay),
-  deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId),
-
-  // Reçete detayı güncelleme fonksiyonu
-  // Renderer süreci, Ana Süreç'teki 'updateReceteDetay' handler'ını bu fonksiyonla çağıracak.
-  updateReceteDetay: (detay) => ipcRenderer.invoke('updateReceteDetay', detay)
+  deleteReceteDetay: (detayId) => ipcRenderer.invoke('deleteReceteDetay', detayId), // Detay silme mevcut
+  updateReceteDetay: (detay) => ipcRenderer.invoke('updateReceteDetay', detay), // Detay güncelleme mevcut
 
 
-  // TODO: Diğer handler'lar buraya gelecek (silme/düzenleme, alım, gider, satış, analiz)
+  // TODO: Diğer handler'lar buraya gelecek (Birim/Porsiyon silme/düzenleme, alım, gider, satış, analiz)
 });
