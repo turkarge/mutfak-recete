@@ -2,6 +2,13 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Renderer süreci için güvenli bir API sunuyoruz
 contextBridge.exposeInMainWorld('electronAPI', {
+
+  // Giriş Kontrolü
+  checkLogin: (username, password) => ipcRenderer.invoke('checkLogin', username, password),
+
+  // Başarılı Giriş Mesajı Gönderme
+  sendLoginSuccess: () => ipcRenderer.send('login-successful'),
+
   // Ürünler handler'ları
   getUrunler: () => ipcRenderer.invoke('get-urunler'),
   addUrun: (urun) => ipcRenderer.invoke('add-urun', urun),

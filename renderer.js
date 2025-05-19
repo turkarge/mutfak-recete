@@ -14,7 +14,7 @@ import { loadPorsiyonlarPage } from './renderer/porsiyonlar.js';
 import { loadRecetelerPage } from './renderer/receteler.js';
 // loadLoginPage artık buradan import edilmeyecek
 // TODO: Diğer sayfalar için de benzer importlar eklenecek:
-// import { loadDashboardPage } from './renderer/dashboard.js';
+import { loadDashboardPage } from './renderer/dashboard.js';
 import { loadAlimlarPage } from './renderer/alimlar.js';
 import { loadGiderlerPage } from './renderer/giderler.js';
 import { loadSatislarPage } from './renderer/satislar.js';
@@ -110,6 +110,9 @@ async function loadPage(pageName) {
                 case 'ayarlar':
                     loadAyarlarPage();
                     break;
+                case 'dashboard':
+                    loadDashboardPage();
+                    break;
                 // 'login' case'i artık burada olmayacak
                 // TODO: Diğer sayfalar için case'ler eklenecek:
                 // case 'dashboard':
@@ -183,7 +186,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         // Varsayılan olarak ana sayfa yüklenecek (Örn: Ürünler veya Dashboard)
-        loadPage('urunler'); // Varsayılan olarak Ürünler sayfasını yükle (dropdown içindeki 'urunler' linkine karşılık gelecek)
+        loadPage('dashboard'); // Varsayılan olarak Ürünler sayfasını yükle (dropdown içindeki 'urunler' linkine karşılık gelecek)
 
 
     } else {

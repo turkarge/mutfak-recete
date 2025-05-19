@@ -13,8 +13,9 @@ Uygulamanın temel işlevleri şunlardır:
 5.  **Alım Fişi Girişi:** Hammadde ve ürün alımlarının miktarlarını, birimlerini ve fiyatlarını kaydetme.
 6.  **Gider Girişi:** İşletmenin genel (kira, maaş, faturalar vb.) giderlerini kaydetme.
 7.  **Satılan Ürün Kaydı:** Belirli bir dönemde satılan porsiyonların miktarlarını ve satış fiyatlarını kaydetme.
-8.  **Analiz ve Raporlama:** Girilen verilere dayanarak ürün/porsiyon maliyetlerini, toplam alımları, giderleri, satış gelirlerini ve kâr/zararı analiz etme ve raporlama.
-9.  **Kullanıcı Yönetimi:** (Gelecekteki bir özellik olabilir) Kullanıcıların sisteme erişimini yönetme.
+8.  **Kullanıcı Girişi ve Ayarlar:** Basit kullanıcı doğrulama ve şifre değiştirme.
+9.  **Analiz ve Raporlama:** Girilen verilere dayanarak ürün/porsiyon maliyetlerini, toplam alımları, giderleri, satış gelirlerini ve kâr/zararı analiz etme ve raporlama.
+10. **Kullanıcı Yönetimi (Gelişmiş):** (Gelecekteki bir özellik) Rol ve izin tabanlı erişim.
 
 ## Kullanılan Teknolojiler
 
@@ -32,32 +33,39 @@ Uygulamanın temel işlevleri şunlardır:
 ## Proje Yapısı (Mevcut Durum)
 
 RestoranMaliyetApp/
-├── assets/ # Tema (Tabler), Toastr, jQuery, ikonlar vb. dosyaları
+├── assets/
 │ ├── css/
 │ ├── js/
 │ └── toastr/
-├── main/ # Electron Ana Süreç Modülleri
-│ ├── db.js # Veri tabanı bağlantısı ve temel CRUD fonksiyonları, DB initialize
-│ └── ipcHandlers.js # Renderer'dan gelen IPC mesajlarını işleyen handler'lar
-├── renderer/ # Electron Renderer Süreci Modülleri
-│ ├── urunler.js # Ürün yönetimi (CRUD)
-│ ├── birimler.js # Birim yönetimi (CRUD)
-│ ├── porsiyonlar.js # Porsiyon yönetimi (CRUD, Dropdown)
-│ ├── receler.js # Reçete yönetimi (Ana ve Detay CRUD, Dropdown)
-│ ├── alimlar.js # Alım yönetimi (CRUD, Dropdown, Otomatik Hesaplama)
-│ ├── giderler.js # Gider yönetimi (CRUD)
-│ └── satislar.js # Satış yönetimi (CRUD, Dropdown, Otomatik Hesaplama)
-├── views/ # Uygulama sayfalarının HTML şablonları
+├── main/
+│ ├── db.js
+│ └── ipcHandlers.js
+├── renderer/
+│ ├── urunler.js
+│ ├── birimler.js
+│ ├── porsiyonlar.js
+│ ├── receler.js
+│ ├── alimlar.js
+│ ├── giderler.js
+│ ├── satislar.js
+│ ├── ayarlar.js # Ayarlar sayfası JS
+│ └── dashboard.js # Dashboard sayfası JS
+├── views/
 │ ├── urunler.html
 │ ├── birimler.html
 │ ├── porsiyonlar.html
 │ ├── receler.html
 │ ├── alimlar.html
 │ ├── giderler.html
-│ └── satislar.html
-├── index.html # Ana HTML layout (menü, içerik alanı, genel JS/CSS, Modal)
-├── preload.js # Güvenli IPC köprüsü
-├── style.css # Uygulamaya özel CSS
+│ ├── satislar.html
+│ ├── ayarlar.html # Ayarlar sayfası HTML
+│ └── dashboard.html # Dashboard sayfası HTML
+├── index.html # Ana uygulama arayüzü HTML layout
+├── login.html # Giriş ekranı HTML (Ana dizinde)
+├── splash.html # Splash ekranı HTML (Ana dizinde)
+├── login.js # Giriş ekranı JS (Ana dizinde)
+├── preload.js
+├── style.css
 ├── package.json
 ├── package-lock.json
 └── node_modules/
@@ -77,49 +85,53 @@ RestoranMaliyetApp/
 7.  Genel Onay Modalı Entegrasyonu.
 8.  Ana Layout ve Menü Yapısı (`index.html`).
 9.  Sayfa Yükleme Mekanizması (`renderer.js`).
-10. Menü Navigasyonu ve Aktiflik Yönetimi.
+10. Menü Navigasyonu, Aktiflik Durumu ve İkon Güncellemeleri.
 11. **Sayfa Düzenleri:** Tüm CRUD sayfaları için form solda, liste sağda, ayrı kartlarda olacak şekilde standart bir düzene geçildi.
 12. **Buton Stilleri:** Tüm form ve tablo eylem butonları için standart ikonlu ve şık bir görünüme geçildi.
 13. **Ürün/Hammadde Yönetimi:** CRUD işlevleri tamamlandı.
 14. **Birim Yönetimi:** CRUD işlevleri tamamlandı.
 15. **Porsiyon Yönetimi:** CRUD işlevleri ve ilgili dropdown'lar tamamlandı.
 16. **Reçete Yönetimi:** Ana reçete ve reçete detayları için CRUD işlevleri, dropdown'lar ve görünüm düzenlemeleri tamamlandı.
-17. **Alım Yönetimi:** CRUD işlevleri, dropdown'lar ve otomatik toplam tutar hesaplaması tamamlandı. Menü linki eklendi.
+17. **Alım Yönetimi:** CRUD işlevleri, dropdown'lar, otomatik toplam tutar ve Fiş No alanı tamamlandı. Menü linki eklendi.
 18. **Gider Yönetimi:** CRUD işlevleri tamamlandı. Menü linki eklendi.
-19. **Satış Yönetimi:**
-    *   Veritabanına `satislar` tablosu güncellendi (`toplamSatisTutari`, `aciklama` alanları eklendi).
-    *   `views/satislar.html` ve `renderer/satislar.js` oluşturuldu.
-    *   CRUD işlevleri (Ekleme, Listeleme, Düzenleme, Silme), porsiyon dropdown'ı, varsayılan fiyat getirme ve otomatik toplam tutar hesaplaması tamamlandı.
-    *   İlgili IPC handler'ları ve API'ler eklendi.
-    *   Menüye "Satışlar" linki eklendi.
+19. **Satış Yönetimi:** CRUD işlevleri, porsiyon dropdown'ı, varsayılan fiyat getirme ve otomatik toplam tutar hesaplaması tamamlandı. Menü linki eklendi.
+20. **Ayarlar Sayfası:**
+    *   `ayarlar` tablosuna varsayılan kullanıcı adı/şifre ekleme mantığı (`main/db.js`).
+    *   `views/ayarlar.html` ve `renderer/ayarlar.js` oluşturuldu.
+    *   Kullanıcı adı gösterme ve şifre değiştirme işlevi eklendi.
+    *   İlgili IPC handler'ları (`getAyar`, `setAyar`) ve API'ler eklendi.
+    *   Menüye "Ayarlar" linki eklendi.
+21. **Splash Screen ve Giriş Ekranı Akışı:**
+    *   Ana dizine `splash.html` ve `login.html` eklendi.
+    *   `main.js` uygulama başlangıç akışını (Splash -> Login -> Ana Arayüz) yönetecek şekilde güncellendi.
+    *   `login.js` (ana dizinde) oluşturuldu ve temel giriş mantığı eklendi.
+    *   `checkLogin` IPC handler'ı ve `sendLoginSuccess` IPC mesajı eklendi/kullanıldı.
+22. **Dashboard Sayfası:**
+    *   `views/dashboard.html` ve `renderer/dashboard.js` (basit haliyle) oluşturuldu.
+    *   Menüye "Dashboard" linki eklendi ve varsayılan açılış sayfası yapıldı.
 
 ## Gelecek Adımlar (Yapılacaklar)
 
 Planlanan gelecek adımlar ve tamamlanacak özellikler sırasıyla (önceliklendirme tartışılabilir):
 
-1.  **Tablo Güncelleme ve Silme (Kalan Sayfalar):**
-    *   ~~Birimler için silme ve düzenleme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
-    *   ~~Porsiyonlar için silme ve düzenleme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
-    *   ~~Alımlar için düzenleme ve silme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
-    *   ~~Giderler için düzenleme ve silme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
-    *   ~~Satışlar için düzenleme ve silme işlevlerini ekleme.~~ `✓ TAMAMLANDI`
+1.  ~~**Tablo Güncelleme ve Silme (Kalan Sayfalar):**~~ `✓ TAMAMLANDI` (Tüm temel CRUD sayfaları tamamlandı)
 2.  **Birim çevrim mantığının** (Hammadde kullanım biriminden alış birimine çevirme) Reçete Maliyeti hesaplanırken kodda uygulanması.
 3.  **Alım Fişi Girişi:** `✓ TAMAMLANDI`
 4.  **Gider Girişi:** `✓ TAMAMLANDI`
 5.  **Satılan Ürün Kaydı:** `✓ TAMAMLANDI`
-    *   ~~`views/satislar.html` sayfası oluşturma.~~
-    *   ~~`renderer/satislar.js` dosyası oluşturma.~~
-    *   ~~`main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.~~
-    *   ~~Ekleme, Listeleme, Düzenleme, Silme işlevleri.~~
 6.  **Analiz ve Raporlama:**
     *   `views/analiz.html` sayfası oluşturma.
-    *   `renderer/analiz.js` dosyası oluşturma (Veri tabanından verileri çekip hesaplamaları yapma ve grafik/tablo şeklinde gösterme).
-    *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme (Özel SQL sorguları gerektirecek).
+    *   `renderer/analiz.js` dosyası oluşturma.
+    *   `main/ipcHandlers.js` dosyasına ilgili handler'ları ekleme.
     *   Maliyet, Alım, Gider, Satış ve Kâr/Zarar raporlarını oluşturma.
-7.  **Uygulama Ayarları:** `ayarlar` tablosunu kullanarak genel ayarları yönetme arayüzü.
+7.  **Uygulama Ayarları:** `✓ (Basit Kullanıcı Yönetimi ve Şifre Değiştirme Tamamlandı)`
+    *   Genel uygulama ayarları (para birimi, tema vb.) için arayüz.
+    *   Şifrelerin hash'lenerek güvenli bir şekilde saklanması.
 8.  **Hata Yönetimi İyileştirme:** Daha kapsamlı hata yakalama ve loglama.
 9.  **Uygulama İyileştirmeleri:** Kullanıcı arayüzü detayları, performans optimizasyonları vb.
-10. **Dağıtım:** Uygulamayı farklı işletim sistemlerinde çalıştırılabilir hale getirme (Electron-builder gibi araçlarla).
+10. **Dağıtım:** Uygulamayı farklı işletim sistemlerinde çalıştırılabilir hale getirme.
 11. **Yedekleme/Geri Yükleme:** Veri tabanının yedeklenmesi ve geri yüklenmesi işlevi.
-12. **Kullanıcı Yönetimi:** Rol ve izin tabanlı erişim kontrolü.
-13. **Splash Screen ve Giriş Ekranı:** Uygulama başlatma akışına splash screen ve giriş ekranı ekleme.
+12. **Kullanıcı Yönetimi:** `✓ (Basit Tek Kullanıcı Doğrulaması Tamamlandı)`
+    *   Rol ve izin tabanlı erişim kontrolü (Gelişmiş).
+    *   Çoklu kullanıcı desteği.
+13. **Splash Screen ve Giriş Ekranı:** `✓ TAMAMLANDI`

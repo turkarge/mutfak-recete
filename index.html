@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Restoran Uygulamam</title>
 
   <!-- Tabler CSS -->
@@ -21,191 +23,278 @@
       margin: 0;
       padding: 0;
     }
-     /* Ana içerik alanı için stil (isteğe bağlı) */
+
+    /* Ana içerik alanı için stil (isteğe bağlı) */
     #main-content-area {
-        padding: 20px; /* İçerik etrafına padding ekle */
+      padding: 20px;
+      /* İçerik etrafına padding ekle */
     }
   </style>
 
 </head>
+
 <body class="layout-fluid">
 
-    <!-- Ana Uygulama İçeriği -->
-    <!-- index.html artık doğrudan Ana Uygulama Penceresinin içeriğidir. -->
+  <!-- Ana Uygulama İçeriği -->
+  <!-- index.html artık doğrudan Ana Uygulama Penceresinin içeriğidir. -->
 
-    <!-- Üst Menü (Navbar) -->
-    <header class="navbar navbar-expand-md d-print-none">
-       <div class="container-xl">
-        <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-rauch">
-          <a href="#" data-page="dashboard">
-            Restoran App
-          </a>
-        </h1>
-        <div class="navbar-nav flex-row order-md-last"></div>
-        <div class="collapse navbar-collapse" id="navbar-menu">
-          <div class="d-flex flex-column flex-md-row flex-grow-1 align-items-center">
-             <ul class="navbar-nav">
-               <!-- Dashboard -->
-               <li class="nav-item"> <!-- active sınıfı JS ile eklenecek -->
-                 <a class="nav-link" href="#" data-page="dashboard">
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                      <!-- Dashboard (Home) Icon -->
-                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg>
-                   </span>
-                   <span class="nav-link-title">Dashboard</span>
-                 </a>
-               </li>
+  <!-- Üst Menü (Navbar) -->
+  <header class="navbar navbar-expand-md d-print-none">
+    <div class="container-xl">
+      <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-rauch">
+        <a href="#" data-page="dashboard">
+          Restoran App
+        </a>
+      </h1>
+      <div class="navbar-nav flex-row order-md-last"></div>
+      <div class="collapse navbar-collapse" id="navbar-menu">
+        <div class="d-flex flex-column flex-md-row flex-grow-1 align-items-center">
+          <ul class="navbar-nav">
+            <!-- Dashboard -->
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-page="dashboard">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                    <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                    <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Dashboard</span>
+              </a>
+            </li>
 
-               <!-- Ürünler (Dropdown Menü) -->
-               <li class="nav-item dropdown"> <!-- <-- dropdown sınıfı eklendi -->
-                 <a class="nav-link dropdown-toggle" href="#navbar-products" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false"> <!-- <-- dropdown-toggle sınıfları ve attribute'ları -->
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                     <!-- Ürünler (Box) Icon -->
-                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /><path d="M16 5.25l-8 4.5" /></svg>
-                   </span>
-                   <span class="nav-link-title">Ürünler</span>
-                 </a>
-                 <!-- Dropdown Menü -->
-                 <div class="dropdown-menu">
-                   <div class="dropdown-menu-columns">
-                     <div class="dropdown-menu-column">
-                       <a class="dropdown-item" href="#" data-page="urunler"> <!-- <-- Ürün Listesi linki dropdown içinde -->
-                         Ürün Listesi
-                       </a>
-                       <a class="dropdown-item" href="#" data-page="birimler"> <!-- <-- Birimler linki dropdown içinde -->
-                         Birimler
-                       </a>
-                        <a class="dropdown-item" href="#" data-page="porsiyonlar"> <!-- <-- Porsiyonlar linki dropdown içinde -->
-                         Porsiyonlar
-                       </a>
-                       <!-- TODO: Ürünlerle ilgili başka alt menüler buraya eklenebilir -->
-                     </div>
-                   </div>
-                 </div>
-               </li>
-                <!-- Birimler ve Porsiyonlar artık dropdown içinde, buradan kaldırıldı -->
+            <!-- Ürünler (Dropdown Menü) -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#navbar-products" data-bs-toggle="dropdown"
+                data-bs-auto-close="outside" role="button" aria-expanded="false">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-packages" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M7 16.5l-5 -3l5 -3l5 3v5.5l-5 3z" />
+                    <path d="M2 13.5v5.5l5 3" />
+                    <path d="M7 16.5l5 -3" />
+                    <path d="M17 16.5l-5 -3l5 -3l5 3v5.5l-5 3z" />
+                    <path d="M12 13.5v5.5l5 3" />
+                    <path d="M17 16.5l5 -3" />
+                    <path d="M12 5.5l-5 -3l5 -3l5 3v5.5l-5 3z" />
+                    <path d="M7 2.5v5.5l5 3" />
+                    <path d="M12 5.5l5 -3" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Ürün Yönetimi</span>
+                <!-- "Ürünler" yerine "Ürün Yönetimi" daha açıklayıcı olabilir -->
+              </a>
+              <div class="dropdown-menu">
+                <div class="dropdown-menu-columns">
+                  <div class="dropdown-menu-column">
+                    <a class="dropdown-item" href="#" data-page="urunler">
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="icon dropdown-item-icon icon-tabler icon-tabler-package" width="24" height="24"
+                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9l8 -4.5" />
+                        <path d="M12 12l8 -4.5" />
+                        <path d="M12 12v9" />
+                        <path d="M12 12l-8 -4.5" />
+                        <path d="M16 5.25l-8 4.5" />
+                      </svg>
+                      Ürünler
+                    </a>
+                    <a class="dropdown-item" href="#" data-page="birimler">
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="icon dropdown-item-icon icon-tabler icon-tabler-ruler-2" width="24" height="24"
+                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M17 3l4 4l-14 14l-4 -4z" />
+                        <path d="M16 7l-1.5 -1.5" />
+                        <path d="M13 10l-1.5 -1.5" />
+                        <path d="M10 13l-1.5 -1.5" />
+                        <path d="M7 16l-1.5 -1.5" />
+                      </svg>
+                      Birimler
+                    </a>
+                    <a class="dropdown-item" href="#" data-page="porsiyonlar">
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="icon dropdown-item-icon icon-tabler icon-tabler-tools-kitchen-2" width="24" height="24"
+                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path
+                          d="M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12zm0 12v6h-1v-3m-10 -14v17m-3 -17v3a3 3 0 1 0 6 0v-3" />
+                      </svg>
+                      Porsiyonlar
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
 
-               <!-- Reçeteler -->
-               <li class="nav-item">
-                 <a class="nav-link" href="#" data-page="receteler">
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                     <!-- Reçeteler (Notebook) Icon -->
-                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10c-1.657 0 -3 -1.343 -3 -3v-14c0 -1.657 1.343 -3 3 -3" /><path d="M8 4l0 16" /><path d="M13 7l-2 0" /><path d="M13 10l-2 0" /><path d="M13 13l-2 0" /></svg>
-                   </span>
-                   <span class="nav-link-title">Reçeteler</span>
-                 </a>
-               </li>
-               <!-- Alımlar -->
-               <li class="nav-item">
-                 <a class="nav-link" href="#" data-page="alimlar">
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                     <!-- Alımlar (Notebook) Icon -->
-                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10c-1.657 0 -3 -1.343 -3 -3v-14c0 -1.657 1.343 -3 3 -3" /><path d="M8 4l0 16" /><path d="M13 7l-2 0" /><path d="M13 10l-2 0" /><path d="M13 13l-2 0" /></svg>
-                   </span>
-                   <span class="nav-link-title">Alımlar</span>
-                 </a>
-               </li>
-               <!-- Giderler -->
-               <li class="nav-item">
-                 <a class="nav-link" href="#" data-page="giderler">
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                     <!-- Alımlar (Notebook) Icon -->
-                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10c-1.657 0 -3 -1.343 -3 -3v-14c0 -1.657 1.343 -3 3 -3" /><path d="M8 4l0 16" /><path d="M13 7l-2 0" /><path d="M13 10l-2 0" /><path d="M13 13l-2 0" /></svg>
-                   </span>
-                   <span class="nav-link-title">Giderler</span>
-                 </a>
-               </li>
-               <!-- Satışlar -->
-               <li class="nav-item">
-                 <a class="nav-link" href="#" data-page="satislar">
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                     <!-- Alımlar (Notebook) Icon -->
-                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10c-1.657 0 -3 -1.343 -3 -3v-14c0 -1.657 1.343 -3 3 -3" /><path d="M8 4l0 16" /><path d="M13 7l-2 0" /><path d="M13 10l-2 0" /><path d="M13 13l-2 0" /></svg>
-                   </span>
-                   <span class="nav-link-title">Satışlar</span>
-                 </a>
-               </li>
-               <!-- Ayarlar -->
-               <li class="nav-item">
-                 <a class="nav-link" href="#" data-page="ayarlar">
-                   <span class="nav-link-icon d-md-none d-lg-inline">
-                     <!-- Alımlar (Notebook) Icon -->
-                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10c-1.657 0 -3 -1.343 -3 -3v-14c0 -1.657 1.343 -3 3 -3" /><path d="M8 4l0 16" /><path d="M13 7l-2 0" /><path d="M13 10l-2 0" /><path d="M13 13l-2 0" /></svg>
-                   </span>
-                   <span class="nav-link-title">Ayarlar</span>
-                 </a>
-               </li>
-               <!-- TODO: Diğer menü öğeleri buraya eklenecek -->
-             </ul>
-          </div>
+            <!-- Reçeteler -->
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-page="receteler">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-notebook" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18" />
+                    <path d="M13 8l2 0" />
+                    <path d="M13 12l2 0" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Reçeteler</span>
+              </a>
+            </li>
+
+            <!-- Alımlar -->
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-page="alimlar">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shopping-cart" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M17 17h-11v-14h-2" />
+                    <path d="M6 5l14 1l-1 7h-13" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Alımlar</span>
+              </a>
+            </li>
+
+            <!-- Giderler -->
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-page="giderler">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-invoice" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                    <path d="M9 7l1 0" />
+                    <path d="M9 13l6 0" />
+                    <path d="M13 17l2 0" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Giderler</span>
+              </a>
+            </li>
+
+            <!-- Satışlar -->
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-page="satislar">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-receipt" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2" />
+                    <path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5m2 0l1.5 -1.5m0 3l-1.5 -1.5" />
+                    <path d="M9 11h1" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Satışlar</span>
+              </a>
+            </li>
+
+            <!-- Ayarlar -->
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-page="ayarlar">
+                <span class="nav-link-icon d-md-none d-lg-inline">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings" width="24"
+                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                  </svg>
+                </span>
+                <span class="nav-link-title">Ayarlar</span>
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
-    </header>
-
-    <!-- Ana Sayfa İçerik Alanı -->
-    <div class="page-wrapper">
-      <div class="page-body">
-          <div class="container-xl">
-            <div id="main-content-area">
-              <!-- Yönetim sayfalarının (views klasöründeki HTML dosyaları) içeriği buraya JavaScript ile yüklenecek -->
-              <p>Ana sayfa içeriği yükleniyor...</p>
-            </div>
-          </div>
-      </div>
     </div>
+  </header>
 
-
-<!-- Genel Hata Modalı -->
-<div class="modal modal-blur fade" id="errorModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-danger">Hata</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="errorModalBody">
-        <!-- Hata mesajı buraya JavaScript ile eklenecek -->
-        Bir hata oluştu.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Tamam</button>
+  <!-- Ana Sayfa İçerik Alanı -->
+  <div class="page-wrapper">
+    <div class="page-body">
+      <div class="container-xl">
+        <div id="main-content-area">
+          <!-- Yönetim sayfalarının (views klasöründeki HTML dosyaları) içeriği buraya JavaScript ile yüklenecek -->
+          <p>Ana sayfa içeriği yükleniyor...</p>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Genel Onay Modalı -->
-<div class="modal modal-blur fade" id="confirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-warning">Onay Gerekiyor</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="confirmationModalBody">
-        <!-- Onay mesajı buraya JavaScript ile eklenecek -->
-        Bu işlemi yapmak istediğinizden emin misiniz?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-        <button type="button" class="btn btn-danger" id="confirmActionButton">Sil</button>
+
+  <!-- Genel Hata Modalı -->
+  <div class="modal modal-blur fade" id="errorModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger">Hata</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="errorModalBody">
+          <!-- Hata mesajı buraya JavaScript ile eklenecek -->
+          Bir hata oluştu.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Tamam</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Genel Onay Modalı -->
+  <div class="modal modal-blur fade" id="confirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-warning">Onay Gerekiyor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="confirmationModalBody">
+          <!-- Onay mesajı buraya JavaScript ile eklenecek -->
+          Bu işlemi yapmak istediğinizden emin misiniz?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="button" class="btn btn-danger" id="confirmActionButton">Sil</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 
-<!-- jQuery (Toastr için gerekli) -->
-<script src="./assets/js/jquery.min.js"></script>
+  <!-- jQuery (Toastr için gerekli) -->
+  <script src="./assets/js/jquery.min.js"></script>
 
-<!-- Tabler JS dosyaları -->
-<script src="./assets/js/tabler.min.js"></script>
+  <!-- Tabler JS dosyaları -->
+  <script src="./assets/js/tabler.min.js"></script>
 
-<!-- Toastr JS dosyası -->
-<script src="./assets/toastr/toastr.min.js"></script>
+  <!-- Toastr JS dosyası -->
+  <script src="./assets/toastr/toastr.min.js"></script>
 
-<!-- Kendi Renderer JS -->
-<script src="./renderer.js" type="module"></script>
+  <!-- Kendi Renderer JS -->
+  <script src="./renderer.js" type="module"></script>
 
 </body>
+
 </html>

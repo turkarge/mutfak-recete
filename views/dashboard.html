@@ -1,0 +1,66 @@
+<!-- views/dashboard.html -->
+<div class="page-header d-print-none">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">
+                    Dashboard
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="page-body">
+    <div class="container-xl">
+        <div class="row row-deck row-cards">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Hoş Geldiniz!</h3>
+                        <p class="text-muted">
+                            Restoran Maliyet ve Reçete Yönetimi Uygulamasına hoş geldiniz.
+                            Sol taraftaki menüden işlem yapmak istediğiniz modülü seçebilirsiniz.
+                        </p>
+                        <p class="text-muted">
+                            Bu alan, gelecekte önemli istatistikler, hızlı raporlar veya sık kullanılan işlemlere
+                            kısa yollar içerecek şekilde geliştirilecektir.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Örnek Placeholder Kartlar (Gelecekte Doldurulabilir) -->
+            <div class="col-sm-6 col-lg-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="subheader">Toplam Ürün</div>
+                        </div>
+                        <div class="h1 mb-3" id="dashboardToplamUrun">-</div>
+                        <div class="d-flex mb-2">
+                            <div>Hammadde Sayısı</div>
+                            <div class="ms-auto" id="dashboardHammaddeSayisi">-</div>
+                        </div>
+                        <div class="d-flex">
+                            <div>Son Ürün Sayısı</div>
+                            <div class="ms-auto" id="dashboardSonUrunSayisi">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="subheader">Toplam Reçete</div>
+                        </div>
+                        <div class="h1 mb-3" id="dashboardToplamRecete">-</div>
+                         <!-- Buraya reçetelerle ilgili başka bir bilgi eklenebilir -->
+                    </div>
+                </div>
+            </div>
+            <!-- Diğer placeholder kartlar eklenebilir -->
+
+        </div>
+    </div>
+</div>

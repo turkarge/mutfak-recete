@@ -1,0 +1,71 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+  <title>Giriş Yap - Restoran App</title>
+  <link rel="stylesheet" href="./assets/css/tabler.min.css">
+  <link rel="stylesheet" href="./assets/css/tabler-vendors.min.css">
+  <link rel="stylesheet" href="./assets/toastr/toastr.min.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f8f9fa; /* Açık gri bir arka plan */
+    }
+    .login-form-container {
+      width: 100%;
+      max-width: 400px; /* Formun maksimum genişliği */
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .login-form-title {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+    .login-logo {
+        display: block;
+        margin: 0 auto 1.5rem auto;
+        width: 100px; /* Logonuzun boyutuna göre ayarlayın */
+        height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-form-container">
+    <img src="./assets/svg/Splash.svg" alt="Logo" class="login-logo"> <!-- Logonuzu buraya koyun -->
+    <h2 class="login-form-title">Giriş Yap</h2>
+    <form id="loginForm">
+      <div class="mb-3">
+        <label class="form-label" for="username">Kullanıcı Adı:</label>
+        <input type="text" class="form-control" id="username" required autofocus>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="password">Şifre:</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      <div id="loginError" class="text-danger mb-3" style="display: none;">
+        <!-- Hata mesajları buraya gelecek -->
+      </div>
+      <button type="submit" class="btn btn-primary w-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-login-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 8v-2a2 2 0 0 1 2 -2h7a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-7a2 2 0 0 1 -2 -2v-2" /><path d="M3 12h13l-3 -3" /><path d="M13 15l3 -3" /></svg>
+        <span class="ms-1">Giriş Yap</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Gerekli JS Dosyaları -->
+  <script src="./assets/js/jquery.min.js"></script> <!-- Toastr için -->
+  <script src="./assets/toastr/toastr.min.js"></script>
+  <!-- Login sayfasına özel JS dosyası (sonraki adımda oluşturacağız) -->
+  <script src="./login.js" type="module"></script>
+</body>
+</html>
