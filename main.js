@@ -4,59 +4,127 @@ const path = require('node:path');
 const database = require('./main/db');
 const { registerIpcHandlers } = require('./main/ipcHandlers');
 
+let splashWindow = null;
+let loginWindow = null;
 let mainWindow = null;
 
-const createMainWindow = () => {
-  mainWindow = new BrowserWindow({
-    width: 1024, // Ana uygulama için boyutlar
-    height: 768,
-    // Splash ve login için başlangıçta daha küçük bir pencere ve ortalanmış olabilir
-    // Veya sabit boyutta tutup sadece içeriği değiştirebiliriz. Şimdilik sabit.
-    // width: 500,
-    // height: 400,
-    // center: true,
-    // frame: false, // Splash için çerçevesiz pencere (isteğe bağlı)
-    show: false, // Başlangıçta gösterme, ready-to-show ile göster
+const SPLASH_TIMEOUT = 2500; // Splash ekranı gösterim süresi (milisaniye)
+
+// 1. Splash Penceresini Oluştur
+function createSplashWindow() {
+  splashWindow = new BrowserWindow({
+    width: 640,
+    height: 480,
+    center: true,
+    frame: false, // Çerçevesiz
+    resizable: false,
+    show: false,
+    backgroundColor: '#f0f2f5',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'), // Her zaman aynı preload'ı kullanacağız
+      // Splash için preload gerekmeyebilir, ama tutarlılık için eklenebilir
+      // preload: path.join(__dirname, 'preload_splash.js'), // Gerekirse ayrı bir preload
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: process.env.NODE_ENV !== 'development',
-      allowRunningInsecureContent: process.env.NODE_ENV === 'development',
+    }
+  });
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show();
+  });
+
+  // Splash gösterildikten sonra Login penceresini aç ve Splash'i kapat
+  setTimeout(() => {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      createLoginWindow(); // Login penceresini oluştur
+      splashWindow.close(); // Splash penceresini kapat
+      splashWindow = null;
+    }
+  }, SPLASH_TIMEOUT);
+
+  splashWindow.on('closed', () => {
+    splashWindow = null;
+  });
+}
+
+// 2. Login Penceresini Oluştur
+function createLoginWindow() {
+  loginWindow = new BrowserWindow({
+    width: 800, // Login için uygun bir boyut
+    height: 600, // Logo ve form için yeterli yükseklik
+    center: true,
+    frame: true, // Çerçeveli (kapat, küçült butonları için)
+    resizable: false, // Login ekranı genelde sabit boyutludur
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'), // Giriş işlemleri için preload gerekli
+      nodeIntegration: false,
+      contextIsolation: true,
     }
   });
 
-  // 1. Splash ekranını yükle
-  mainWindow.loadFile(path.join(__dirname, 'splash.html')); // Ana dizindeki splash.html
+  // YÖNTEM 1: Menüyü tamamen kaldırmak (önerilen, eğer hiç menü istenmiyorsa)
+  loginWindow.setMenu(null); 
+  // VEYA loginWindow.removeMenu(); // Electron'un daha yeni versiyonlarında
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    // Splash ekranı gösterildikten sonra belirli bir süre bekleyip login ekranına geç
-    setTimeout(() => {
-      if (mainWindow) { // Pencere hala açıksa
-        // 2. Login ekranını yükle
-        mainWindow.loadFile(path.join(__dirname, 'login.html')); // Ana dizindeki login.html
-      }
-    }, 3000); // 3 saniye splash gösterim süresi (isteğe bağlı)
+  // YÖNTEM 2: Menü çubuğunu gizlemek (Alt tuşuyla hala erişilebilir olabilir)
+  // loginWindow.setMenuBarVisibility(false); // Windows/Linux'ta çalışır
+
+  loginWindow.loadFile(path.join(__dirname, 'login.html'));
+  loginWindow.once('ready-to-show', () => {
+    loginWindow.show();
+  });
+
+  loginWindow.on('closed', () => {
+    loginWindow = null;
+    // Eğer login penceresi kapatılırsa ve ana pencere yoksa uygulamayı kapat
+    // (Kullanıcı giriş yapmadan uygulamayı kapatırsa)
+    if (!mainWindow) {
+      app.quit();
+    }
+  });
+}
+
+// 3. Ana Uygulama Penceresini Oluştur
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200, // Ana uygulama için başlangıç boyutu
+    height: 800,
+    show: false, // Başlangıçta gösterme
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  // index.html'in yolunu doğru belirttiğinizden emin olun
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+
+  mainWindow.webContents.once('did-finish-load', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.maximize(); // Pencereyi maksimize et
+      mainWindow.show();    // Sonra göster
+    }
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+    // Ana pencere kapatıldığında uygulamayı tamamen kapatabiliriz
+    // veya macOS'ta dock'ta kalmasını sağlayabiliriz.
+    // Mevcut app.on('window-all-closed') bunu zaten yönetiyor.
   });
+}
 
-  // Geliştirme Araçlarını aç (isteğe bağlı)
-  // if (process.env.NODE_ENV === 'development') {
-  //    mainWindow.webContents.openDevTools();
-  // }
-};
-
+// Electron uygulaması başlatılmaya hazır olduğunda
 app.whenReady().then(async () => {
   try {
     await database.initialize();
     console.log("Veritabanı başlatma tamamlandı.");
     registerIpcHandlers();
     console.log("IPC handler'lar kaydedildi.");
-    createMainWindow();
+
+    createSplashWindow(); // İlk olarak Splash penceresini oluştur
+
   } catch (error) {
     console.error("Uygulama başlatılırken hata:", error);
     dialog.showErrorBox('Uygulama Başlatma Hatası', 'Uygulama başlatılırken kritik bir hata oluştu: ' + error.message);
@@ -64,18 +132,24 @@ app.whenReady().then(async () => {
   }
 
   app.on('activate', () => {
-    if (mainWindow === null) {
-      createMainWindow();
+    // macOS'ta dock simgesine tıklandığında
+    // Eğer hiçbir pencere açık değilse (splash veya login beklenirken), splash ile başlat
+    // Eğer login bekleniyorsa login aç, main bekleniyorsa main aç.
+    // Bu kısım mevcut akışla biraz daha karmaşıklaşabilir.
+    // Şimdilik, eğer ana pencere yoksa ve login de yoksa splash açsın.
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createSplashWindow();
+    } else if (loginWindow && loginWindow.isDestroyed() && !mainWindow) {
+        createLoginWindow(); // Eğer login kapatıldı ama main açılmadıysa
+    } else if (mainWindow && mainWindow.isDestroyed()) {
+        // Bu durum normalde olmaz, çünkü main kapanınca uygulama kapanır.
     }
   });
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      console.log("Tüm BrowserWindows kapandı, uygulama kapatılıyor...");
-      app.quit();
-    }
+    app.quit();
   }
 });
 
@@ -83,40 +157,25 @@ app.on('before-quit', () => {
   console.log("Uygulama kapanıyor...");
 });
 
-// YENİ: Başarılı giriş sonrası ana arayüzü yüklemek için IPC handler
+// Başarılı giriş sonrası
 ipcMain.on('login-successful', () => {
-  if (mainWindow) {
-    console.log("Başarılı giriş, ana arayüz yükleniyor...");
-    // Ana uygulama için pencere boyutlarını ayarla (eğer splash/login için farklıysa)
-    // mainWindow.setSize(1024, 768);
-    // mainWindow.center();
-    mainWindow.loadFile('index.html');
-    mainWindow.webContents.once('did-finish-load', () => {
-      if (mainWindow && !mainWindow.isDestroyed()) { // Pencerenin hala var olduğundan emin ol
-        mainWindow.maximize();
-      }
-    });
-
+  if (loginWindow && !loginWindow.isDestroyed()) {
+    loginWindow.close(); // Login penceresini kapat
   }
+  createMainWindow(); // Ana uygulama penceresini oluştur ve göster
 });
 
-// YENİ: Kullanıcı adı/şifre kontrolü için IPC Handler
-// Bu, ayarlar tablosundaki kullanıcı adı ve şifre ile karşılaştırma yapacak.
-// Şimdilik basit bir karşılaştırma, sonra hash'li şifreye geçilecek.
+// Kullanıcı adı/şifre kontrolü
 ipcMain.handle('checkLogin', async (event, username, password) => {
-    try {
-        const dbUsername = await database.get("SELECT deger FROM ayarlar WHERE anahtar = ?", ['kullaniciAdi']);
-        const dbPassword = await database.get("SELECT deger FROM ayarlar WHERE anahtar = ?", ['sifre']);
-
-        if (dbUsername && dbPassword && dbUsername.deger === username && dbPassword.deger === password) {
-            console.log("Giriş başarılı:", username);
-            return true;
-        } else {
-            console.log("Giriş başarısız:", username);
-            return false;
-        }
-    } catch (error) {
-        console.error("Giriş kontrolü sırasında hata:", error);
-        return false; // Hata durumunda da başarısız dön
+  try {
+    const dbUsername = await database.get("SELECT deger FROM ayarlar WHERE anahtar = ?", ['kullaniciAdi']);
+    const dbPassword = await database.get("SELECT deger FROM ayarlar WHERE anahtar = ?", ['sifre']);
+    if (dbUsername && dbPassword && dbUsername.deger === username && dbPassword.deger === password) {
+      return true;
     }
+    return false;
+  } catch (error) {
+    console.error("Giriş kontrolü sırasında hata:", error);
+    return false;
+  }
 });
