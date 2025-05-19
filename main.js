@@ -90,9 +90,13 @@ ipcMain.on('login-successful', () => {
     // Ana uygulama için pencere boyutlarını ayarla (eğer splash/login için farklıysa)
     // mainWindow.setSize(1024, 768);
     // mainWindow.center();
-    mainWindow.loadFile('index.html'); // Veya views/index.html, projenizdeki yola göre
-                                      // Eğer index.html ana dizindeyse bu doğru.
-                                      // Eğer views klasöründeyse: path.join(__dirname, 'views', 'index.html')
+    mainWindow.loadFile('index.html');
+    mainWindow.webContents.once('did-finish-load', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) { // Pencerenin hala var olduğundan emin ol
+        mainWindow.maximize();
+      }
+    });
+
   }
 });
 
