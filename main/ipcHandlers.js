@@ -73,10 +73,11 @@ function registerIpcHandlers() {
         }
     });
 
-    // Birimler handler'ları
+    // --- Birimler için Handler'lar ---
     ipcMain.handle('get-birimler', async (event) => {
         try {
-            const birimler = await database.all("SELECT * FROM birimler");
+            // SELECT * zaten cevrimKatsayisi sütununu da getirecektir.
+            const birimler = await database.all("SELECT * FROM birimler ORDER BY birimAdi COLLATE NOCASE");
             console.log('Birimler başarıyla getirildi.');
             return birimler;
         } catch (error) {
@@ -86,76 +87,105 @@ function registerIpcHandlers() {
     });
 
     ipcMain.handle('add-birim', async (event, birim) => {
+        // birim objesi artık { birimAdi, kisaAd, anaBirimKisaAd, cevrimKatsayisi } içerecek
         try {
-            const lastID = await database.run("INSERT INTO birimler (birimAdi, kisaAd, anaBirimKisaAd) VALUES (?, ?, ?)",
-                [birim.birimAdi, birim.kisaAd, birim.anaBirimKisaAd]);
-            console.log(`Birim başarıyla eklendi: ${birim.birimAdi}, ID: ${lastID}`);
+            const anaBirim = birim.anaBirimKisaAd ? birim.anaBirimKisaAd.trim() : null;
+            const katsayi = birim.cevrimKatsayisi ? parseFloat(birim.cevrimKatsayisi) : 1;
+
+            // Aynı birim adı veya kısa adın tekrar kaydedilmesini engellemek için
+            // veritabanındaki UNIQUE kısıtlamalarına güveniyoruz (db.js'de tanımlı).
+            // Ekstra kontrol istenirse buraya eklenebilir.
+
+            const sql = `INSERT INTO birimler (birimAdi, kisaAd, anaBirimKisaAd, cevrimKatsayisi)
+                   VALUES (?, ?, ?, ?)`;
+            const params = [
+                birim.birimAdi.trim(),
+                birim.kisaAd.trim(),
+                anaBirim,
+                katsayi
+            ];
+            const lastID = await database.run(sql, params);
+            console.log(`Birim başarıyla eklendi: ${birim.birimAdi}, Katsayı: ${katsayi}, ID: ${lastID}`);
             return lastID;
         } catch (error) {
             console.error('Birim ekleme hatası:', error.message);
+            // UNIQUE constraint hatasını daha spesifik ele al
+            if (error.message.includes('UNIQUE constraint failed')) {
+                if (error.message.includes('birimler.birimAdi')) {
+                    throw new Error(`"${birim.birimAdi.trim()}" adında bir birim zaten mevcut.`);
+                } else if (error.message.includes('birimler.kisaAd')) {
+                    throw new Error(`"${birim.kisaAd.trim()}" kısa adında bir birim zaten mevcut.`);
+                } else {
+                    throw new Error('Eklemeye çalıştığınız birim adı veya kısa adı zaten kullanılıyor.');
+                }
+            }
             throw error;
         }
     });
 
-    // YENİ: Birim güncelleme handler'ı
-    ipcMain.handle('updateBirim', async (event, birim) => { // birim objesini (id dahil) alıyor
+    ipcMain.handle('deleteBirim', async (event, birimId) => {
         try {
-            // Ana birim kisa adı boş string ise null olarak kaydet
-            const anaBirimKisaAdToSave = birim.anaBirimKisaAd === '' ? null : birim.anaBirimKisaAd;
-
-            // UNIQUE kısıtlamalarını kontrol etmek için, güncelleme yapmadan önce
-            // aynı birimAdi veya kisaAd ile başka bir birim var mı diye bakabiliriz (mevcut ID hariç).
-            // Şimdilik veritabanının UNIQUE kısıtlamasına güveniyoruz.
-            const changes = await database.run(
-                "UPDATE birimler SET birimAdi = ?, kisaAd = ?, anaBirimKisaAd = ? WHERE id = ?",
-                [birim.birimAdi, birim.kisaAd, anaBirimKisaAdToSave, birim.id]
-            );
+            // İlgili FOREIGN KEY kısıtlamaları (ON DELETE RESTRICT) db.js'de tanımlı olduğu için
+            // veritabanı, bu birim başka tablolarda kullanılıyorsa silmeyi engelleyecektir.
+            const changes = await database.run("DELETE FROM birimler WHERE id = ?", [birimId]);
             if (changes > 0) {
-                console.log(`Birim başarıyla güncellendi (ID: ${birim.id}). Etkilenen satır sayısı: ${changes}`);
+                console.log(`Birim silme işlemi tamamlandı (ID: ${birimId}).`);
+                return true;
+            } else {
+                console.warn(`Birim silinirken kayıt bulunamadı (ID: ${birimId})`);
+                throw new Error('Silinecek birim bulunamadı.');
+            }
+        } catch (error) {
+            console.error(`Birim silme hatası (ID: ${birimId}):`, error.message);
+            if (error.message.includes('FOREIGN KEY constraint failed')) {
+                throw new Error('Bu birim başka kayıtlarda (Porsiyon, Reçete Detayı, Alım vb.) kullanıldığı için silinemez.');
+            }
+            throw error;
+        }
+    });
+
+    ipcMain.handle('updateBirim', async (event, birim) => {
+        // birim objesi: { id, birimAdi, kisaAd, anaBirimKisaAd, cevrimKatsayisi }
+        try {
+            const anaBirim = birim.anaBirimKisaAd ? birim.anaBirimKisaAd.trim() : null;
+            const katsayi = birim.cevrimKatsayisi ? parseFloat(birim.cevrimKatsayisi) : 1;
+
+            const sql = `
+        UPDATE birimler SET
+          birimAdi = ?,
+          kisaAd = ?,
+          anaBirimKisaAd = ?,
+          cevrimKatsayisi = ?
+        WHERE id = ?`;
+            const params = [
+                birim.birimAdi.trim(),
+                birim.kisaAd.trim(),
+                anaBirim,
+                katsayi,
+                birim.id
+            ];
+            const changes = await database.run(sql, params);
+            if (changes > 0) {
+                console.log(`Birim başarıyla güncellendi (ID: ${birim.id}).`);
                 return true;
             } else {
                 console.warn(`Birim güncellenirken kayıt bulunamadı veya veri değişmedi (ID: ${birim.id})`);
-                // Güncellenecek birim bulunamadıysa veya gönderilen veriler mevcut verilerle aynıysa
-                // 'changes' 0 olabilir. Bu durumu bir hata olarak değil, bir uyarı olarak ele alabiliriz.
-                // Ya da renderer tarafında, gerçekten bir değişiklik yapılıp yapılmadığına bakılabilir.
-                // Şimdilik, değişiklik olmadıysa false dönüyoruz. İsteğe bağlı olarak hata da fırlatılabilir.
-                // throw new Error('Güncellenecek birim bulunamadı veya verilerde değişiklik yapılmadı.');
-                return false;
+                // UNIQUE kısıtlamasını kontrol etmek için ekstra sorgu yapılabilir (ID hariç)
+                // Ama şimdilik veritabanı hatasına güveniyoruz.
+                throw new Error('Güncellenecek birim bulunamadı veya verilerde değişiklik yapılmadı.');
             }
         } catch (error) {
             console.error(`Birim güncelleme hatası (ID: ${birim.id}):`, error.message);
-            // UNIQUE constraint hatasını daha spesifik ele alabiliriz
             if (error.message.includes('UNIQUE constraint failed')) {
                 if (error.message.includes('birimler.birimAdi')) {
-                    throw new Error(`"${birim.birimAdi}" adında başka bir birim zaten mevcut.`);
+                    throw new Error(`"${birim.birimAdi.trim()}" adında başka bir birim zaten mevcut.`);
                 } else if (error.message.includes('birimler.kisaAd')) {
-                    throw new Error(`"${birim.kisaAd}" kısa adında başka bir birim zaten mevcut.`);
+                    throw new Error(`"${birim.kisaAd.trim()}" kısa adında başka bir birim zaten mevcut.`);
                 } else {
                     throw new Error('Güncellemeye çalıştığınız birim adı veya kısa adı zaten başka bir birim tarafından kullanılıyor.');
                 }
             }
-            // TODO: Yabancı anahtar hatasını da yakalayabiliriz (ana birim bulunamadığında)
-            // if (error.message && error.message.includes('FOREIGN KEY constraint failed')) { ... }
-            throw error; // Diğer hataları olduğu gibi fırlat
-        }
-    });
-
-    // YENİ: Birim silme handler'ı
-    ipcMain.handle('deleteBirim', async (event, birimId) => {
-        try {
-            // TODO: İleride bu birimin porsiyonlarda veya reçete detaylarında kullanılıp kullanılmadığını kontrol et.
-            // Eğer kullanılıyorsa, silme işlemi engellenmeli veya kullanıcıya uyarı verilmeli.
-            // Şimdilik basit silme yapıyoruz.
-            const changes = await database.run("DELETE FROM birimler WHERE id = ?", [birimId]);
-            console.log(`Birim silme işlemi tamamlandı (ID: ${birimId}). Etkilenen satır sayısı: ${changes}`);
-            return changes > 0; // Silme başarılıysa true, değilse false döner
-        } catch (error) {
-            console.error(`Birim silme hatası (ID: ${birimId}):`, error.message);
-            // FOREIGN KEY constraint failed hatasını kontrol et
-            if (error.message.includes('FOREIGN KEY constraint failed')) {
-                throw new Error('Bu birim başka kayıtlarda (örn: Porsiyonlar, Reçete Detayları) kullanıldığı için silinemez.');
-            }
-            throw error; // Diğer hataları olduğu gibi fırlat
+            throw error;
         }
     });
 

@@ -1,5 +1,4 @@
-<!-- views/birimler.html (Güncellenmiş Form Butonları) -->
-
+<!-- views/birimler.html -->
 <h2>Birim Yönetimi</h2>
 
 <div class="row">
@@ -23,18 +22,21 @@
                     <div class="mb-3">
                         <label class="form-label" for="anaBirimKisaAd">Ana Birim (Kısa Ad):</label>
                         <input type="text" class="form-control" id="anaBirimKisaAd">
-                        <small class="form-text text-muted">Bu birimin ait olduğu ana birimin kısa adını girin (örn: gr için kg, ml için lt). Kendisi ana birim ise kendi kısa adını girin veya boş bırakın.</small>
+                        <small class="form-text text-muted">Bu birimin ait olduğu ana birimin kısa adını girin (örn: gr için kg). Kendisi ana birim ise kendi kısa adını girin veya boş bırakın.</small>
+                    </div>
+                    <!-- YENİ: Çevrim Katsayısı Alanı -->
+                    <div class="mb-3">
+                        <label class="form-label" for="cevrimKatsayisi">Çevrim Katsayısı:</label>
+                        <input type="number" class="form-control" id="cevrimKatsayisi" step="0.00001" min="0.00001" value="1" required>
+                        <small class="form-text text-muted">Bu birimden kaç tanesinin, yukarıda belirtilen 'Ana Birim'e eşit olduğunu girin. Örn: Gram için Ana Birim 'kg', Katsayı '1000' (1000gr = 1kg).</small>
                     </div>
 
-                    <!-- Güncellenmiş Butonlar -->
-                    <div class="d-flex"> <!-- Butonları yan yana getirmek için flex container -->
+                    <div class="d-flex">
                         <button type="submit" id="birimFormSubmitButton" class="btn btn-primary">
-                            <!-- İkon (Kaydet/Onayla) -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
-                            <span class="ms-1">Kaydet</span> <!-- Metin JS ile değişebilir -->
+                            <span class="ms-1">Kaydet</span>
                         </button>
-                        <button type="button" id="birimFormCancelButton" class="btn btn-ghost-secondary ms-2 d-none"> <!-- btn-ghost-secondary daha az dikkat çekici -->
-                            <!-- İkon (İptal/Geri) -->
+                        <button type="button" id="birimFormCancelButton" class="btn btn-ghost-secondary ms-2 d-none">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                             <span class="ms-1">İptal</span>
                         </button>
@@ -44,7 +46,6 @@
         </div>
     </div>
 
-    <!-- Sağ Sütun: Birim Listesi (Değişiklik yok) -->
     <div class="col-md-7 mb-4">
         <div class="card h-100">
             <div class="card-header">
@@ -58,12 +59,13 @@
                       <th>Birim Adı</th>
                       <th>Kısa Ad</th>
                       <th>Ana Birim</th>
+                      <th class="text-end">Çevrim Kats.</th> <!-- YENİ SÜTUN (Sağa yaslı) -->
                       <th>Eylemler</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                        <td colspan="5" class="text-center">Birimler yükleniyor...</td>
+                        <td colspan="6" class="text-center">Birimler yükleniyor...</td> <!-- Colspan güncellendi -->
                     </tr>
                   </tbody>
                 </table>
