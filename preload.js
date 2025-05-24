@@ -61,6 +61,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Maliyet Hesaplama için Yardımcı Handler
   getLatestAlimInfoForUrun: (urunId) => ipcRenderer.invoke('getLatestAlimInfoForUrun', urunId),
 
+  // Toplu Maliyet Güncelleme
+  updateReceteMaliyet: (receteId, yeniMaliyet, tarih) => ipcRenderer.invoke('updateReceteMaliyet', receteId, yeniMaliyet, tarih),
+
   // Ayarlar Handler'ları
   getAyar: (anahtar) => ipcRenderer.invoke('getAyar', anahtar),
   setAyar: (anahtar, deger) => ipcRenderer.invoke('setAyar', anahtar, deger),

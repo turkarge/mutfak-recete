@@ -105,12 +105,14 @@ function initializeDatabase() {
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         porsiyonId INTEGER NOT NULL,
                         receteAdi TEXT,
+                        sonHesaplananMaliyet REAL DEFAULT 0,   -- YENİ SÜTUN
+                        maliyetHesaplamaTarihi TEXT,          -- YENİ SÜTUN
                         UNIQUE(porsiyonId, receteAdi),
-                        FOREIGN KEY (porsiyonId) REFERENCES porsiyonlar(id)
+                        FOREIGN KEY (porsiyonId) REFERENCES porsiyonlar(id) ON DELETE CASCADE
                       )`, (err) => {
-                if (err) console.error('receler tablosu oluşturma hatası:', err.message);
-                else console.log('receler tablosu hazır.');
-              });
+                        if (err) console.error('receler tablosu oluşturma hatası:', err.message);
+                        else console.log('receler tablosu hazır.');
+                      });
 
               db.run(`CREATE TABLE IF NOT EXISTS receteDetaylari (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -19,6 +19,7 @@ import { loadAlimlarPage } from './renderer/alimlar.js';
 import { loadGiderlerPage } from './renderer/giderler.js';
 import { loadSatislarPage } from './renderer/satislar.js';
 import { loadAyarlarPage } from './renderer/ayarlar.js';
+import { loadTopluMaliyetPage } from './renderer/toplu_maliyet.js';
 // import { loadAnalizPage } from './renderer/analiz.js';
 
 
@@ -112,6 +113,9 @@ async function loadPage(pageName) {
                     break;
                 case 'dashboard':
                     loadDashboardPage();
+                    break;
+                case 'toplu_maliyet':
+                    loadTopluMaliyetPage();
                     break;
                 // 'login' case'i artık burada olmayacak
                 // TODO: Diğer sayfalar için case'ler eklenecek:

@@ -369,7 +369,7 @@ function registerIpcHandlers() {
         }
     });
 
-    // YENİ: Ana Reçete Güncelleme handler'ı
+    // Ana Reçete Güncelleme handler'ı
     ipcMain.handle('updateRecete', async (event, recete) => {
         // Gelen recete objesi: { id, porsiyonId, receteAdi }
         try {
@@ -830,6 +830,32 @@ function registerIpcHandlers() {
             throw error; // Veya null dönüp renderer tarafında hata yönetimi
         }
     });
+
+    // Toplu Maliyet Güncelleme için Handler
+  ipcMain.handle('updateReceteMaliyet', async (event, receteId, yeniMaliyet, hesaplamaTarihi) => {
+    try {
+      const sql = `
+        UPDATE receler SET
+          sonHesaplananMaliyet = ?,
+          maliyetHesaplamaTarihi = ?
+        WHERE id = ?`;
+      const params = [yeniMaliyet, hesaplamaTarihi, receteId];
+      const changes = await database.run(sql, params);
+
+      if (changes > 0) {
+        console.log(`Reçete ID ${receteId} için maliyet güncellendi: ${yeniMaliyet}`);
+        return true;
+      } else {
+        // Bu durum, receteId bulunamazsa veya değerler aynıysa olabilir.
+        console.warn(`Reçete ID ${receteId} için maliyet güncellenirken kayıt bulunamadı veya değer değişmedi.`);
+        // Hata fırlatmak yerine false dönebiliriz, renderer tarafında buna göre işlem yapılır.
+        return false;
+      }
+    } catch (error) {
+      console.error(`Reçete ID ${receteId} için maliyet güncelleme hatası:`, error.message);
+      throw error;
+    }
+  });
 
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)
