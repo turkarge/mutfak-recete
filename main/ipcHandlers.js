@@ -799,6 +799,38 @@ function registerIpcHandlers() {
         }
     });
 
+    // Belirli bir ürün için en son alım bilgilerini getir
+    ipcMain.handle('getLatestAlimInfoForUrun', async (event, urunId) => {
+        if (!urunId) {
+            console.warn("getLatestAlimInfoForUrun çağrıldı ancak urunId sağlanmadı.");
+            return null; // Veya uygun bir hata objesi
+        }
+        try {
+            const sql = `
+        SELECT birimFiyat, birimKisaAd
+        FROM alimlar
+        WHERE urunId = ?
+        ORDER BY tarih DESC, id DESC  -- En son tarihi, aynı tarihte ise en son ekleneni al
+        LIMIT 1;
+      `;
+            const alimInfo = await database.get(sql, [urunId]); // database.get tek bir satır döndürür
+            console.log(`[IPC] Ürün ID ${urunId} için alımInfo:`, alimInfo); // EKLE
+            if (alimInfo) {
+                console.log(`Ürün ID ${urunId} için en son alım bilgisi: Fiyat=${alimInfo.birimFiyat}, Birim=${alimInfo.birimKisaAd}`);
+                return {
+                    alisFiyati: alimInfo.birimFiyat,
+                    alisBirimiKisaAd: alimInfo.birimKisaAd
+                };
+            } else {
+                console.log(`Ürün ID ${urunId} için alım kaydı bulunamadı.`);
+                return null; // Eğer ürün için hiç alım yapılmamışsa null dön
+            }
+        } catch (error) {
+            console.error(`Ürün ID ${urunId} için alım bilgisi getirme hatası:`, error.message);
+            throw error; // Veya null dönüp renderer tarafında hata yönetimi
+        }
+    });
+
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)
     // - Birim düzenleme

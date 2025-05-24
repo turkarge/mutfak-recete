@@ -44,7 +44,7 @@ export async function loadRecetelerPage() {
     }
 
     let currentReceteId = null;
-
+    let birimVerileri = {};
     function showConfirmationModal(message, actionButtonText = 'Tamam', actionButtonClass = 'btn-primary') {
         return new Promise((resolve) => {
             confirmationModalBody.textContent = message;
@@ -66,7 +66,76 @@ export async function loadRecetelerPage() {
             modalInstance.show();
         });
     }
+    // YENİ: Tüm birim bilgilerini yükle ve sakla
+    async function loadAllBirimler() {
+        try {
+            const birimler = await window.electronAPI.getBirimler();
+            birimVerileri = {};
+            birimler.forEach(birim => {
+                birimVerileri[birim.kisaAd] = {
+                    id: birim.id,
+                    birimAdi: birim.birimAdi,
+                    anaBirimKisaAd: birim.anaBirimKisaAd,
+                    cevrimKatsayisi: parseFloat(birim.cevrimKatsayisi)
+                };
+            });
+            console.log("Birim verileri maliyet hesaplama için yüklendi:", birimVerileri);
+        } catch (error) {
+            console.error("Birim verileri yüklenirken hata:", error);
+            toastr.error("Maliyet hesaplaması için birim verileri yüklenemedi.");
+        }
+    }
 
+    // YENİ: Hammadde Maliyetini Hesaplama Fonksiyonu
+    async function calculateHammaddeMaliyet(hammaddeId, kullanilanMiktar, kullanilanBirimKisaAd) {
+        console.log(`Maliyet Hesaplanıyor: Hammadde ID=${hammaddeId}, Miktar=${kullanilanMiktar}, Birim=${kullanilanBirimKisaAd}`);
+        try {
+            const alimInfo = await window.electronAPI.getLatestAlimInfoForUrun(hammaddeId);
+            console.log("Alım Bilgisi:", alimInfo);
+            if (!alimInfo || alimInfo.alisFiyati == null || !alimInfo.alisBirimiKisaAd) {
+                return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: "Alım kaydı/fiyatı yok" };
+            }
+            const { alisFiyati, alisBirimiKisaAd } = alimInfo;
+            const kullanilanBirim = birimVerileri[kullanilanBirimKisaAd];
+            const alisBirimi = birimVerileri[alisBirimiKisaAd];
+            console.log("Kullanılan Birim Detayı:", kullanilanBirim);
+            console.log("Alış Birimi Detayı:", alisBirimi);
+
+            if (!kullanilanBirim) return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: `Kullanım birimi (${kullanilanBirimKisaAd}) tanımsız` };
+            if (!alisBirimi) return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: `Alış birimi (${alisBirimiKisaAd}) tanımsız` };
+
+            let kullanilanMiktarAnaCinsinden = parseFloat(kullanilanMiktar);
+            if (kullanilanBirim.kisaAd !== kullanilanBirim.anaBirimKisaAd) {
+                if (kullanilanBirim.cevrimKatsayisi && kullanilanBirim.cevrimKatsayisi !== 0) {
+                    kullanilanMiktarAnaCinsinden = kullanilanMiktar / kullanilanBirim.cevrimKatsayisi;
+                } else return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: "Kullanım birimi çevrim hatası" };
+            }
+            const anaBirimKullanim = kullanilanBirim.anaBirimKisaAd;
+            console.log("Kullanılan Miktar (Ana Birimde):", kullanilanMiktarAnaCinsinden, anaBirimKullanim);
+
+            let alisFiyatiAnaCinsinden = parseFloat(alisFiyati);
+            if (alisBirimi.kisaAd !== alisBirimi.anaBirimKisaAd) {
+                if (alisBirimi.cevrimKatsayisi) {
+                    alisFiyatiAnaCinsinden = alisFiyati * alisBirimi.cevrimKatsayisi;
+                } else return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: "Alış birimi çevrim hatası" };
+            }
+            const anaBirimAlis = alisBirimi.anaBirimKisaAd;
+            console.log("Alış Fiyatı (Ana Birimde):", alisFiyatiAnaCinsinden, anaBirimAlis);
+
+            if (anaBirimKullanim !== anaBirimAlis) {
+                return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: `Birimler arası çevrim yok (${anaBirimKullanim} -> ${anaBirimAlis})` };
+            }
+
+            const maliyetAnaBirimCinsinden = kullanilanMiktarAnaCinsinden * alisFiyatiAnaCinsinden;
+            const birimMaliyet = kullanilanMiktar != 0 ? maliyetAnaBirimCinsinden / parseFloat(kullanilanMiktar) : 0;
+            console.log("Hesaplanan Birim Maliyet:", birimMaliyet, "Toplam Maliyet:", maliyetAnaBirimCinsinden);
+
+            return { birimMaliyet: birimMaliyet, toplamMaliyet: maliyetAnaBirimCinsinden, aciklama: "" };
+        } catch (error) {
+            console.error(`Hammadde ID ${hammaddeId} için maliyet hesaplama hatası:`, error);
+            return { birimMaliyet: 0, toplamMaliyet: 0, aciklama: "Hesaplama hatası" };
+        }
+    }
     function switchToAddReceteMode() {
         if (!receteEkleForm) return;
         receteEkleForm.reset();
@@ -178,6 +247,30 @@ export async function loadRecetelerPage() {
                 deleteButton.addEventListener('click', handleDeleteRecete);
                 buttonContainer.appendChild(deleteButton);
                 actionsCell.appendChild(buttonContainer);
+
+                // YENİ: Maliyeti Yenile Butonu
+                const refreshCostButton = document.createElement('button');
+                refreshCostButton.textContent = 'Maliyet'; // Veya sadece ikon
+                refreshCostButton.classList.add('btn', 'btn-sm', 'btn-outline-secondary', 'me-1'); // Stilini ayarla
+                refreshCostButton.title = "Bu Reçetenin Güncel Maliyetini Hesapla";
+                refreshCostButton.addEventListener('click', async () => {
+                    try {
+                        toastr.info(`"${recete.porsiyonAdi} - ${recete.receteAdi || 'Varsayılan'}" için maliyet hesaplanıyor...`);
+                        const detaylar = await window.electronAPI.getReceteDetaylari(recete.id);
+                        let toplamMaliyet = 0;
+                        if (detaylar && detaylar.length > 0) {
+                            for (const detay of detaylar) {
+                                const maliyetSonucu = await calculateHammaddeMaliyet(detay.hammaddeId, detay.miktar, detay.birimKisaAd);
+                                toplamMaliyet += maliyetSonucu.toplamMaliyet;
+                            }
+                        }
+                        toastr.success(`"${recete.porsiyonAdi} - ${recete.receteAdi || 'Varsayılan'}" için hesaplanan maliyet: ${toplamMaliyet.toFixed(2)} ₺`);
+                    } catch (error) {
+                        console.error("Reçete maliyeti yenilenirken hata:", error);
+                        toastr.error("Maliyet yenilenirken bir hata oluştu.");
+                    }
+                });
+                actionsCell.appendChild(refreshCostButton);
             });
         } else {
             const row = recelerTableBody.insertRow();
@@ -193,7 +286,7 @@ export async function loadRecetelerPage() {
         receteIdInput.value = recete.id;
         recetePorsiyonSelect.value = recete.porsiyonId;
         receteAdiInput.value = recete.receteAdi || '';
-        if(receteFormBaslik) receteFormBaslik.textContent = `Reçeteyi Düzenle: ${recete.sonUrunAdi} - ${recete.porsiyonAdi}`;
+        if (receteFormBaslik) receteFormBaslik.textContent = `Reçeteyi Düzenle: ${recete.sonUrunAdi} - ${recete.porsiyonAdi}`;
         if (receteFormSubmitButton) {
             const textSpan = receteFormSubmitButton.querySelector('span');
             if (textSpan) textSpan.textContent = 'Reçeteyi Güncelle';
@@ -204,17 +297,34 @@ export async function loadRecetelerPage() {
         recetePorsiyonSelect.focus();
     }
 
-    function displayReceteDetaylari(detaylar) {
+    async function displayReceteDetaylari(detaylar) {
         if(!receteDetaylariTableBody) return;
         receteDetaylariTableBody.innerHTML = '';
+        let genelToplamMaliyet = 0;
+
         if (detaylar && detaylar.length > 0) {
-            detaylar.forEach(detay => {
+            for (const detay of detaylar) {
                 const row = receteDetaylariTableBody.insertRow();
                 row.insertCell(0).textContent = detay.id;
                 row.insertCell(1).textContent = detay.hammaddeAdi || 'Hammadde Bilgisi Eksik';
                 row.insertCell(2).textContent = parseFloat(detay.miktar).toFixed(3);
                 row.insertCell(3).textContent = detay.birimKisaAd || 'Birim Bilgisi Eksik';
-                const actionsCell = row.insertCell(4);
+
+                const maliyetSonucu = await calculateHammaddeMaliyet(detay.hammaddeId, detay.miktar, detay.birimKisaAd);
+
+                const birimMaliyetCell = row.insertCell(4);
+                birimMaliyetCell.textContent = maliyetSonucu.birimMaliyet.toFixed(2) + " ₺";
+                birimMaliyetCell.classList.add('text-end');
+                birimMaliyetCell.title = maliyetSonucu.aciklama || "";
+
+                const toplamMaliyetCell = row.insertCell(5);
+                toplamMaliyetCell.textContent = maliyetSonucu.toplamMaliyet.toFixed(2) + " ₺";
+                toplamMaliyetCell.classList.add('text-end');
+                toplamMaliyetCell.title = maliyetSonucu.aciklama || "";
+
+                genelToplamMaliyet += maliyetSonucu.toplamMaliyet;
+
+                const actionsCell = row.insertCell(6);
                 actionsCell.classList.add('text-end');
                 const buttonContainer = document.createElement('div');
 
@@ -223,6 +333,7 @@ export async function loadRecetelerPage() {
                 editButton.classList.add('btn', 'btn-icon', 'btn-warning');
                 editButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>';
                 editButton.title = "Detayı Düzenle";
+                // DÜZELTME: handleEditReceteDetay fonksiyonuna tüm 'detay' objesini gönderiyoruz. Bu doğru.
                 editButton.addEventListener('click', () => handleEditReceteDetay(detay));
                 buttonContainer.appendChild(editButton);
 
@@ -232,12 +343,32 @@ export async function loadRecetelerPage() {
                 deleteButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>';
                 deleteButton.title = "Detayı Sil";
                 deleteButton.setAttribute('data-detay-id', detay.id);
-                deleteButton.setAttribute('data-hammadde-adi', detay.hammaddeAdi);
+                deleteButton.setAttribute('data-hammadde-adi', detay.hammaddeAdi || 'Bilinmeyen Hammadde'); // Null kontrolü
+                // DÜZELTME: handleDeleteReceteDetay fonksiyonuna event objesinin otomatik geçmesini sağlıyoruz.
                 deleteButton.addEventListener('click', handleDeleteReceteDetay);
                 buttonContainer.appendChild(deleteButton);
                 actionsCell.appendChild(buttonContainer);
-            });
-        } else { /* ... liste boş mesajı ... */ }
+            } // forEach döngüsü sonu
+        } else {
+            const row = receteDetaylariTableBody.insertRow();
+            const cell = row.insertCell(0);
+            cell.colSpan = 7; // Yeni sütunlarla colspan'i 7 yap
+            cell.textContent = 'Bu reçetede henüz hammadde detayı bulunamadı.';
+            cell.style.textAlign = 'center';
+        }
+
+        // HTML'de <h5 id="toplamReceteMaliyetiText" class="mt-2 mb-3">Toplam Maliyet: - ₺</h5> gibi bir element olmalı
+        const toplamReceteMaliyetiEl = document.getElementById('toplamReceteMaliyetiText');
+        if (toplamReceteMaliyetiEl) {
+            toplamReceteMaliyetiEl.textContent = `Toplam Reçete Maliyeti: ${genelToplamMaliyet.toFixed(2)} ₺`;
+        } else {
+            // Eğer HTML elementi yoksa, receteDetaylariGenelBaslik'a ekleyebiliriz veya konsola yazdırabiliriz.
+            if (receteDetaylariGenelBaslik) { // receteDetaylariTitle yerine güncel ID
+                receteDetaylariGenelBaslik.textContent += ` - Toplam Maliyet: ${genelToplamMaliyet.toFixed(2)} ₺`;
+            } else {
+                console.log(`Toplam Reçete Maliyeti: ${genelToplamMaliyet.toFixed(2)} ₺`);
+            }
+        }
     }
 
     async function handleViewReceteDetails(receteId, recete) {
@@ -291,7 +422,7 @@ export async function loadRecetelerPage() {
             console.error('Reçete silme hatası:', error);
             let errMsg = `Reçete silinirken bir hata oluştu: ${error.message}`;
             if (error.message && error.message.toLowerCase().includes('foreign key constraint failed')) {
-                 errMsg = 'Bu reçeteye bağlı detaylar olduğu için silinemedi. Lütfen önce detayları silin veya veritabanı ayarlarınızı kontrol edin.';
+                errMsg = 'Bu reçeteye bağlı detaylar olduğu için silinemedi. Lütfen önce detayları silin veya veritabanı ayarlarınızı kontrol edin.';
             }
             toastr.error(errMsg);
         }
@@ -401,10 +532,10 @@ export async function loadRecetelerPage() {
                     if (receteData.id && currentReceteId === receteData.id) {
                         const guncelRecete = (await window.electronAPI.getReceteler()).find(r => r.id === receteData.id);
                         if (guncelRecete && receteDetaylariGenelBaslik) { // Yeni ID'yi kullan
-                             receteDetaylariGenelBaslik.textContent = `"${guncelRecete.sonUrunAdi} - ${guncelRecete.porsiyonAdi}" Reçete Detayları`;
-                             if (guncelRecete.receteAdi && guncelRecete.receteAdi.toLowerCase() !== 'varsayılan') {
-                                 receteDetaylariGenelBaslik.textContent += ` ("${guncelRecete.receteAdi}")`;
-                             }
+                            receteDetaylariGenelBaslik.textContent = `"${guncelRecete.sonUrunAdi} - ${guncelRecete.porsiyonAdi}" Reçete Detayları`;
+                            if (guncelRecete.receteAdi && guncelRecete.receteAdi.toLowerCase() !== 'varsayılan') {
+                                receteDetaylariGenelBaslik.textContent += ` ("${guncelRecete.receteAdi}")`;
+                            }
                         }
                     }
                 }
@@ -477,16 +608,23 @@ export async function loadRecetelerPage() {
             }
         };
     }
-    if(receteDetayFormCancelButton){
+    if (receteDetayFormCancelButton) {
         receteDetayFormCancelButton.onclick = () => {
             resetReceteDetayForm();
         };
     }
 
+console.log("Sayfa yükleme akışı başlıyor...");
+    await loadAllBirimler(); // <<-- ÖNCE TÜM BİRİMLERİ YÜKLE VE BEKLE
+    console.log("Birimler yüklendi, dropdownlar dolduruluyor...");
     await populateRecetePorsiyonDropdown();
     await populateReceteDetayDropdowns();
-    await fetchAndDisplayReceteler();
+    console.log("Dropdownlar dolduruldu, reçeteler çekiliyor...");
+    await fetchAndDisplayReceteler(); // Bu fonksiyon içinde displayReceteler çağrılıyor
+
+    console.log("Form modları ayarlanıyor...");
     if (receteEkleForm) { switchToAddReceteMode(); }
     if (receteDetayEkleForm) { resetReceteDetayForm(); }
-    if (receteDetaylariAlani) receteDetaylariAlani.style.display = 'none'; // Yeni ana div'i gizle
+    if (receteDetaylariAlani) receteDetaylariAlani.style.display = 'none';
+    console.log("Reçeteler sayfası yüklemesi tamamlandı.");
 }

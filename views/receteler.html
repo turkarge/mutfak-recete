@@ -73,6 +73,7 @@
 <!-- REÇETE DETAYLARI YÖNETİMİ BÖLÜMÜ -->
 <div id="receteDetaylariAlani" style="display: none;"> <!-- ESKİ receteDetaylariCard ID'Sİ BU ANA DIV'E TAŞINDI -->
     <h3 id="receteDetaylariGenelBaslik" class="mb-3">Seçilen Reçete Detayları</h3> <!-- ESKİ receteDetaylariTitle ID'Sİ BU BAŞLIĞA TAŞINDI -->
+    <h5 id="toplamReceteMaliyetiText" class="mt-2 mb-3 text-azure">Toplam Maliyet: - ₺</h5>
     <div class="row"> <!-- Reçete detayları için ana satır -->
 
         <!-- SOL SÜTUN: Hammadde Ekleme/Düzenleme Formu -->
@@ -133,12 +134,14 @@
                           <th>Hammadde</th>
                           <th>Miktar</th>
                           <th>Birim</th>
+                          <th class="text-end">Birim Maliyet (₺)</th> <!-- YENİ -->
+                          <th class="text-end">Toplam Maliyet (₺)</th> <!-- YENİ -->
                           <th>Eylemler</th>
                         </tr>
                       </thead>
                       <tbody>
                          <tr>
-                            <td colspan="5" class="text-center">Hammadde bulunamadı.</td>
+                            <td colspan="7" class="text-center">Hammadde bulunamadı.</td>
                         </tr>
                       </tbody>
                     </table>
