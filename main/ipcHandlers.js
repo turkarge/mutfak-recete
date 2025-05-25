@@ -831,28 +831,76 @@ function registerIpcHandlers() {
         }
     });
 
-    // Toplu Maliyet Güncelleme için Handler
-  ipcMain.handle('updateReceteMaliyet', async (event, receteId, yeniMaliyet, hesaplamaTarihi) => {
+// YENİ veya GÜNCELLENMİŞ: Reçete maliyetini logla ve ana reçete tablosunu güncelle
+  ipcMain.handle('logAndUpdateReceteMaliyet', async (event, receteId, yeniMaliyet, hesaplamaTarihi) => {
+    if (receteId == null || yeniMaliyet == null || !hesaplamaTarihi) {
+        console.error("logAndUpdateReceteMaliyet için eksik parametreler:", { receteId, yeniMaliyet, hesaplamaTarihi });
+        throw new Error("Maliyet kaydı için eksik parametreler.");
+    }
     try {
-      const sql = `
+      // 1. Yeni maliyeti maliyet_log tablosuna ekle
+      const logSql = `INSERT INTO maliyet_log (receteId, hesaplamaTarihi, hesaplananMaliyet)
+                      VALUES (?, ?, ?)`;
+      const logParams = [receteId, hesaplamaTarihi, yeniMaliyet];
+      const logId = await database.run(logSql, logParams);
+      console.log(`Maliyet loguna eklendi. Log ID: ${logId}, Reçete ID: ${receteId}, Maliyet: ${yeniMaliyet}`);
+
+      // 2. receler tablosundaki son maliyet ve tarih bilgilerini güncelle
+      const updateReceteSql = `
         UPDATE receler SET
           sonHesaplananMaliyet = ?,
           maliyetHesaplamaTarihi = ?
         WHERE id = ?`;
-      const params = [yeniMaliyet, hesaplamaTarihi, receteId];
-      const changes = await database.run(sql, params);
+      const updateReceteParams = [yeniMaliyet, hesaplamaTarihi, receteId];
+      const changes = await database.run(updateReceteSql, updateReceteParams);
 
       if (changes > 0) {
-        console.log(`Reçete ID ${receteId} için maliyet güncellendi: ${yeniMaliyet}`);
-        return true;
+        console.log(`Reçeteler tablosu güncellendi. Reçete ID: ${receteId}`);
+        return { success: true, logId: logId, receteId: receteId };
       } else {
-        // Bu durum, receteId bulunamazsa veya değerler aynıysa olabilir.
-        console.warn(`Reçete ID ${receteId} için maliyet güncellenirken kayıt bulunamadı veya değer değişmedi.`);
-        // Hata fırlatmak yerine false dönebiliriz, renderer tarafında buna göre işlem yapılır.
-        return false;
+        // Bu durum, receteId bulunamazsa olabilir. Log yine de eklenmiş olacak.
+        console.warn(`Reçeteler tablosunda Reçete ID ${receteId} güncellenirken bulunamadı veya değer değişmedi.`);
+        // Başarılı loglama ama reçete güncelleme hatası durumunu ele alabiliriz.
+        // Şimdilik log başarılıysa genel başarı kabul edelim.
+        return { success: true, logId: logId, receteId: receteId, warning: "Reçete ana kaydı güncellenemedi." };
       }
     } catch (error) {
-      console.error(`Reçete ID ${receteId} için maliyet güncelleme hatası:`, error.message);
+      console.error(`Reçete ID ${receteId} için maliyet loglama/güncelleme hatası:`, error.message);
+      throw error;
+    }
+  });
+
+  // Ek olarak, bir önceki maliyeti getirecek bir handler'a ihtiyacımız olacak
+  // `toplu_maliyet.html`'de "Eski Fiyat/Tarih" göstermek için.
+  ipcMain.handle('getPreviousMaliyetLog', async (event, receteId) => {
+    if (!receteId) {
+      console.warn("getPreviousMaliyetLog için receteId sağlanmadı.");
+      return null;
+    }
+    try {
+      // En sonuncudan bir önceki kaydı (yani ikinci en son kaydı) getir
+      const sql = `
+        SELECT hesaplamaTarihi, hesaplananMaliyet
+        FROM maliyet_log
+        WHERE receteId = ?
+        ORDER BY hesaplamaTarihi DESC
+        LIMIT 1 OFFSET 1; 
+      `;
+      // Eğer sadece bir kayıt varsa, OFFSET 1 sonuç döndürmez. Bu durumda receler tablosundaki
+      // sonHesaplananMaliyet'ten farklı bir şey göstermek için bir mantık gerekebilir
+      // veya en son kaydı alıp "önceki maliyet yok" diyebiliriz.
+      // Şimdilik, eğer 2 veya daha fazla log varsa bir öncekini getirecek.
+      const row = await database.get(sql, [receteId]);
+      if (row) {
+        return { tarih: row.hesaplamaTarihi, maliyet: row.hesaplananMaliyet };
+      }
+      // Eğer sadece 1 log varsa veya hiç log yoksa, receler tablosundaki mevcut maliyeti "eski" kabul edebiliriz.
+      // Veya daha iyisi, receler tablosuna oncekiMaliyet ve oncekiMaliyetTarihi sütunlarını eklemekti.
+      // Bu handler'ı şimdilik böyle bırakalım, renderer'da bu durumu ele alırız.
+      console.log(`Reçete ID ${receteId} için bir önceki maliyet logu bulunamadı.`);
+      return null;
+    } catch (error) {
+      console.error(`Reçete ID ${receteId} için önceki maliyet logu getirme hatası:`, error.message);
       throw error;
     }
   });

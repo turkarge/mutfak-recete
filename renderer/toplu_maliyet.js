@@ -6,6 +6,7 @@ let maliyetListesiKarti;
 let guncellenenMaliyetlerTableBody;
 let toplamKayitSayisiSpan;
 let birimVerileri = {};
+let guncellenenReceteListesi = []; // <<-- GLOBAL DEĞİŞKEN OLARAK TANIMLANDI
 
 // Sayfa yüklendiğinde çalışacak ana fonksiyon
 export async function loadTopluMaliyetPage() {
@@ -30,11 +31,11 @@ export async function loadTopluMaliyetPage() {
                 };
             });
             console.log("Birim verileri toplu maliyet hesaplama için yüklendi.");
-            return true; // Başarılı yükleme
+            return true;
         } catch (error) {
             console.error("Toplu maliyet için birim verileri yüklenirken hata:", error);
             toastr.error("Birim verileri yüklenemedi, maliyet hesaplama yapılamaz.");
-            return false; // Başarısız yükleme
+            return false;
         }
     }
 
@@ -77,43 +78,67 @@ export async function loadTopluMaliyetPage() {
         }
     }
 
-    function displayGuncellenenMaliyetler(guncellenenReceteler) {
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        try {
+            const dateObj = new Date(dateString);
+            const day = dateObj.getDate().toString().padStart(2, '0');
+            const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}.${month}.${year}`;
+        } catch (e) {
+            return dateString;
+        }
+    }
+
+    function displayGuncellenenMaliyetler(liste) { // Parametre adı 'liste'
         if (!guncellenenMaliyetlerTableBody || !maliyetListesiKarti || !toplamKayitSayisiSpan) return;
 
-        guncellenenMaliyetlerTableBody.innerHTML = ''; // Tabloyu temizle
-        if (guncellenenReceteler && guncellenenReceteler.length > 0) {
-            guncellenenReceteler.forEach(recete => {
+        guncellenenMaliyetlerTableBody.innerHTML = '';
+        if (liste && liste.length > 0) {
+            liste.forEach(recete => {
                 const row = guncellenenMaliyetlerTableBody.insertRow();
-                row.insertCell(0).textContent = `${recete.sonUrunAdi} - ${recete.porsiyonAdi}`;
-                row.insertCell(1).textContent = recete.receteAdi || 'Varsayılan';
-                const maliyetCell = row.insertCell(2);
-                maliyetCell.textContent = recete.sonHesaplananMaliyet.toFixed(2);
-                maliyetCell.classList.add('text-end');
-                row.insertCell(3).textContent = new Date(recete.maliyetHesaplamaTarihi).toLocaleString('tr-TR');
+                row.insertCell(0).textContent = recete.urunAdi;
+                row.insertCell(1).textContent = recete.porsiyonAdi;
+                row.insertCell(2).textContent = formatDate(recete.eskiTarih);
+                const eskiFiyatCell = row.insertCell(3);
+                eskiFiyatCell.textContent = recete.eskiMaliyet !== null ? recete.eskiMaliyet.toFixed(2) : '-';
+                eskiFiyatCell.classList.add('text-end');
+                row.insertCell(4).textContent = formatDate(recete.yeniTarih);
+                const yeniFiyatCell = row.insertCell(5);
+                yeniFiyatCell.textContent = recete.yeniMaliyet.toFixed(2);
+                yeniFiyatCell.classList.add('text-end');
+                const degisimCell = row.insertCell(6);
+                degisimCell.textContent = recete.degisimYuzdesi !== null ? `${recete.degisimYuzdesi.toFixed(2)}%` : '-';
+                degisimCell.classList.add('text-end');
+                if (recete.degisimYuzdesi > 0) degisimCell.classList.add('text-danger');
+                if (recete.degisimYuzdesi < 0) degisimCell.classList.add('text-success');
             });
-            toplamKayitSayisiSpan.textContent = `${guncellenenReceteler.length} reçete güncellendi.`;
+            toplamKayitSayisiSpan.textContent = `${liste.length} reçete için maliyet bilgisi gösteriliyor.`;
             maliyetListesiKarti.style.display = 'block';
         } else {
             const row = guncellenenMaliyetlerTableBody.insertRow();
             const cell = row.insertCell(0);
-            cell.colSpan = 4;
+            cell.colSpan = 7;
             cell.textContent = 'Güncellenecek veya gösterilecek reçete bulunamadı.';
             cell.style.textAlign = 'center';
             toplamKayitSayisiSpan.textContent = "";
-            maliyetListesiKarti.style.display = 'block'; // Yine de kartı gösterelim, içinde mesaj olsun.
+            maliyetListesiKarti.style.display = 'block';
         }
     }
 
 
     if (hesaplaVeGuncelleButton) {
         hesaplaVeGuncelleButton.onclick = async () => {
+            console.log("Toplu maliyet hesaplama başlatıldı.");
             islemDurumuDiv.textContent = "Maliyetler hesaplanıyor, lütfen bekleyin...";
             islemDurumuDiv.className = 'alert alert-info mt-3';
             islemDurumuDiv.style.display = 'block';
             maliyetListesiKarti.style.display = 'none';
-            guncellenenMaliyetlerTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Veriler işleniyor...</td></tr>';
+            guncellenenMaliyetlerTableBody.innerHTML = '<tr><td colspan="7" class="text-center">Veriler işleniyor...</td></tr>';
             hesaplaVeGuncelleButton.disabled = true;
-            let guncellenenReceteListesi = [];
+            
+            guncellenenReceteListesi = []; // <<-- SADECE SIFIRLA, 'let' ile yeniden tanımlama YOK
             let basariliGuncellemeSayisi = 0;
             let hataliReceteSayisi = 0;
 
@@ -123,8 +148,10 @@ export async function loadTopluMaliyetPage() {
                 if (!birimlerYuklendi) {
                     throw new Error("Birim verileri yüklenemediği için işlem iptal edildi.");
                 }
+                console.log("Birimler yüklendi.");
 
                 const tumReceteler = await window.electronAPI.getReceteler();
+                console.log("Tüm reçeteler çekildi:", tumReceteler);
                 if (!tumReceteler || tumReceteler.length === 0) {
                     islemDurumuDiv.textContent = "Güncellenecek reçete bulunamadı.";
                     islemDurumuDiv.className = 'alert alert-warning mt-3';
@@ -137,51 +164,74 @@ export async function loadTopluMaliyetPage() {
 
                 for (let i = 0; i < tumReceteler.length; i++) {
                     const recete = tumReceteler[i];
-                    let receteToplamMaliyet = 0;
-                    let hesaplamaBasarili = true;
+                    console.log(`İşleniyor: Reçete ID ${recete.id} - ${recete.sonUrunAdi} - ${recete.porsiyonAdi}`);
+                    let yeniReceteToplamMaliyet = 0;
+
+                    const eskiMaliyet = recete.sonHesaplananMaliyet;
+                    const eskiTarih = recete.maliyetHesaplamaTarihi;
+                    console.log(`  Eski Maliyet: ${eskiMaliyet}, Eski Tarih: ${eskiTarih}`);
 
                     const detaylar = await window.electronAPI.getReceteDetaylari(recete.id);
+                    console.log(`  Reçete ID ${recete.id} için detaylar:`, detaylar);
                     if (detaylar && detaylar.length > 0) {
                         for (const detay of detaylar) {
                             const maliyetSonucu = await calculateHammaddeMaliyet(detay.hammaddeId, detay.miktar, detay.birimKisaAd);
-                            if (maliyetSonucu.aciklama !== "") {
-                                console.warn(`Reçete ID ${recete.id}, Hammadde ID ${detay.hammaddeId} için maliyet hatası: ${maliyetSonucu.aciklama}`);
-                                // İsteğe bağlı: Bu tür hatalı hesaplamaları da kullanıcıya bildirebiliriz.
-                                // Şimdilik sadece konsola yazıyoruz ve o hammaddenin maliyetini 0 kabul ediyoruz.
-                            }
-                            receteToplamMaliyet += maliyetSonucu.toplamMaliyet;
+                            console.log(`    Hammadde ID ${detay.hammaddeId} maliyet sonucu:`, maliyetSonucu);
+                            yeniReceteToplamMaliyet += maliyetSonucu.toplamMaliyet;
                         }
                     } else {
-                        console.log(`Reçete ID ${recete.id} için detay bulunamadı, maliyet 0 olarak ayarlandı.`);
+                        console.log(`  Reçete ID ${recete.id} için detay bulunamadı, maliyet 0 olarak ayarlandı.`);
                     }
+                    console.log(`  Reçete ID ${recete.id} için YENİ Toplam Maliyet: ${yeniReceteToplamMaliyet}`);
 
-                    // Maliyeti ve tarihi veritabanına kaydet
                     const hesaplamaTarihi = new Date().toISOString();
-                    const updateSuccess = await window.electronAPI.updateReceteMaliyet(recete.id, receteToplamMaliyet, hesaplamaTarihi);
+                    console.log(`  Veritabanına kaydediliyor: ReceteID=${recete.id}, YeniMaliyet=${yeniReceteToplamMaliyet}, Tarih=${hesaplamaTarihi}`);
+                    const updateResult = await window.electronAPI.logAndUpdateReceteMaliyet(recete.id, yeniReceteToplamMaliyet, hesaplamaTarihi);
+                    console.log(`  Güncelleme sonucu (logAndUpdateReceteMaliyet):`, updateResult);
 
-                    if (updateSuccess) {
+
+                    if (updateResult && updateResult.success) {
                         basariliGuncellemeSayisi++;
+                        let degisimYuzdesi = null;
+                        if (eskiMaliyet !== null && eskiMaliyet !== 0 && yeniReceteToplamMaliyet !== null) {
+                            degisimYuzdesi = ((yeniReceteToplamMaliyet - eskiMaliyet) / eskiMaliyet) * 100;
+                        } else if (yeniReceteToplamMaliyet > 0 && (eskiMaliyet === null || eskiMaliyet === 0)) {
+                            degisimYuzdesi = 100;
+                        }
+                        console.log(`  Değişim Yüzdesi: ${degisimYuzdesi}`);
+
                         guncellenenReceteListesi.push({
-                            ...recete, // Porsiyon adı, reçete adı gibi bilgileri almak için
-                            sonHesaplananMaliyet: receteToplamMaliyet,
-                            maliyetHesaplamaTarihi: hesaplamaTarihi
+                            urunAdi: recete.sonUrunAdi,
+                            porsiyonAdi: recete.porsiyonAdi,
+                            receteAdi: recete.receteAdi,
+                            eskiMaliyet: eskiMaliyet,
+                            eskiTarih: eskiTarih,
+                            yeniMaliyet: yeniReceteToplamMaliyet,
+                            yeniTarih: hesaplamaTarihi,
+                            degisimYuzdesi: degisimYuzdesi
                         });
                     } else {
                         hataliReceteSayisi++;
-                        console.warn(`Reçete ID ${recete.id} için maliyet veritabanına kaydedilemedi.`);
+                        console.warn(`  Reçete ID ${recete.id} için maliyet veritabanına kaydedilemedi veya ana reçete kaydı güncellenemedi.`);
                     }
                     islemDurumuDiv.textContent = `Toplam ${tumReceteler.length} reçete işleniyor... (${i + 1}/${tumReceteler.length})`;
                 }
 
+                console.log("Döngü tamamlandı. Güncellenen reçete listesi:", guncellenenReceteListesi);
+                console.log("displayGuncellenenMaliyetler çağrılıyor...");
                 displayGuncellenenMaliyetler(guncellenenReceteListesi);
+
                 islemDurumuDiv.textContent = `${basariliGuncellemeSayisi} reçetenin maliyeti başarıyla güncellendi.`;
                 if (hataliReceteSayisi > 0) {
                     islemDurumuDiv.textContent += ` ${hataliReceteSayisi} reçete güncellenirken hata oluştu.`;
                     islemDurumuDiv.className = 'alert alert-warning mt-3';
                     toastr.warning(`${hataliReceteSayisi} reçete güncellenirken hata oluştu. Detaylar için konsolu kontrol edin.`);
-                } else {
+                } else if (basariliGuncellemeSayisi > 0) {
                     islemDurumuDiv.className = 'alert alert-success mt-3';
-                    toastr.success("Tüm reçete maliyetleri başarıyla güncellendi!");
+                    toastr.success("Tüm uygun reçete maliyetleri başarıyla güncellendi!");
+                } else {
+                    islemDurumuDiv.textContent = "İşlem tamamlandı, ancak güncellenen reçete yok.";
+                    islemDurumuDiv.className = 'alert alert-info mt-3';
                 }
 
             } catch (error) {
@@ -190,13 +240,12 @@ export async function loadTopluMaliyetPage() {
                 islemDurumuDiv.className = 'alert alert-danger mt-3';
                 toastr.error("Toplu maliyet güncelleme sırasında bir hata oluştu.");
             } finally {
+                console.log("Finally bloğu çalışıyor, buton aktif ediliyor.");
                 hesaplaVeGuncelleButton.disabled = false;
             }
         };
     }
 
-    // Sayfa Yüklendiğinde
-    // await loadAllBirimlerForMaliyet(); // Butona basılınca yüklenecek
     islemDurumuDiv.style.display = 'none';
     maliyetListesiKarti.style.display = 'none';
 }

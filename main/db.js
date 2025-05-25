@@ -12,26 +12,26 @@ let db = null; // Veritabanı bağlantı nesnesi. Başlangıçta null, initializ
 // İsteğe bağlı: Uygulamanın ilk çalıştırılmasında standart birimleri ekleme fonksiyonu
 function insertDefaultBirimler() {
   const birimler = [
-      { birimAdi: 'Kilogram', kisaAd: 'kg', anaBirimKisaAd: 'kg', cevrimKatsayisi: 1 },
-      { birimAdi: 'Gram', kisaAd: 'gr', anaBirimKisaAd: 'kg', cevrimKatsayisi: 1000 }, // 1000 gr = 1 kg
-      { birimAdi: 'Litre', kisaAd: 'lt', anaBirimKisaAd: 'lt', cevrimKatsayisi: 1 },
-      { birimAdi: 'Mililitre', kisaAd: 'ml', anaBirimKisaAd: 'lt', cevrimKatsayisi: 1000 }, // 1000 ml = 1 lt
-      { birimAdi: 'Adet', kisaAd: 'adet', anaBirimKisaAd: 'adet', cevrimKatsayisi: 1 },
-      { birimAdi: 'Porsiyon', kisaAd: 'porsiyon', anaBirimKisaAd: 'porsiyon', cevrimKatsayisi: 1 }
-      // { birimAdi: 'Kilogram (Adet)', kisaAd: 'kg/adet', anaBirimKisaAd: 'kg', cevrimKatsayisi: 1 } // Bu tür karmaşık birimler için mantık farklı olabilir, şimdilik basit tutalım.
+    { birimAdi: 'Kilogram', kisaAd: 'kg', anaBirimKisaAd: 'kg', cevrimKatsayisi: 1 },
+    { birimAdi: 'Gram', kisaAd: 'gr', anaBirimKisaAd: 'kg', cevrimKatsayisi: 1000 }, // 1000 gr = 1 kg
+    { birimAdi: 'Litre', kisaAd: 'lt', anaBirimKisaAd: 'lt', cevrimKatsayisi: 1 },
+    { birimAdi: 'Mililitre', kisaAd: 'ml', anaBirimKisaAd: 'lt', cevrimKatsayisi: 1000 }, // 1000 ml = 1 lt
+    { birimAdi: 'Adet', kisaAd: 'adet', anaBirimKisaAd: 'adet', cevrimKatsayisi: 1 },
+    { birimAdi: 'Porsiyon', kisaAd: 'porsiyon', anaBirimKisaAd: 'porsiyon', cevrimKatsayisi: 1 }
+    // { birimAdi: 'Kilogram (Adet)', kisaAd: 'kg/adet', anaBirimKisaAd: 'kg', cevrimKatsayisi: 1 } // Bu tür karmaşık birimler için mantık farklı olabilir, şimdilik basit tutalım.
   ];
 
-   const stmt = db.prepare("INSERT OR IGNORE INTO birimler (birimAdi, kisaAd, anaBirimKisaAd, cevrimKatsayisi) VALUES (?, ?, ?, ?)");
-   birimler.forEach(birim => {
-       stmt.run(birim.birimAdi, birim.kisaAd, birim.anaBirimKisaAd, birim.cevrimKatsayisi);
-   });
-   stmt.finalize((err) => {
-       if (!err) {
-           console.log("Varsayılan birimler (çevrim katsayıları ile) eklendi (eğer daha önce yoksa).");
-       } else {
-           console.error("Varsayılan birim ekleme hatası:", err.message);
-       }
-   });
+  const stmt = db.prepare("INSERT OR IGNORE INTO birimler (birimAdi, kisaAd, anaBirimKisaAd, cevrimKatsayisi) VALUES (?, ?, ?, ?)");
+  birimler.forEach(birim => {
+    stmt.run(birim.birimAdi, birim.kisaAd, birim.anaBirimKisaAd, birim.cevrimKatsayisi);
+  });
+  stmt.finalize((err) => {
+    if (!err) {
+      console.log("Varsayılan birimler (çevrim katsayıları ile) eklendi (eğer daha önce yoksa).");
+    } else {
+      console.error("Varsayılan birim ekleme hatası:", err.message);
+    }
+  });
 }
 
 // Veritabanını açma ve tabloları oluşturma fonksiyonu
@@ -110,9 +110,22 @@ function initializeDatabase() {
                         UNIQUE(porsiyonId, receteAdi),
                         FOREIGN KEY (porsiyonId) REFERENCES porsiyonlar(id) ON DELETE CASCADE
                       )`, (err) => {
-                        if (err) console.error('receler tablosu oluşturma hatası:', err.message);
-                        else console.log('receler tablosu hazır.');
-                      });
+                if (err) console.error('receler tablosu oluşturma hatası:', err.message);
+                else console.log('receler tablosu hazır.');
+              });
+
+              // Maliyet_log Tablosu
+              db.run(`CREATE TABLE IF NOT EXISTS maliyet_log (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        receteId INTEGER NOT NULL,
+                        hesaplamaTarihi TEXT NOT NULL,
+                        hesaplananMaliyet REAL NOT NULL,
+                        FOREIGN KEY (receteId) REFERENCES receler(id) ON DELETE CASCADE 
+                        -- Ana reçete silinirse, ona ait maliyet logları da silinsin
+                      )`, (err) => {
+                if (err) console.error('maliyet_log tablosu oluşturma hatası:', err.message);
+                else console.log('maliyet_log tablosu hazır.');
+              });
 
               db.run(`CREATE TABLE IF NOT EXISTS receteDetaylari (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
