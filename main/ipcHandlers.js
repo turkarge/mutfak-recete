@@ -1,10 +1,11 @@
 // main/ipcHandlers.js
 // Renderer'dan gelen IPC mesajlarını işleyen handler'ları içerir.
 
-const { ipcMain } = require('electron');
-const database = require('./db'); // db modülümüzü içeri aktarıyoruz
-const path = require('node:path'); // Dosya yolları için path modülü
-const fs = require('node:fs').promises; // Dosya okuma için fs modülü (Promise versiyonu)
+const { ipcMain, dialog } = require('electron'); // dialog EKLENDİ
+const database = require('./db');
+const path = require('node:path');
+const fs = require('node:fs'); // Sadece 'fs' olarak import edelim
+const XLSX = require('xlsx');
 
 function registerIpcHandlers() {
     console.log("IPC handler'lar kaydediliyor...");
@@ -58,20 +59,22 @@ function registerIpcHandlers() {
         }
     });
 
-
-    // Sayfa HTML getirme handler'ı
-    ipcMain.handle('get-page-html', async (event, pageName) => {
-        try {
-            const pagePath = path.join(__dirname, '../views', `${pageName}.html`);
-            console.log(`HTML dosyası okunuyor: ${pagePath}`);
-            const htmlContent = await fs.readFile(pagePath, 'utf8');
-            console.log(`${pageName}.html başarıyla okundu.`);
-            return htmlContent;
-        } catch (error) {
-            console.error(`HTML dosyası okuma hatası (${pageName}.html):`, error);
-            throw new Error(`"${pageName}.html" dosyası okunamadı: ${error.message}`);
+    // Sayfa HTML getirme handler'ı (GÜNCELLENMİŞ)
+  ipcMain.handle('get-page-html', (event, pageName) => {
+    return new Promise((resolve, reject) => {
+      const pagePath = path.join(__dirname, '../views', `${pageName}.html`);
+      console.log(`HTML dosyası okunuyor: ${pagePath}`);
+      fs.readFile(pagePath, 'utf8', (err, htmlContent) => {
+        if (err) {
+          console.error(`HTML dosyası okuma hatası (${pageName}.html):`, err);
+          reject(new Error(`"${pageName}.html" dosyası okunamadı: ${err.message}`));
+        } else {
+          console.log(`${pageName}.html başarıyla okundu.`);
+          resolve(htmlContent);
         }
+      });
     });
+  });
 
     // --- Birimler için Handler'lar ---
     ipcMain.handle('get-birimler', async (event) => {
@@ -188,6 +191,96 @@ function registerIpcHandlers() {
             throw error;
         }
     });
+
+    ipcMain.handle('exportMaliyetToExcel', async (event, data) => {
+    // data: [{ urunAdi, porsiyonAdi, eskiTarih, eskiMaliyet, yeniTarih, yeniMaliyet, degisimYuzdesi }, ...]
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return { success: false, message: 'Dışa aktarılacak veri bulunamadı.' };
+    }
+
+    try {
+      // Kullanıcıya dosyayı nereye kaydedeceğini sor
+      const { filePath, canceled } = await dialog.showSaveDialog({
+        title: 'Maliyet Raporunu Kaydet',
+        defaultPath: `maliyet_raporu_${new Date().toISOString().split('T')[0]}.xlsx`,
+        filters: [{ name: 'Excel Dosyası', extensions: ['xlsx'] }]
+      });
+
+      if (canceled || !filePath) {
+        console.log('Excel dışa aktarma işlemi kullanıcı tarafından iptal edildi.');
+        return { success: false, message: 'İşlem iptal edildi.' };
+      }
+
+      const formatNumberForExcel_TR = (num) => {
+        if (num === null || num === undefined || isNaN(parseFloat(num))) {
+          return '-';
+        }
+        // Sayıyı string'e çevirip noktayı virgüle dönüştür
+        return parseFloat(num).toFixed(2).replace('.', ',');
+      };
+      
+      const formatPercentageForExcel_TR = (num) => {
+        if (num === null || num === undefined || isNaN(parseFloat(num))) {
+          return '-';
+        }
+        return parseFloat(num).toFixed(2).replace('.', ',') + '%';
+      };
+
+      // Excel için veri formatını hazırla (başlıklar ve satırlar)
+      const worksheetData = [
+        ["Ürün", "Porsiyon", "Eski Hesaplama Tarihi", "Eski Maliyet (₺)", "Yeni Hesaplama Tarihi", "Yeni Maliyet (₺)", "Değişim (%)"],
+        ...data.map(item => [
+          item.urunAdi,
+          item.porsiyonAdi,
+          item.eskiTarih ? formatDateForExcel(item.eskiTarih) : '-',
+          formatNumberForExcel_TR(item.eskiMaliyet), // FORMATLAMA
+          item.yeniTarih ? formatDateForExcel(item.yeniTarih) : '-',
+          formatNumberForExcel_TR(item.yeniMaliyet), // FORMATLAMA
+          formatPercentageForExcel_TR(item.degisimYuzdesi) // FORMATLAMA
+        ])
+      ];
+      
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+      // Sütun genişliklerini ayarla (isteğe bağlı ama daha iyi görünüm için)
+      worksheet['!cols'] = [
+        { wch: 30 }, // Ürün
+        { wch: 20 }, // Porsiyon
+        { wch: 20 }, // Eski Tarih
+        { wch: 15 }, // Eski Maliyet
+        { wch: 20 }, // Yeni Tarih
+        { wch: 15 }, // Yeni Maliyet
+        { wch: 15 }  // Değişim %
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'MaliyetRaporu');
+      XLSX.writeFile(workbook, filePath);
+
+      console.log('Maliyet raporu başarıyla Excel dosyasına aktarıldı:', filePath);
+      return { success: true, path: filePath, message: 'Rapor başarıyla dışa aktarıldı.' };
+
+    } catch (error) {
+      console.error('Excel dışa aktarma hatası:', error);
+      return { success: false, message: `Excel dosyası oluşturulurken bir hata oluştu: ${error.message}` };
+    }
+  });
+
+    // Tarihi DD.MM.YYYY formatına çeviren yardımcı fonksiyon (main process için)
+function formatDateForExcel(dateString) {
+    if (!dateString) return '-';
+    try {
+        const dateObj = new Date(dateString);
+        // Excel'in tarih olarak tanıması için YYYY-MM-DD formatını da kullanabiliriz
+        // veya direkt string olarak DD.MM.YYYY. Şimdilik string.
+        const day = dateObj.getDate().toString().padStart(2, '0');
+        const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+        const year = dateObj.getFullYear();
+        return `${day}.${month}.${year}`;
+    } catch (e) {
+        return dateString;
+    }
+}
 
     // Belirli bir türdeki ürünleri getirme isteğini dinle (örn: Sadece Son Ürünler)
     ipcMain.handle('get-urunler-by-tur', async (event, tur) => {
@@ -333,10 +426,12 @@ function registerIpcHandlers() {
               p.porsiyonAdi,
               p.sonUrunId,
               u.ad AS sonUrunAdi,
-              r.receteAdi
-            FROM receler r
-            JOIN porsiyonlar p ON r.porsiyonId = p.id
-            JOIN urunler u ON p.sonUrunId = u.id
+              r.receteAdi,
+             r.sonHesaplananMaliyet,
+             r.maliyetHesaplamaTarihi
+             FROM receler r
+             JOIN porsiyonlar p ON r.porsiyonId = p.id
+             JOIN urunler u ON p.sonUrunId = u.id
           `);
             console.log('Reçeteler başarıyla getirildi.');
             return receler;
@@ -831,79 +926,80 @@ function registerIpcHandlers() {
         }
     });
 
-// YENİ veya GÜNCELLENMİŞ: Reçete maliyetini logla ve ana reçete tablosunu güncelle
-  ipcMain.handle('logAndUpdateReceteMaliyet', async (event, receteId, yeniMaliyet, hesaplamaTarihi) => {
-    if (receteId == null || yeniMaliyet == null || !hesaplamaTarihi) {
-        console.error("logAndUpdateReceteMaliyet için eksik parametreler:", { receteId, yeniMaliyet, hesaplamaTarihi });
-        throw new Error("Maliyet kaydı için eksik parametreler.");
-    }
-    try {
-      // 1. Yeni maliyeti maliyet_log tablosuna ekle
-      const logSql = `INSERT INTO maliyet_log (receteId, hesaplamaTarihi, hesaplananMaliyet)
+    // YENİ veya GÜNCELLENMİŞ: Reçete maliyetini logla ve ana reçete tablosunu güncelle
+    ipcMain.handle('logAndUpdateReceteMaliyet', async (event, receteId, yeniMaliyet, hesaplamaTarihi) => {
+        if (receteId == null || yeniMaliyet == null || !hesaplamaTarihi) {
+            console.error("logAndUpdateReceteMaliyet için eksik parametreler:", { receteId, yeniMaliyet, hesaplamaTarihi });
+            throw new Error("Maliyet kaydı için eksik parametreler.");
+        }
+        try {
+            // 1. Yeni maliyeti maliyet_log tablosuna ekle
+            const logSql = `INSERT INTO maliyet_log (receteId, hesaplamaTarihi, hesaplananMaliyet)
                       VALUES (?, ?, ?)`;
-      const logParams = [receteId, hesaplamaTarihi, yeniMaliyet];
-      const logId = await database.run(logSql, logParams);
-      console.log(`Maliyet loguna eklendi. Log ID: ${logId}, Reçete ID: ${receteId}, Maliyet: ${yeniMaliyet}`);
+            const logParams = [receteId, hesaplamaTarihi, yeniMaliyet];
+            const logId = await database.run(logSql, logParams);
+            console.log(`Maliyet loguna eklendi. Log ID: ${logId}, Reçete ID: ${receteId}, Maliyet: ${yeniMaliyet}`);
 
-      // 2. receler tablosundaki son maliyet ve tarih bilgilerini güncelle
-      const updateReceteSql = `
+            // 2. receler tablosundaki son maliyet ve tarih bilgilerini güncelle
+            const updateReceteSql = `
         UPDATE receler SET
           sonHesaplananMaliyet = ?,
           maliyetHesaplamaTarihi = ?
         WHERE id = ?`;
-      const updateReceteParams = [yeniMaliyet, hesaplamaTarihi, receteId];
-      const changes = await database.run(updateReceteSql, updateReceteParams);
+            const updateReceteParams = [yeniMaliyet, hesaplamaTarihi, receteId];
+            const changes = await database.run(updateReceteSql, updateReceteParams);
 
-      if (changes > 0) {
-        console.log(`Reçeteler tablosu güncellendi. Reçete ID: ${receteId}`);
-        return { success: true, logId: logId, receteId: receteId };
-      } else {
-        // Bu durum, receteId bulunamazsa olabilir. Log yine de eklenmiş olacak.
-        console.warn(`Reçeteler tablosunda Reçete ID ${receteId} güncellenirken bulunamadı veya değer değişmedi.`);
-        // Başarılı loglama ama reçete güncelleme hatası durumunu ele alabiliriz.
-        // Şimdilik log başarılıysa genel başarı kabul edelim.
-        return { success: true, logId: logId, receteId: receteId, warning: "Reçete ana kaydı güncellenemedi." };
-      }
-    } catch (error) {
-      console.error(`Reçete ID ${receteId} için maliyet loglama/güncelleme hatası:`, error.message);
-      throw error;
-    }
-  });
+            if (changes > 0) {
+                console.log(`Reçeteler tablosu güncellendi. Reçete ID: ${receteId}`);
+                return { success: true, logId: logId, receteId: receteId };
+            } else {
+                // Bu durum, receteId bulunamazsa olabilir. Log yine de eklenmiş olacak.
+                console.warn(`Reçeteler tablosunda Reçete ID ${receteId} güncellenirken bulunamadı veya değer değişmedi.`);
+                // Başarılı loglama ama reçete güncelleme hatası durumunu ele alabiliriz.
+                // Şimdilik log başarılıysa genel başarı kabul edelim.
+                return { success: true, logId: logId, receteId: receteId, warning: "Reçete ana kaydı güncellenemedi." };
+            }
+        } catch (error) {
+            console.error(`Reçete ID ${receteId} için maliyet loglama/güncelleme hatası:`, error.message);
+            throw error;
+        }
+    });
+    
 
-  // Ek olarak, bir önceki maliyeti getirecek bir handler'a ihtiyacımız olacak
-  // `toplu_maliyet.html`'de "Eski Fiyat/Tarih" göstermek için.
-  ipcMain.handle('getPreviousMaliyetLog', async (event, receteId) => {
-    if (!receteId) {
-      console.warn("getPreviousMaliyetLog için receteId sağlanmadı.");
-      return null;
-    }
-    try {
-      // En sonuncudan bir önceki kaydı (yani ikinci en son kaydı) getir
-      const sql = `
+    // Ek olarak, bir önceki maliyeti getirecek bir handler'a ihtiyacımız olacak
+    // `toplu_maliyet.html`'de "Eski Fiyat/Tarih" göstermek için.
+    ipcMain.handle('getPreviousMaliyetLog', async (event, receteId) => {
+        if (!receteId) {
+            console.warn("getPreviousMaliyetLog için receteId sağlanmadı.");
+            return null;
+        }
+        try {
+            // En sonuncudan bir önceki kaydı (yani ikinci en son kaydı) getir
+            const sql = `
         SELECT hesaplamaTarihi, hesaplananMaliyet
         FROM maliyet_log
         WHERE receteId = ?
         ORDER BY hesaplamaTarihi DESC
         LIMIT 1 OFFSET 1; 
       `;
-      // Eğer sadece bir kayıt varsa, OFFSET 1 sonuç döndürmez. Bu durumda receler tablosundaki
-      // sonHesaplananMaliyet'ten farklı bir şey göstermek için bir mantık gerekebilir
-      // veya en son kaydı alıp "önceki maliyet yok" diyebiliriz.
-      // Şimdilik, eğer 2 veya daha fazla log varsa bir öncekini getirecek.
-      const row = await database.get(sql, [receteId]);
-      if (row) {
-        return { tarih: row.hesaplamaTarihi, maliyet: row.hesaplananMaliyet };
-      }
-      // Eğer sadece 1 log varsa veya hiç log yoksa, receler tablosundaki mevcut maliyeti "eski" kabul edebiliriz.
-      // Veya daha iyisi, receler tablosuna oncekiMaliyet ve oncekiMaliyetTarihi sütunlarını eklemekti.
-      // Bu handler'ı şimdilik böyle bırakalım, renderer'da bu durumu ele alırız.
-      console.log(`Reçete ID ${receteId} için bir önceki maliyet logu bulunamadı.`);
-      return null;
-    } catch (error) {
-      console.error(`Reçete ID ${receteId} için önceki maliyet logu getirme hatası:`, error.message);
-      throw error;
-    }
-  });
+            // Eğer sadece bir kayıt varsa, OFFSET 1 sonuç döndürmez. Bu durumda receler tablosundaki
+            // sonHesaplananMaliyet'ten farklı bir şey göstermek için bir mantık gerekebilir
+            // veya en son kaydı alıp "önceki maliyet yok" diyebiliriz.
+            // Şimdilik, eğer 2 veya daha fazla log varsa bir öncekini getirecek.
+            const row = await database.get(sql, [receteId]);
+            if (row) {
+                return { tarih: row.hesaplamaTarihi, maliyet: row.hesaplananMaliyet };
+            }
+            // Eğer sadece 1 log varsa veya hiç log yoksa, receler tablosundaki mevcut maliyeti "eski" kabul edebiliriz.
+            // Veya daha iyisi, receler tablosuna oncekiMaliyet ve oncekiMaliyetTarihi sütunlarını eklemekti.
+            // Bu handler'ı şimdilik böyle bırakalım, renderer'da bu durumu ele alırız.
+            console.log(`Reçete ID ${receteId} için bir önceki maliyet logu bulunamadı.`);
+            return null;
+        } catch (error) {
+            console.error(`Reçete ID ${receteId} için önceki maliyet logu getirme hatası:`, error.message);
+            throw error;
+        }
+    });
 
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)

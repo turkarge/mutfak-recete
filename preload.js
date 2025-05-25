@@ -63,8 +63,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Toplu Maliyet Güncelleme
   updateReceteMaliyet: (receteId, yeniMaliyet, tarih) => ipcRenderer.invoke('updateReceteMaliyet', receteId, yeniMaliyet, tarih),
+
+  // Excel'e Aktarma
+  exportMaliyetToExcel: (data) => ipcRenderer.invoke('exportMaliyetToExcel', data),
   
-  // YENİ/GÜNCELLENMİŞ: Maliyet Loglama ve Reçete Güncelleme
+  // Maliyet Loglama ve Reçete Güncelleme
   logAndUpdateReceteMaliyet: (receteId, yeniMaliyet, tarih) => ipcRenderer.invoke('logAndUpdateReceteMaliyet', receteId, yeniMaliyet, tarih),
   getPreviousMaliyetLog: (receteId) => ipcRenderer.invoke('getPreviousMaliyetLog', receteId),
 

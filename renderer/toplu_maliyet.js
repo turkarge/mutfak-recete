@@ -5,8 +5,10 @@ let islemDurumuDiv;
 let maliyetListesiKarti;
 let guncellenenMaliyetlerTableBody;
 let toplamKayitSayisiSpan;
+let excelAktarButton;
 let birimVerileri = {};
 let guncellenenReceteListesi = []; // <<-- GLOBAL DEĞİŞKEN OLARAK TANIMLANDI
+let guncellenenReceteListesiVerisi = [];
 
 // Sayfa yüklendiğinde çalışacak ana fonksiyon
 export async function loadTopluMaliyetPage() {
@@ -17,6 +19,7 @@ export async function loadTopluMaliyetPage() {
     maliyetListesiKarti = document.querySelector('#maliyetListesiKarti');
     guncellenenMaliyetlerTableBody = document.querySelector('#guncellenenMaliyetlerTable tbody');
     toplamKayitSayisiSpan = document.querySelector('#toplamKayitSayisi');
+    excelAktarButton = document.querySelector('#excelAktarButton'); // Excel butonunu seç
 
     async function loadAllBirimlerForMaliyet() {
         try {
@@ -54,7 +57,7 @@ export async function loadTopluMaliyetPage() {
 
             let kullanilanMiktarAnaCinsinden = parseFloat(kullanilanMiktar);
             if (kullanilanBirim.kisaAd !== kullanilanBirim.anaBirimKisaAd) {
-                 if (kullanilanBirim.cevrimKatsayisi && kullanilanBirim.cevrimKatsayisi !== 0) {
+                if (kullanilanBirim.cevrimKatsayisi && kullanilanBirim.cevrimKatsayisi !== 0) {
                     kullanilanMiktarAnaCinsinden = kullanilanMiktar / kullanilanBirim.cevrimKatsayisi;
                 } else return { toplamMaliyet: 0, aciklama: "Kullanım birimi çevrim hatası" };
             }
@@ -102,20 +105,26 @@ export async function loadTopluMaliyetPage() {
                 row.insertCell(1).textContent = recete.porsiyonAdi;
                 row.insertCell(2).textContent = formatDate(recete.eskiTarih);
                 const eskiFiyatCell = row.insertCell(3);
-                eskiFiyatCell.textContent = recete.eskiMaliyet !== null ? recete.eskiMaliyet.toFixed(2) : '-';
+                eskiFiyatCell.textContent = (recete.eskiMaliyet !== null && recete.eskiMaliyet !== undefined)
+                    ? recete.eskiMaliyet.toFixed(2)
+                    : '-';
                 eskiFiyatCell.classList.add('text-end');
                 row.insertCell(4).textContent = formatDate(recete.yeniTarih);
                 const yeniFiyatCell = row.insertCell(5);
                 yeniFiyatCell.textContent = recete.yeniMaliyet.toFixed(2);
                 yeniFiyatCell.classList.add('text-end');
                 const degisimCell = row.insertCell(6);
-                degisimCell.textContent = recete.degisimYuzdesi !== null ? `${recete.degisimYuzdesi.toFixed(2)}%` : '-';
+                degisimCell.textContent = (recete.degisimYuzdesi !== null && recete.degisimYuzdesi !== undefined)
+                    ? `${recete.degisimYuzdesi.toFixed(2)}%`
+                    : '-';
                 degisimCell.classList.add('text-end');
                 if (recete.degisimYuzdesi > 0) degisimCell.classList.add('text-danger');
                 if (recete.degisimYuzdesi < 0) degisimCell.classList.add('text-success');
             });
             toplamKayitSayisiSpan.textContent = `${liste.length} reçete için maliyet bilgisi gösteriliyor.`;
             maliyetListesiKarti.style.display = 'block';
+            excelAktarButton.style.display = 'inline-block'; // Excel butonunu göster
+            guncellenenReceteListesiVerisi = liste; // Veriyi global değişkende sakla
         } else {
             const row = guncellenenMaliyetlerTableBody.insertRow();
             const cell = row.insertCell(0);
@@ -124,6 +133,8 @@ export async function loadTopluMaliyetPage() {
             cell.style.textAlign = 'center';
             toplamKayitSayisiSpan.textContent = "";
             maliyetListesiKarti.style.display = 'block';
+            excelAktarButton.style.display = 'none'; // Veri yoksa Excel butonunu gizle
+            guncellenenReceteListesiVerisi = [];
         }
     }
 
@@ -137,7 +148,8 @@ export async function loadTopluMaliyetPage() {
             maliyetListesiKarti.style.display = 'none';
             guncellenenMaliyetlerTableBody.innerHTML = '<tr><td colspan="7" class="text-center">Veriler işleniyor...</td></tr>';
             hesaplaVeGuncelleButton.disabled = true;
-            
+            excelAktarButton.style.display = 'none'; // İşlem başlarken Excel butonunu gizle
+
             guncellenenReceteListesi = []; // <<-- SADECE SIFIRLA, 'let' ile yeniden tanımlama YOK
             let basariliGuncellemeSayisi = 0;
             let hataliReceteSayisi = 0;
@@ -167,8 +179,8 @@ export async function loadTopluMaliyetPage() {
                     console.log(`İşleniyor: Reçete ID ${recete.id} - ${recete.sonUrunAdi} - ${recete.porsiyonAdi}`);
                     let yeniReceteToplamMaliyet = 0;
 
-                    const eskiMaliyet = recete.sonHesaplananMaliyet;
-                    const eskiTarih = recete.maliyetHesaplamaTarihi;
+                    const eskiMaliyet = recete.sonHesaplananMaliyet !== undefined ? recete.sonHesaplananMaliyet : null;
+                    const eskiTarih = recete.maliyetHesaplamaTarihi !== undefined ? recete.maliyetHesaplamaTarihi : null;
                     console.log(`  Eski Maliyet: ${eskiMaliyet}, Eski Tarih: ${eskiTarih}`);
 
                     const detaylar = await window.electronAPI.getReceteDetaylari(recete.id);
@@ -244,8 +256,34 @@ export async function loadTopluMaliyetPage() {
                 hesaplaVeGuncelleButton.disabled = false;
             }
         };
+        // YENİ: Excel'e Aktar Butonu Olay Dinleyicisi
+    if (excelAktarButton) {
+        excelAktarButton.onclick = async () => {
+            if (guncellenenReceteListesiVerisi && guncellenenReceteListesiVerisi.length > 0) {
+                excelAktarButton.disabled = true;
+                excelAktarButton.querySelector('span').textContent = 'Aktarılıyor...';
+                try {
+                    const result = await window.electronAPI.exportMaliyetToExcel(guncellenenReceteListesiVerisi);
+                    if (result.success) {
+                        toastr.success(`Rapor başarıyla şuraya kaydedildi: ${result.path}`);
+                    } else {
+                        toastr.error(result.message || 'Excel dosyası oluşturulamadı.');
+                    }
+                } catch (error) {
+                    console.error("Excel aktarma istemci tarafı hatası:", error);
+                    toastr.error(`Excel aktarılırken bir hata oluştu: ${error.message}`);
+                } finally {
+                    excelAktarButton.disabled = false;
+                    excelAktarButton.querySelector('span').textContent = "Excel'e Aktar";
+                }
+            } else {
+                toastr.warning("Dışa aktarılacak veri bulunamadı.");
+            }
+        };
+    }
     }
 
     islemDurumuDiv.style.display = 'none';
     maliyetListesiKarti.style.display = 'none';
+    if (excelAktarButton) excelAktarButton.style.display = 'none'; // Excel butonunu başlangıçta gizle
 }
