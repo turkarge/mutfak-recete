@@ -13,6 +13,7 @@ Uygulamanın temel işlevleri şunlardır:
     *   Belirli bir porsiyon için reçeteleri tanımlama, ana reçete bilgilerini düzenleme/silme.
     *   Reçetenin detaylarını (kullanılan hammaddeleri ve miktarlarını) ekleme, silme ve düzenleme.
     *   **Hammadde Maliyet Hesaplama:** Birim çevrimlerini dikkate alarak, en son alış fiyatlarına göre reçetedeki her bir hammaddenin ve reçetenin toplam maliyetini anlık olarak hesaplama ve gösterme.
+    *   **Toplu Maliyet Güncelleme:** Tüm reçetelerin maliyetlerini tek seferde hesaplama, veritabanına kaydetme ve sonuçları Excel'e aktarma.
 5.  **Alım Fişi Girişi:** Hammadde ve ürün alımlarının miktarlarını, birimlerini, alış fiyatlarını ve fiş numaralarını kaydetme.
 6.  **Gider Girişi:** İşletmenin genel (kira, maaş, faturalar vb.) giderlerini kaydetme.
 7.  **Satılan Ürün Kaydı:** Belirli bir dönemde satılan porsiyonların miktarlarını ve satış fiyatlarını kaydetme.
@@ -27,6 +28,7 @@ Uygulamanın temel işlevleri şunlardır:
 *   **Ana Süreç Runtime:** Node.js
 *   **Veri Tabanı:** SQLite (Dosya Tabanlı Veri Tabanı)
 *   **Veri Tabanı Erişim:** `sqlite3` Node.js kütüphanesi
+*   **Excel İşlemleri (Ana Süreç):** `xlsx` (SheetJS) kütüphanesi
 *   **Kullanıcı Arayüzü Framework:** Temel HTML/CSS/JS + Tabler Tema
 *   **Bildirimler:** Toastr JavaScript kütüphanesi
 *   **JS Bağımlılığı:** jQuery (Toastr için)
@@ -45,24 +47,26 @@ RestoranMaliyetApp/
 │ └── ipcHandlers.js
 ├── renderer/
 │ ├── urunler.js
-│ ├── birimler.js # Çevrim katsayısı yönetimi dahil
+│ ├── birimler.js
 │ ├── porsiyonlar.js
-│ ├── receler.js # Maliyet hesaplama mantığı dahil
+│ ├── receler.js
 │ ├── alimlar.js
 │ ├── giderler.js
 │ ├── satislar.js
 │ ├── ayarlar.js
-│ └── dashboard.js
+│ ├── dashboard.js
+│ └── toplu_maliyet.js # Toplu Maliyet Güncelleme sayfası JS
 ├── views/
 │ ├── urunler.html
-│ ├── birimler.html # Çevrim katsayısı alanı eklendi
+│ ├── birimler.html
 │ ├── porsiyonlar.html
-│ ├── receler.html # Maliyet gösterim alanları eklendi
+│ ├── receler.html
 │ ├── alimlar.html
 │ ├── giderler.html
 │ ├── satislar.html
 │ ├── ayarlar.html
-│ └── dashboard.html
+│ ├── dashboard.html
+│ └── toplu_maliyet.html # Toplu Maliyet Güncelleme sayfası HTML
 ├── index.html
 ├── login.html
 ├── splash.html
@@ -76,6 +80,8 @@ RestoranMaliyetApp/
 ## Veri Modeli (Güncel Plan)
 
 ... (Veri modeli kısmı aynı kalıyor - Lütfen bu kısmı kendi projenizdeki güncel haliyle değiştirin veya olduğu gibi bırakın)
+*   `receler` tablosuna `sonHesaplananMaliyet` ve `maliyetHesaplamaTarihi` sütunları eklendi.
+*   `maliyet_log` tablosu (receteId, hesaplamaTarihi, hesaplananMaliyet) eklendi.
 
 ## Tamamlanan Adımlar (Güncel)
 
@@ -83,15 +89,18 @@ RestoranMaliyetApp/
 2.  Temel Pencere Oluşturma ve Uygulama Başlatma.
 3.  SQLite Veri Tabanı Entegrasyonu ve Tüm Tabloların Oluşturulması (`main/db.js`).
     *   `birimler` tablosuna `cevrimKatsayisi` sütunu eklendi.
+    *   `receler` tablosuna maliyet takibi için `sonHesaplananMaliyet` ve `maliyetHesaplamaTarihi` sütunları eklendi.
+    *   Geçmiş maliyetleri loglamak için `maliyet_log` tablosu oluşturuldu.
     *   Varsayılan birimlere çevrim katsayıları eklendi.
 4.  IPC Altyapısı Kurulumu (`preload.js`, `main/ipcHandlers.js`).
-    *   `getLatestAlimInfoForUrun` handler'ı eklendi.
+    *   `getLatestAlimInfoForUrun`, `logAndUpdateReceteMaliyet`, `getPreviousMaliyetLog`, `exportMaliyetToExcel` handler'ları eklendi.
 5.  Tabler Tema Entegrasyonu.
 6.  Toastr Bildirimleri Entegrasyonu.
 7.  Genel Onay Modalı Entegrasyonu.
 8.  Ana Layout ve Menü Yapısı (`index.html`).
+    *   Menü yapısı daha işlevsel gruplara ayrıldı (Tanımlar, Reçeteler, İşlemler vb.).
 9.  Sayfa Yükleme Mekanizması (`renderer.js`).
-10. Menü Navigasyonu, Aktiflik Durumu ve İkon Güncellemeleri.
+10. Menü Navigasyonu, Aktiflik Durumu ve İkon Güncellemeleri (`<img>` ile SVG kullanımı).
 11. **Sayfa Düzenleri:** Tüm CRUD sayfaları için form solda, liste sağda, ayrı kartlarda standart düzene geçildi.
 12. **Buton Stilleri:** Tüm form ve tablo eylem butonları standart ikonlu görünüme kavuştu.
 13. **Ürün/Hammadde Yönetimi:** CRUD işlevleri tamamlandı.
@@ -107,8 +116,14 @@ RestoranMaliyetApp/
 18. **Gider Yönetimi:** CRUD işlevleri tamamlandı.
 19. **Satış Yönetimi:** CRUD işlevleri, varsayılan fiyat getirme ve otomatik toplam tutar tamamlandı.
 20. **Ayarlar Sayfası:** Basit kullanıcı adı gösterme ve şifre değiştirme işlevi tamamlandı.
-21. **Splash Screen ve Giriş Ekranı Akışı:** Tamamlandı.
-22. **Dashboard Sayfası:** Basit haliyle oluşturuldu.
+21. **Splash Screen ve Giriş Ekranı Akışı:** Çerçevesiz splash, çerçeveli login ve maksimize ana uygulama akışı tamamlandı.
+22. **Dashboard Sayfası:** Basit haliyle oluşturuldu ve varsayılan açılış sayfası yapıldı.
+23. **Toplu Reçete Maliyeti Güncelleme:**
+    *   `views/toplu_maliyet.html` ve `renderer/toplu_maliyet.js` oluşturuldu.
+    *   Tüm reçetelerin maliyetlerini hesaplayıp `receler` tablosunu ve `maliyet_log` tablosunu güncelleme işlevi.
+    *   Sonuçları "Eski/Yeni Maliyet ve Değişim %" formatında tabloda gösterme.
+    *   Hesaplanan maliyet raporunu Excel'e aktarma (`xlsx` kütüphanesi ile).
+    *   Menüye "Toplu Maliyet Güncelleme" linki eklendi.
 
 ## Gelecek Adımlar (Yapılacaklar)
 
@@ -117,21 +132,23 @@ Planlanan gelecek adımlar ve tamamlanacak özellikler sırasıyla (önceliklend
 1.  ~~**Tablo Güncelleme ve Silme (Kalan Sayfalar):**~~ `✓ TAMAMLANDI`
 2.  **Birim çevrim mantığının Reçete Maliyeti hesaplanırken kodda uygulanması:** `✓ TEMEL İŞLEVSELLİK TAMAMLANDI`
     *   (İleri Geliştirme: Daha karmaşık çapraz birim çevrimleri, yoğunluk bazlı çevrimler eklenebilir.)
-    *   (İleri Geliştirme: Maliyet geçmişi takibi ve raporlaması.)
 3.  **Alım Fişi Girişi:** `✓ TAMAMLANDI`
 4.  **Gider Girişi:** `✓ TAMAMLANDI`
 5.  **Satılan Ürün Kaydı:** `✓ TAMAMLANDI`
 6.  **Analiz ve Raporlama:**
-    *   Toplu Reçete Maliyeti Güncelleme sayfası/işlevi.
-    *   `views/analiz.html` ve `renderer/analiz.js` oluşturma.
-    *   Maliyet, Alım, Gider, Satış ve Kâr/Zarar raporlarını oluşturma.
+    *   ~~Toplu Reçete Maliyeti Güncelleme sayfası/işlevi.~~ `✓ TAMAMLANDI` (Excel'e aktarma dahil)
+    *   Maliyet Geçmişi Raporu (`maliyet_log` tablosundan detaylı analiz).
+    *   `views/analiz.html` ve `renderer/analiz.js` oluşturma (Genel Kâr/Zarar, Detaylı Maliyet Raporları vb.).
 7.  **Uygulama Ayarları:** `✓ (Basit Şifre Değiştirme Tamamlandı)`
-    *   Şifrelerin hash'lenerek güvenli bir şekilde saklanması.
-    *   Genel uygulama ayarları (para birimi, tema vb.) için arayüz.
-8.  **Hata Yönetimi İyileştirme:** ...
-9.  **Uygulama İyileştirmeleri:** ...
-10. **Dağıtım:** ...
-11. **Yedekleme/Geri Yükleme:** ...
+    *   **Şifrelerin hash'lenerek güvenli bir şekilde saklanması.** (ÖNCELİKLİ)
+    *   Genel uygulama ayarları (para birimi sembolü, firma bilgileri vb.) için arayüz.
+8.  **Hata Yönetimi İyileştirme:** Daha kapsamlı hata yakalama ve kullanıcı dostu mesajlar, loglama.
+9.  **Uygulama İyileştirmeleri:**
+    *   Tablolarda sıralama, filtreleme, arama özellikleri.
+    *   Sayfalandırma (çok fazla kayıt olduğunda).
+    *   Kullanıcı arayüzü detayları, performans optimizasyonları.
+10. **Dağıtım:** Uygulamayı farklı işletim sistemlerinde çalıştırılabilir hale getirme.
+11. **Yedekleme/Geri Yükleme:** Veri tabanının yedeklenmesi ve geri yüklenmesi işlevi.
 12. **Kullanıcı Yönetimi:** `✓ (Basit Tek Kullanıcı Doğrulaması Tamamlandı)`
     *   Rol ve izin tabanlı erişim kontrolü (Gelişmiş).
     *   Çoklu kullanıcı desteği.
