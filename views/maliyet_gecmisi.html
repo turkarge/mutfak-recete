@@ -1,0 +1,75 @@
+<!-- views/maliyet_gecmisi.html -->
+<div class="page-header d-print-none">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">
+                    Reçete Maliyet Geçmişi Raporu
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="container-xl">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Filtreleme Seçenekleri</h3>
+            </div>
+            <div class="card-body">
+                <form id="maliyetGecmisiFiltreForm">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="filtreReceteId">Reçete:</label>
+                            <select class="form-select" id="filtreReceteId">
+                                <option value="">-- Tüm Reçeteler --</option>
+                                <!-- Reçeteler buraya JS ile doldurulacak -->
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label" for="filtreBaslangicTarihi">Başlangıç Tarihi:</label>
+                            <input type="date" class="form-control" id="filtreBaslangicTarihi">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label" for="filtreBitisTarihi">Bitiş Tarihi:</label>
+                            <input type="date" class="form-control" id="filtreBitisTarihi">
+                        </div>
+                        <div class="col-md-2 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-filter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" /></svg>
+                                <span class="ms-1">Filtrele</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Maliyet Geçmişi</h3>
+            </div>
+            <div class="table-responsive">
+                <table id="maliyetGecmisiTable" class="table table-striped table-hover card-table">
+                    <thead>
+                        <tr>
+                            <th>Hesaplama Tarihi</th>
+                            <th>Porsiyon</th>
+                            <th>Reçete Adı</th>
+                            <th class="text-end">Hesaplanan Maliyet (₺)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4" class="text-center">Filtreleme yapınız veya veri yükleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+             <div class="card-footer text-end">
+                <small class="text-muted" id="raporKayitSayisi"></small>
+            </div>
+        </div>
+    </div>
+</div>

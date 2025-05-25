@@ -1,0 +1,90 @@
+<!-- views/detayli_maliyet.html -->
+<div class="page-header d-print-none">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">
+                    Detaylı Maliyet Raporu
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="container-xl">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Filtreleme Seçenekleri</h3>
+            </div>
+            <div class="card-body">
+                <form id="detayliMaliyetFiltreForm">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="filtreSonUrunId">Son Ürün:</label>
+                            <select class="form-select" id="filtreSonUrunId">
+                                <option value="">-- Son Ürün Seçiniz --</option>
+                                <!-- Son Ürünler buraya JS ile doldurulacak -->
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="filtrePorsiyonId">Porsiyon:</label>
+                            <select class="form-select" id="filtrePorsiyonId" disabled>
+                                <option value="">-- Önce Son Ürün Seçiniz --</option>
+                                <!-- Porsiyonlar buraya JS ile doldurulacak -->
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="filtreReceteIdRapor">Reçete:</label> <!-- ID'yi farklılaştırdık -->
+                            <select class="form-select" id="filtreReceteIdRapor" disabled>
+                                <option value="">-- Önce Porsiyon Seçiniz --</option>
+                                <!-- Reçeteler buraya JS ile doldurulacak -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="filtreRaporBaslangicTarihi">Başlangıç Tarihi:</label>
+                            <input type="date" class="form-control" id="filtreRaporBaslangicTarihi">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="filtreRaporBitisTarihi">Bitiş Tarihi:</label>
+                            <input type="date" class="form-control" id="filtreRaporBitisTarihi">
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-report-analytics" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M9 17v-5" /><path d="M12 17v-1" /><path d="M15 17v-3" /></svg>
+                                <span class="ms-1">Raporu Getir</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" id="detayliMaliyetSonucKarti" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">Maliyet Geçmişi: <span id="raporBasligiEki" class="text-muted"></span></h3>
+            </div>
+            <div class="table-responsive">
+                <table id="detayliMaliyetTable" class="table table-vcenter table-striped table-hover card-table">
+                    <thead>
+                        <tr>
+                            <th>Hesaplama Tarihi</th>
+                            <th class="text-end">Hesaplanan Maliyet (₺)</th>
+                            <!-- İsteğe bağlı: Değişim, Önceki Maliyet gibi sütunlar eklenebilir -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="2" class="text-center">Filtreleme yapınız veya veri yükleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+             <div class="card-footer text-end">
+                <small class="text-muted" id="detayliRaporKayitSayisi"></small>
+            </div>
+        </div>
+    </div>
+</div>

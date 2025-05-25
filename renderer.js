@@ -20,6 +20,8 @@ import { loadGiderlerPage } from './renderer/giderler.js';
 import { loadSatislarPage } from './renderer/satislar.js';
 import { loadAyarlarPage } from './renderer/ayarlar.js';
 import { loadTopluMaliyetPage } from './renderer/toplu_maliyet.js';
+import { loadMaliyetGecmisiPage } from './renderer/maliyet_gecmisi.js';
+import { loadDetayliMaliyetPage } from './renderer/detayli_maliyet.js';
 // import { loadAnalizPage } from './renderer/analiz.js';
 
 
@@ -116,6 +118,12 @@ async function loadPage(pageName) {
                     break;
                 case 'toplu_maliyet':
                     loadTopluMaliyetPage();
+                    break;
+                case 'maliyet_gecmisi':
+                    loadMaliyetGecmisiPage();
+                    break;
+                    case 'detayli_maliyet':
+                    loadDetayliMaliyetPage();
                     break;
                 // 'login' case'i artık burada olmayacak
                 // TODO: Diğer sayfalar için case'ler eklenecek:

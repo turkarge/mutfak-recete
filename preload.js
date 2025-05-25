@@ -71,9 +71,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   logAndUpdateReceteMaliyet: (receteId, yeniMaliyet, tarih) => ipcRenderer.invoke('logAndUpdateReceteMaliyet', receteId, yeniMaliyet, tarih),
   getPreviousMaliyetLog: (receteId) => ipcRenderer.invoke('getPreviousMaliyetLog', receteId),
 
+  // Maliyet Geçmişi Raporu
+  getMaliyetGecmisi: (filtreler) => ipcRenderer.invoke('getMaliyetGecmisi', filtreler),
+
+  // YENİ: Detaylı Maliyet Raporu için yardımcı API'ler
+  getPorsiyonlarByUrunId: (sonUrunId) => ipcRenderer.invoke('getPorsiyonlarByUrunId', sonUrunId),
+  getRecetelerByPorsiyonId: (porsiyonId) => ipcRenderer.invoke('getRecetelerByPorsiyonId', porsiyonId),
+
   // Ayarlar Handler'ları
   getAyar: (anahtar) => ipcRenderer.invoke('getAyar', anahtar),
   setAyar: (anahtar, deger) => ipcRenderer.invoke('setAyar', anahtar, deger),
+
+  // Reçete PDF Oluşturma
+  generateRecetePdf: (receteData) => ipcRenderer.invoke('generateRecetePdf', receteData),
 
   // TODO: Diğer handler'lar buraya gelecek (Birim/Porsiyon düzenleme, alım, gider, satış, analiz)
 });

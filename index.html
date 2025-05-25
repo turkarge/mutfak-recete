@@ -140,14 +140,35 @@
               </div>
             </li>
 
-            <!-- Raporlar -->
-            <li class="nav-item">
-              <a class="nav-link" href="#" data-page="raporlar">
+            <!-- Raporlar (Dropdown Menü) -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#navbar-raporlar" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                 <span class="nav-link-icon d-md-none d-lg-inline">
                   <img src="./assets/svg/chart-bar.svg" class="icon" alt="Raporlar Icon">
                 </span>
                 <span class="nav-link-title">Raporlar</span>
               </a>
+              <div class="dropdown-menu">
+                <div class="dropdown-menu-columns">
+                  <div class="dropdown-menu-column">
+                    <a class="dropdown-item" href="#" data-page="maliyet_gecmisi">
+                      <img src="./assets/svg/history.svg" class="icon dropdown-item-icon" alt="Maliyet Geçmişi Icon"> <!-- Yeni ikon: history.svg -->
+                      Maliyet Geçmişi
+                    </a>
+                    <a class="dropdown-item" href="#" data-page="detayli_maliyet">
+                      <img src="./assets/svg/history.svg" class="icon dropdown-item-icon" alt="Maliyet Geçmişi Icon"> <!-- Yeni ikon: history.svg -->
+                      Detaylı Maliyet
+                    </a>
+                    <!-- Gelecekte diğer rapor linkleri buraya eklenebilir -->
+                    <!--
+                    <a class="dropdown-item" href="#" data-page="kar_zarar_raporu">
+                      <img src="./assets/svg/trending-up.svg" class="icon dropdown-item-icon" alt="Kâr/Zarar Icon">
+                      Kâr/Zarar Analizi
+                    </a>
+                    -->
+                  </div>
+                </div>
+              </div>
             </li>
 
             <!-- Ayarlar -->

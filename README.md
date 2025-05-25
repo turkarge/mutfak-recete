@@ -153,3 +153,7 @@ Planlanan gelecek adımlar ve tamamlanacak özellikler sırasıyla (önceliklend
     *   Rol ve izin tabanlı erişim kontrolü (Gelişmiş).
     *   Çoklu kullanıcı desteği.
 13. **Splash Screen ve Giriş Ekranı:** `✓ TAMAMLANDI`
+14. **Lisans Yönetimi:** (YENİ)
+    *   Lisans anahtarı doğrulama mekanizması.
+    *   Deneme sürümü / süre kısıtlaması özellikleri.
+    *   Aktivasyon ve lisans durumu yönetimi.

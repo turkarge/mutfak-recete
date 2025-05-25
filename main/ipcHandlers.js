@@ -964,6 +964,54 @@ function formatDateForExcel(dateString) {
             throw error;
         }
     });
+
+    // Maliyet Geçmişi Raporu için Handler
+  ipcMain.handle('getMaliyetGecmisi', async (event, filtreler) => {
+    // filtreler objesi: { receteId, baslangicTarihi, bitisTarihi }
+    try {
+      let sql = `
+        SELECT
+          ml.id,
+          ml.hesaplamaTarihi,
+          ml.hesaplananMaliyet,
+          ml.receteId,
+          r.receteAdi,
+          p.porsiyonAdi,
+          u.ad AS sonUrunAdi
+        FROM maliyet_log ml
+        JOIN receler r ON ml.receteId = r.id
+        JOIN porsiyonlar p ON r.porsiyonId = p.id
+        JOIN urunler u ON p.sonUrunId = u.id
+      `;
+      const params = [];
+      const conditions = [];
+
+      if (filtreler.receteId) {
+        conditions.push("ml.receteId = ?");
+        params.push(filtreler.receteId);
+      }
+      if (filtreler.baslangicTarihi) {
+        conditions.push("ml.hesaplamaTarihi >= ?");
+        params.push(filtreler.baslangicTarihi); // ISO formatında YYYY-MM-DD
+      }
+      if (filtreler.bitisTarihi) {
+        conditions.push("ml.hesaplamaTarihi <= ?");
+        params.push(filtreler.bitisTarihi); // ISO formatında YYYY-MM-DDTHH:mm:ss.sssZ
+      }
+
+      if (conditions.length > 0) {
+        sql += " WHERE " + conditions.join(" AND ");
+      }
+      sql += " ORDER BY ml.hesaplamaTarihi DESC, ml.id DESC"; // En yeni loglar üste
+
+      const loglar = await database.all(sql, params);
+      console.log(`Maliyet geçmişi getirildi. Filtreler: ${JSON.stringify(filtreler)}, Sonuç Sayısı: ${loglar.length}`);
+      return loglar;
+    } catch (error) {
+      console.error('Maliyet geçmişi getirme hatası:', error.message);
+      throw error;
+    }
+  });
     
 
     // Ek olarak, bir önceki maliyeti getirecek bir handler'a ihtiyacımız olacak
@@ -1000,6 +1048,180 @@ function formatDateForExcel(dateString) {
             throw error;
         }
     });
+
+    
+
+    // YENİ: Belirli bir son ürüne ait porsiyonları getir
+  ipcMain.handle('getPorsiyonlarByUrunId', async (event, sonUrunId) => {
+    if (!sonUrunId) {
+      return []; // urunId yoksa boş dizi dön
+    }
+    try {
+      const sql = `
+        SELECT
+          p.id,
+          p.sonUrunId,
+          u.ad AS sonUrunAdi,
+          p.porsiyonAdi,
+          p.satisBirimiKisaAd,
+          p.varsayilanSatisFiyati
+        FROM porsiyonlar p
+        JOIN urunler u ON p.sonUrunId = u.id
+        WHERE p.sonUrunId = ?
+        ORDER BY p.porsiyonAdi COLLATE NOCASE;
+      `;
+      const porsiyonlar = await database.all(sql, [sonUrunId]);
+      console.log(`Ürün ID ${sonUrunId} için ${porsiyonlar.length} adet porsiyon getirildi.`);
+      return porsiyonlar;
+    } catch (error) {
+      console.error(`Ürün ID ${sonUrunId} için porsiyonları getirme hatası:`, error.message);
+      throw error;
+    }
+  });
+
+  // YENİ: Belirli bir porsiyona ait reçeteleri getir
+  ipcMain.handle('getRecetelerByPorsiyonId', async (event, porsiyonId) => {
+    if (!porsiyonId) {
+      return []; // porsiyonId yoksa boş dizi dön
+    }
+    try {
+      // Bu sorgu getReceteler ile benzer, sadece porsiyonId filtresi var
+      const sql = `
+        SELECT
+          r.id,
+          r.porsiyonId,
+          p.porsiyonAdi,
+          p.sonUrunId,
+          u.ad AS sonUrunAdi,
+          r.receteAdi,
+          r.sonHesaplananMaliyet,
+          r.maliyetHesaplamaTarihi
+        FROM receler r
+        JOIN porsiyonlar p ON r.porsiyonId = p.id
+        JOIN urunler u ON p.sonUrunId = u.id
+        WHERE r.porsiyonId = ?
+        ORDER BY r.receteAdi COLLATE NOCASE;
+      `;
+      const receteler = await database.all(sql, [porsiyonId]);
+      console.log(`Porsiyon ID ${porsiyonId} için ${receteler.length} adet reçete getirildi.`);
+      return receteler;
+    } catch (error) {
+      console.error(`Porsiyon ID ${porsiyonId} için reçeteleri getirme hatası:`, error.message);
+      throw error;
+    }
+  });
+
+  // YENİ: Reçete PDF Oluşturma ve Kaydetme Handler'ı
+  ipcMain.handle('generateRecetePdf', async (event, receteData) => {
+    // receteData: { receteAdi, porsiyonBilgisi, hesaplamaTarihi, hammaddeler, toplamReceteMaliyeti }
+    // hammaddeler: [{ hammaddeAdi, miktar, birimKisaAd, birimMaliyet, toplamMaliyet }, ...]
+
+    if (!receteData) {
+      return { success: false, message: "PDF oluşturmak için reçete verisi alınamadı." };
+    }
+
+    // 1. Kullanıcıya dosyayı nereye kaydedeceğini sor
+    const defaultFileName = `Recete_${receteData.porsiyonBilgisi.replace(/[^a-z0-9]/gi, '_')}_${receteData.receteAdi.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+    const { filePath, canceled } = await dialog.showSaveDialog({
+      title: 'Reçete PDF Kaydet',
+      defaultPath: defaultFileName,
+      filters: [{ name: 'PDF Dosyası', extensions: ['pdf'] }]
+    });
+
+    if (canceled || !filePath) {
+      console.log('PDF kaydetme işlemi kullanıcı tarafından iptal edildi.');
+      return { success: false, message: 'Kaydetme işlemi iptal edildi.' };
+    }
+
+    // 2. Görünmez bir pencere oluştur
+    let offscreenWindow = new BrowserWindow({
+      show: false, // Pencereyi gösterme
+      width: 800, // A4 boyutuna yakın bir genişlik (piksel cinsinden)
+      height: 1120, // A4 boyutuna yakın bir yükseklik
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        // Offscreen pencere için ayrı bir preload gerekebilir,
+        // ama basit HTML render için şimdilik gerekmeyebilir.
+        // Eğer şablonda karmaşık JS varsa, preload eklemek iyi olur.
+      }
+    });
+
+    // 3. Yazdırma şablonu HTML'ini oku
+    const templatePath = path.join(app.getAppPath(), 'print_templates', 'recete_sablonu.html'); // app.getAppPath() paketlenmiş uygulamada doğru yolu verir
+    let htmlContent;
+    try {
+      htmlContent = fs.readFileSync(templatePath, 'utf8');
+    } catch (readError) {
+      console.error("Reçete şablonu okuma hatası:", readError);
+      if (offscreenWindow && !offscreenWindow.isDestroyed()) offscreenWindow.close();
+      return { success: false, message: "Reçete yazdırma şablonu bulunamadı." };
+    }
+
+    // 4. HTML içeriğini gelen verilerle doldur
+    // Basit string değiştirme yöntemi. Daha karmaşık şablon motorları (Handlebars, EJS) da kullanılabilir.
+    htmlContent = htmlContent.replace('{{printReceteAdi}}', receteData.receteAdi || 'Belirtilmemiş');
+    htmlContent = htmlContent.replace('{{printPorsiyonBilgisi}}', receteData.porsiyonBilgisi || '-');
+    htmlContent = htmlContent.replace('{{printHesaplamaTarihi}}', receteData.hesaplamaTarihi ? new Date(receteData.hesaplamaTarihi).toLocaleDateString('tr-TR') : '-');
+    htmlContent = htmlContent.replace('{{printToplamReceteMaliyeti}}', receteData.toplamReceteMaliyeti ? receteData.toplamReceteMaliyeti.toFixed(2) : '0.00');
+
+    let hammaddeRows = '';
+    if (receteData.hammaddeler && receteData.hammaddeler.length > 0) {
+      receteData.hammaddeler.forEach(h => {
+        hammaddeRows += `
+          <tr>
+            <td>${h.hammaddeAdi || '-'}</td>
+            <td class="text-end">${h.miktar ? parseFloat(h.miktar).toFixed(3) : '-'}</td>
+            <td>${h.birimKisaAd || '-'}</td>
+            <td class="text-end">${h.birimMaliyet ? h.birimMaliyet.toFixed(2) : '0.00'}</td>
+            <td class="text-end">${h.toplamMaliyet ? h.toplamMaliyet.toFixed(2) : '0.00'}</td>
+          </tr>
+        `;
+      });
+    } else {
+      hammaddeRows = '<tr><td colspan="5" style="text-align:center;">Bu reçetede hammadde bulunmamaktadır.</td></tr>';
+    }
+    htmlContent = htmlContent.replace('<!-- Örnek Satır (JS ile dinamik olarak doldurulacak) -->', hammaddeRows);
+    // tbody içindeki örnek satırı da temizleyelim (eğer varsa)
+    htmlContent = htmlContent.replace(/<tbody id="printHammaddeListesi">[\s\S]*?<\/tbody>/, `<tbody id="printHammaddeListesi">${hammaddeRows}</tbody>`);
+
+
+    // 5. Doldurulmuş HTML'i görünmez pencereye yükle (data URL olarak)
+    // Bu, harici dosyalara (CSS, JS) erişimde sorun çıkarabilir.
+    // Alternatif: HTML'i geçici bir dosyaya yazıp onu yüklemek.
+    // Şimdilik data URL ile deneyelim.
+    const dataUrl = `data:text/html;charset=UTF-8,${encodeURIComponent(htmlContent)}`;
+    await offscreenWindow.loadURL(dataUrl);
+
+    try {
+      // 6. PDF Oluştur
+      // Bekleme süresi ekleyerek sayfanın tam render olmasını sağlayalım (ihtiyaç olmayabilir)
+      // await new Promise(resolve => setTimeout(resolve, 500));
+
+      const pdfData = await offscreenWindow.webContents.printToPDF({
+        marginsType: 0, // 0: default, 1: none, 2: minimum
+        pageSize: 'A4', // Letter, A3, A4, A5, Legal, Tabloid
+        printBackground: true, // Arka plan renklerini ve resimlerini yazdır
+        landscape: false // Dikey
+      });
+
+      // 7. PDF'i dosyaya yaz
+      fs.writeFileSync(filePath, pdfData);
+      console.log('PDF başarıyla oluşturuldu ve kaydedildi:', filePath);
+
+      // 8. Görünmez pencereyi kapat
+      if (offscreenWindow && !offscreenWindow.isDestroyed()) {
+        offscreenWindow.close();
+        offscreenWindow = null;
+      }
+      return { success: true, path: filePath, message: 'Reçete PDF olarak başarıyla kaydedildi.' };
+
+    } catch (pdfError) {
+      console.error('PDF oluşturma veya kaydetme hatası:', pdfError);
+      if (offscreenWindow && !offscreenWindow.isDestroyed()) offscreenWindow.close();
+      return { success: false, message: `PDF oluşturulurken bir hata oluştu: ${pdfError.message}` };
+    }
+  });
 
     // TODO: Diğer handler'lar buraya gelecek:
     // - Reçete düzenleme (updateRecete)
